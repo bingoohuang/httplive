@@ -17,7 +17,7 @@ and increase the productivity of our development and testing environments.
 
 ### Installation
 
-    go get github.com/bingoohuang/httplive
+    go get github.com/bingoohuang/httplive/...
 
 With this command you can add the **httplive** application to the path you specify in the Go environment. 
 This way you can run the application from the command line.
