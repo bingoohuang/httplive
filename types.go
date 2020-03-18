@@ -6,6 +6,7 @@ type EnvVars struct {
 	DBFile      string
 	DBFullPath  string
 	DefaultPort string
+	Ports       string // Hosting ports, eg. 5003,5004.
 }
 
 // IPResponse ...

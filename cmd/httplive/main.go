@@ -21,12 +21,8 @@ import (
 func main() {
 	gin.SetMode(gin.ReleaseMode)
 
-	var (
-		ports  string
-		dbpath string
-	)
-
 	app := cli.NewApp()
+	env := &httplive.Environments
 
 	app.Name = "httplive"
 	app.Usage = "HTTP Request & Response Service, Mock HTTP"
@@ -36,20 +32,18 @@ func main() {
 			Name:        "ports, p",
 			Value:       "5003",
 			Usage:       "Hosting ports, eg. 5003,5004.",
-			Destination: &ports,
+			Destination: &env.Ports,
 		},
 		cli.StringFlag{
 			Name:        "dbpath, d",
 			Value:       "",
 			Usage:       "Full path of the httplive.db.",
-			Destination: &dbpath,
+			Destination: &env.DBFullPath,
 		},
 	}
 
-	env := &httplive.Environments
-
 	app.Action = func(c *cli.Context) error {
-		host(env, ports, dbpath)
+		host(env)
 		return nil
 	}
 
@@ -71,13 +65,11 @@ func createDB(env *httplive.EnvVars) error {
 	return httplive.CreateDBBucket()
 }
 
-func host(env *httplive.EnvVars, ports string, dbPath string) {
-	portsArr := strings.Split(ports, ",")
+func host(env *httplive.EnvVars) {
+	portsArr := strings.Split(env.Ports, ",")
 
-	dir, _ := os.Getwd()
-	env.WorkingDir = dir
+	env.WorkingDir, _ = os.Getwd()
 	env.DefaultPort = portsArr[0]
-	env.DBFullPath = dbPath
 
 	_ = createDB(env)
 

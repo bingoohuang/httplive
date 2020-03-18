@@ -72,8 +72,7 @@ func InitDBValues() {
 
 func (model *APIDataModel) gobEncode() ([]byte, error) {
 	buf := new(bytes.Buffer)
-	enc := gob.NewEncoder(buf)
-	err := enc.Encode(model)
+	err := gob.NewEncoder(buf).Encode(model)
 
 	if err != nil {
 		return nil, err
