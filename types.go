@@ -70,9 +70,7 @@ type BasicAuthResponse struct {
 }
 
 // WebCliController ...
-type WebCliController struct {
-	Port string
-}
+type WebCliController struct{}
 
 // APIDataModel ...
 type APIDataModel struct {

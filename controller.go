@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/bingoohuang/gor/giu"
 	"github.com/boltdb/bolt"
 	"github.com/gin-gonic/gin"
 )
@@ -52,8 +53,12 @@ func createJsTreeModel(a APIDataModel) JsTreeDataModel {
 	return model
 }
 
+type treeDir struct {
+	giu.T `url:"GET /api/tree"`
+}
+
 // Tree ...
-func (ctrl WebCliController) Tree(c *gin.Context) {
+func (ctrl WebCliController) Tree(c *gin.Context, _ treeDir) {
 	trees := []JsTreeDataModel{}
 	apis := EndpointList()
 
@@ -75,26 +80,30 @@ func (ctrl WebCliController) Tree(c *gin.Context) {
 	})
 }
 
+type backupDir struct {
+	giu.T `url:"GET /api/backup"`
+}
+
 // Backup ...
-func (ctrl WebCliController) Backup(c *gin.Context) {
+func (ctrl WebCliController) Backup(c *gin.Context, _ backupDir) error {
 	db := OpenDB()
 	defer db.Close()
 
-	err := db.View(func(tx *bolt.Tx) error {
+	return db.View(func(tx *bolt.Tx) error {
 		c.Writer.Header().Set("Content-Type", "application/octet-stream")
 		c.Writer.Header().Set("Content-Disposition", `attachment; filename="httplive.db"`)
 		c.Writer.Header().Set("Content-Length", strconv.Itoa(int(tx.Size())))
 		_, err := tx.WriteTo(c.Writer)
 		return err
 	})
+}
 
-	if err != nil {
-		http.Error(c.Writer, err.Error(), http.StatusInternalServerError)
-	}
+type downloadFileDir struct {
+	giu.T `url:"GET /api/downloadfile"`
 }
 
 // DownloadFile ...
-func (ctrl WebCliController) DownloadFile(c *gin.Context) {
+func (ctrl WebCliController) DownloadFile(c *gin.Context, _ downloadFileDir) {
 	query := c.Request.URL.Query()
 	endpoint := query.Get("endpoint")
 
@@ -116,8 +125,12 @@ func (ctrl WebCliController) DownloadFile(c *gin.Context) {
 	c.Status(http.StatusNotFound)
 }
 
+type endpointDir struct {
+	giu.T `url:"GET /api/endpoint"`
+}
+
 // Endpoint ...
-func (ctrl WebCliController) Endpoint(c *gin.Context) {
+func (ctrl WebCliController) Endpoint(c *gin.Context, _ endpointDir) {
 	query := c.Request.URL.Query()
 	endpoint := query.Get("endpoint")
 	method := query.Get("method")
@@ -133,31 +146,26 @@ func (ctrl WebCliController) Endpoint(c *gin.Context) {
 	c.JSON(http.StatusOK, model)
 }
 
+type saveT struct {
+	giu.T `url:"POST /api/save"`
+}
+
 // Save ...
-func (ctrl WebCliController) Save(c *gin.Context) {
-	var model APIDataModel
-	if err := c.ShouldBindJSON(&model); err == nil {
-		if err := SaveEndpoint(model); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		}
-	} else {
+func (ctrl WebCliController) Save(model APIDataModel, c *gin.Context, _ saveT) {
+	if err := SaveEndpoint(model); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"success": "ok"})
 }
 
+type saveendpointT struct {
+	giu.T `url:"POST /api/saveendpoint"`
+}
+
 // SaveEndpoint ...
-func (ctrl WebCliController) SaveEndpoint(c *gin.Context) {
-	var model EndpointModel
-
-	if err := c.ShouldBind(&model); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		c.Abort()
-
-		return
-	}
-
+func (ctrl WebCliController) SaveEndpoint(model EndpointModel, c *gin.Context, _ saveendpointT) {
 	mimeType, filename, fileContent, abort := parseFileContent(c, model)
 	if abort {
 		return
@@ -254,8 +262,12 @@ func parseFileContent(c *gin.Context, model EndpointModel) (mimeType, filename s
 	return mimeType, filename, fileContent, false
 }
 
+type deleteEndpointT struct {
+	giu.T `url:"GET /api/deleteendpoint"`
+}
+
 // DeleteEndpoint ...
-func (ctrl WebCliController) DeleteEndpoint(c *gin.Context) {
+func (ctrl WebCliController) DeleteEndpoint(c *gin.Context, _ deleteEndpointT) {
 	query := c.Request.URL.Query()
 	endpoint := query.Get("endpoint")
 	method := query.Get("method")
