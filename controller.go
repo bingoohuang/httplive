@@ -48,7 +48,7 @@ type treeT struct {
 }
 
 // Tree ...
-func (ctrl WebCliController) Tree(c *gin.Context, _ treeT) {
+func (ctrl WebCliController) Tree(_ treeT) gin.H {
 	apis := EndpointList()
 	trees := make([]JsTreeDataModel, len(apis))
 
@@ -56,14 +56,14 @@ func (ctrl WebCliController) Tree(c *gin.Context, _ treeT) {
 		trees[i] = createJsTreeModel(api)
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	return gin.H{
 		"id":       "0",
 		"key":      "APIs",
 		"text":     "APIs",
 		"state":    map[string]interface{}{"opened": true},
 		"children": trees,
 		"type":     "root",
-	})
+	}
 }
 
 type backupT struct {
@@ -116,20 +116,19 @@ type endpointT struct {
 }
 
 // Endpoint ...
-func (ctrl WebCliController) Endpoint(c *gin.Context, _ endpointT) {
+func (ctrl WebCliController) Endpoint(c *gin.Context, _ endpointT) (giu.HTTPStatus, interface{}) {
 	query := c.Request.URL.Query()
 	endpoint := query.Get("endpoint")
 	method := query.Get("method")
 
 	if endpoint == "" || method == "" {
-		c.JSON(http.StatusNotFound, gin.H{"error": "endpoint and method required"})
-		return
+		return giu.HTTPStatus(http.StatusNotFound), gin.H{"error": "endpoint and method required"}
 	}
 
 	key := CreateEndpointKey(method, endpoint)
 	model, _ := GetEndpoint(key)
 
-	c.JSON(http.StatusOK, model)
+	return giu.HTTPStatus(http.StatusOK), model
 }
 
 type saveT struct {
@@ -137,13 +136,12 @@ type saveT struct {
 }
 
 // Save ...
-func (ctrl WebCliController) Save(model APIDataModel, c *gin.Context, _ saveT) {
+func (ctrl WebCliController) Save(model APIDataModel, _ saveT) (giu.HTTPStatus, interface{}) {
 	if err := SaveEndpoint(model); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+		return giu.HTTPStatus(http.StatusBadRequest), gin.H{"error": err.Error()}
 	}
 
-	c.JSON(http.StatusOK, gin.H{"success": "ok"})
+	return giu.HTTPStatus(http.StatusOK), gin.H{"success": "ok"}
 }
 
 type saveEndpointT struct {

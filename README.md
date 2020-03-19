@@ -38,7 +38,7 @@ Hosting ports can be array comma separated string <5003,5004> to host multiple e
 
 HttpLive creates a key-value database for the URLs you define. 
 Here the port value is used as a **bucket name** for the keys. 
-When working with a single port, the data is associated with this port as a keys. 
+When working with a single port, the data is associated with this port as keys. 
 When you specify multiple ports, the first value of the array is selected as the default port, 
 and the other ports use the data specified for the default port.
 
