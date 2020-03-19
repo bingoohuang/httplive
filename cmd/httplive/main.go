@@ -1,13 +1,13 @@
 package main
 
 import (
-	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/bingoohuang/gor/giu"
 
@@ -19,8 +19,7 @@ import (
 )
 
 func main() {
-	gin.SetMode(gin.ReleaseMode)
-
+	//gin.SetMode(gin.ReleaseMode)
 	app := cli.NewApp()
 	env := &httplive.Environments
 
@@ -42,30 +41,28 @@ func main() {
 		},
 	}
 
-	app.Action = func(c *cli.Context) error {
-		host(env)
-		return nil
-	}
+	app.Action = func(c *cli.Context) error { return host(env) }
 
 	_ = app.Run(os.Args)
 }
 
 func createDB(env *httplive.EnvVars) error {
-	if fullPath := httplive.Environments.DBFullPath; fullPath != "" {
+	fullPath := httplive.Environments.DBFullPath
+	if fullPath == "" {
+		fullPath = path.Join(env.WorkingDir, "httplive.db")
+	} else {
 		p := filepath.Dir(fullPath)
 		if _, err := os.Stat(p); os.IsNotExist(err) {
-			log.Fatal(err)
+			logrus.Fatalf("fullPath %s error %v", fullPath, err)
 		}
-
-		env.DBFile = fullPath
-	} else {
-		env.DBFile = path.Join(env.WorkingDir, "httplive.db")
 	}
+
+	env.DBFile = fullPath
 
 	return httplive.CreateDBBucket()
 }
 
-func host(env *httplive.EnvVars) {
+func host(env *httplive.EnvVars) error {
 	portsArr := strings.Split(env.Ports, ",")
 
 	env.WorkingDir, _ = os.Getwd()
@@ -78,23 +75,16 @@ func host(env *httplive.EnvVars) {
 	r := gin.Default()
 
 	r.Use(httplive.StaticFileMiddleware())
-
-	r.GET("/ws", func(c *gin.Context) {
-		wshandler(c.Writer, c.Request)
-	})
-
+	r.GET("/ws", wshandler)
 	r.Use(httplive.CORSMiddleware(), httplive.ConfigJsMiddleware())
 
 	ga := giu.NewAdaptor()
 
-	webcli := r.Group("/webcli")
-	gw := ga.Route(webcli)
+	gw := ga.Route(r.Group("/webcli"))
 
-	ctrl := new(httplive.WebCliController)
-	gw.HandleFn(ctrl)
+	gw.HandleFn(new(httplive.WebCliController))
 
 	r.Use(httplive.APIMiddleware())
-
 	r.NoRoute(func(c *gin.Context) {
 		httplive.Broadcast(c)
 		c.Status(http.StatusNotFound)
@@ -112,25 +102,22 @@ func host(env *httplive.EnvVars) {
 
 // nolint gochecknoglobals
 var wsupgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
+	CheckOrigin:     func(r *http.Request) bool { return true },
 	ReadBufferSize:  1024, // nolint gomnd
 	WriteBufferSize: 1024, // nolint gomnd
 }
 
-func wshandler(w http.ResponseWriter, r *http.Request) {
-	connID := r.URL.Query().Get("connectionId")
+func wshandler(c *gin.Context) {
+	connID := c.Request.URL.Query().Get("connectionId")
 	if connID != "" {
-		conn := httplive.Clients[connID]
-		if conn != nil {
+		if conn := httplive.Clients[connID]; conn != nil {
 			return
 		}
 	}
 
-	conn, err := wsupgrader.Upgrade(w, r, nil)
+	conn, err := wsupgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
-		fmt.Printf("Failed to set websocket upgrade: %+v", err)
+		logrus.Warnf("Failed to set websocket upgrade: %+v", err)
 		return
 	}
 

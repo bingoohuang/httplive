@@ -14,78 +14,64 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// nolint gochecknoglobals
-var (
-	httpMethodLabelMap = map[string]string{
-		"GET":    "label label-primary label-small",
-		"POST":   "label label-success label-small",
-		"PUT":    "label label-warning label-small",
-		"DELETE": "label label-danger label-small",
-	}
-)
-
 func createJsTreeModel(a APIDataModel) JsTreeDataModel {
-	originKey := CreateEndpointKey(a.Method, a.Endpoint)
 	model := JsTreeDataModel{
 		ID:        a.ID,
-		OriginKey: originKey,
+		OriginKey: CreateEndpointKey(a.Method, a.Endpoint),
 		Key:       a.Endpoint,
 		Text:      a.Endpoint,
 		Children:  []JsTreeDataModel{},
 	}
-	endpointText := `<span class="%v">%v</span> %v`
 
-	switch method := a.Method; method {
-	case "POST":
-		model.Type = method
-		model.Text = fmt.Sprintf(endpointText, httpMethodLabelMap["POST"], "POST", a.Endpoint)
-	case "PUT":
-		model.Type = method
-		model.Text = fmt.Sprintf(endpointText, httpMethodLabelMap["PUT"], "PUT", a.Endpoint)
-	case "DELETE":
-		model.Type = method
-		model.Text = fmt.Sprintf(endpointText, httpMethodLabelMap["DELETE"], "DELETE", a.Endpoint)
+	m := a.Method
+	switch m {
+	case http.MethodPost, http.MethodPut, http.MethodDelete:
 	default:
-		model.Type = method
-		model.Text = fmt.Sprintf(endpointText, httpMethodLabelMap["GET"], "GET", a.Endpoint)
+		m = http.MethodGet
 	}
+
+	httpMethodLabelMap := map[string]string{
+		http.MethodGet:    "label label-primary label-small",
+		http.MethodPost:   "label label-success label-small",
+		http.MethodPut:    "label label-warning label-small",
+		http.MethodDelete: "label label-danger label-small",
+	}
+
+	model.Type = m
+	model.Text = fmt.Sprintf(`<span class="%v">%v</span> %v`, httpMethodLabelMap[m], m, a.Endpoint)
 
 	return model
 }
 
-type treeDir struct {
+type treeT struct {
 	giu.T `url:"GET /api/tree"`
 }
 
 // Tree ...
-func (ctrl WebCliController) Tree(c *gin.Context, _ treeDir) {
-	trees := []JsTreeDataModel{}
+func (ctrl WebCliController) Tree(c *gin.Context, _ treeT) {
 	apis := EndpointList()
+	trees := make([]JsTreeDataModel, len(apis))
 
-	for _, api := range apis {
-		trees = append(trees, createJsTreeModel(api))
-	}
-
-	state := map[string]interface{}{
-		"opened": true,
+	for i, api := range apis {
+		trees[i] = createJsTreeModel(api)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"id":       "0",
 		"key":      "APIs",
 		"text":     "APIs",
-		"state":    state,
+		"state":    map[string]interface{}{"opened": true},
 		"children": trees,
 		"type":     "root",
 	})
 }
 
-type backupDir struct {
+type backupT struct {
 	giu.T `url:"GET /api/backup"`
 }
 
 // Backup ...
-func (ctrl WebCliController) Backup(c *gin.Context, _ backupDir) error {
+func (ctrl WebCliController) Backup(c *gin.Context, _ backupT) error {
 	db := OpenDB()
 	defer db.Close()
 
@@ -98,17 +84,17 @@ func (ctrl WebCliController) Backup(c *gin.Context, _ backupDir) error {
 	})
 }
 
-type downloadFileDir struct {
+type downloadFileT struct {
 	giu.T `url:"GET /api/downloadfile"`
 }
 
 // DownloadFile ...
-func (ctrl WebCliController) DownloadFile(c *gin.Context, _ downloadFileDir) {
+func (ctrl WebCliController) DownloadFile(c *gin.Context, _ downloadFileT) {
 	query := c.Request.URL.Query()
 	endpoint := query.Get("endpoint")
 
 	if endpoint != "" {
-		key := CreateEndpointKey("GET", endpoint)
+		key := CreateEndpointKey(http.MethodGet, endpoint)
 		model, err := GetEndpoint(key)
 
 		if err == nil && model != nil {
@@ -125,12 +111,12 @@ func (ctrl WebCliController) DownloadFile(c *gin.Context, _ downloadFileDir) {
 	c.Status(http.StatusNotFound)
 }
 
-type endpointDir struct {
+type endpointT struct {
 	giu.T `url:"GET /api/endpoint"`
 }
 
 // Endpoint ...
-func (ctrl WebCliController) Endpoint(c *gin.Context, _ endpointDir) {
+func (ctrl WebCliController) Endpoint(c *gin.Context, _ endpointT) {
 	query := c.Request.URL.Query()
 	endpoint := query.Get("endpoint")
 	method := query.Get("method")
@@ -160,12 +146,12 @@ func (ctrl WebCliController) Save(model APIDataModel, c *gin.Context, _ saveT) {
 	c.JSON(http.StatusOK, gin.H{"success": "ok"})
 }
 
-type saveendpointT struct {
+type saveEndpointT struct {
 	giu.T `url:"POST /api/saveendpoint"`
 }
 
 // SaveEndpoint ...
-func (ctrl WebCliController) SaveEndpoint(model EndpointModel, c *gin.Context, _ saveendpointT) {
+func (ctrl WebCliController) SaveEndpoint(model EndpointModel, c *gin.Context, _ saveEndpointT) {
 	mimeType, filename, fileContent, abort := parseFileContent(c, model)
 	if abort {
 		return
@@ -224,11 +210,11 @@ func updateEndpoint(c *gin.Context, model EndpointModel, key, mimeType, filename
 	endpoint.Filename = filename
 
 	if filename != "" {
-		if strings.HasSuffix(endpoint.Endpoint, "/") {
-			endpoint.Endpoint += filename
-		} else {
-			endpoint.Endpoint += "/" + filename
+		if !strings.HasSuffix(endpoint.Endpoint, "/") {
+			endpoint.Endpoint += "/"
 		}
+
+		endpoint.Endpoint += filename
 	}
 
 	_ = DeleteEndpoint(key)
@@ -268,19 +254,14 @@ type deleteEndpointT struct {
 
 // DeleteEndpoint ...
 func (ctrl WebCliController) DeleteEndpoint(c *gin.Context, _ deleteEndpointT) {
-	query := c.Request.URL.Query()
-	endpoint := query.Get("endpoint")
-	method := query.Get("method")
+	method, endpoint := c.Query("method"), c.Query("endpoint")
 
 	if endpoint == "" || method == "" {
 		c.JSON(http.StatusNotFound, gin.H{"error": "endpoint and method required"})
 		return
 	}
 
-	key := CreateEndpointKey(method, endpoint)
-	_ = DeleteEndpoint(key)
+	_ = DeleteEndpoint(CreateEndpointKey(method, endpoint))
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": "ok",
-	})
+	c.JSON(http.StatusOK, gin.H{"success": "ok"})
 }

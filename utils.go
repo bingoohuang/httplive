@@ -3,8 +3,10 @@ package httplive
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
+	"net/http"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -17,26 +19,21 @@ func CreateEndpointKey(method string, endpoint string) string {
 
 // Broadcast ...
 func Broadcast(c *gin.Context) {
-	url := c.Request.URL
-	method := c.Request.Method
-	path := url.Path
-
-	requestBody := GetRequestBody(c)
-	requestHeaders := GetHeaders(c)
-
 	msg := WsMessage{
 		Host:   c.Request.Host,
-		Body:   requestBody,
-		Method: method,
-		Path:   path,
+		Body:   GetRequestBody(c),
+		Method: c.Request.Method,
+		Path:   c.Request.URL.Path,
 		Query:  c.Request.URL.Query(),
-		Header: requestHeaders}
+		Header: GetHeaders(c),
+	}
 
 	for id, conn := range Clients {
-		err := conn.WriteJSON(msg)
-		if err != nil {
-			log.Printf("error: %v", err)
+		if err := conn.WriteJSON(msg); err != nil {
+			logrus.Warnf("error: %v", err)
+
 			conn.Close()
+
 			delete(Clients, id)
 		}
 	}
@@ -132,7 +129,7 @@ func GetRequestBody(c *gin.Context) interface{} {
 	contentType := c.ContentType()
 	method := c.Request.Method
 
-	if method == "GET" {
+	if method == http.MethodGet {
 		return nil
 	}
 

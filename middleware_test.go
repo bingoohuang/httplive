@@ -17,9 +17,9 @@ func TestCORSMiddleware(t *testing.T) {
 		method    string
 		outExists bool
 	}{
-		{"OPTIONS", true},
-		{"GET", false},
-		{"POST", false},
+		{http.MethodOptions, true},
+		{http.MethodGet, false},
+		{http.MethodPost, false},
 	}
 	expectedHeader := []struct {
 		key   string

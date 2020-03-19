@@ -1,31 +1,30 @@
 package httplive
 
 import (
-	"log"
 	"mime"
 	"net/http"
 	"os"
 	"path"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/gin-gonic/gin"
 )
 
 // TryGetLocalFile ...
 func TryGetLocalFile(c *gin.Context, filePath string) {
-	log.Printf("fs:dev local file for: %s", filePath)
+	logrus.Debugf("fs:dev local file for: %s", filePath)
 	f := path.Join(Environments.WorkingDir, filePath)
 
 	if _, err := os.Stat(f); err == nil {
 		c.File(f)
 		c.Abort()
-
-		return
 	}
 }
 
 // TryGetAssetFile ...
 func TryGetAssetFile(c *gin.Context, filePath string) {
-	log.Printf("fs:bindata asset trygetfile executed for: %s", filePath)
+	logrus.Debugf("fs:bindata asset trygetfile executed for: %s", filePath)
 	assetData, err := Asset(filePath)
 
 	if err == nil && assetData != nil {
@@ -33,7 +32,5 @@ func TryGetAssetFile(c *gin.Context, filePath string) {
 		contentType := mime.TypeByExtension(ext)
 		c.Data(http.StatusOK, contentType, assetData)
 		c.Abort()
-
-		return
 	}
 }

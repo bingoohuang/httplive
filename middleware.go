@@ -9,6 +9,8 @@ import (
 	"path"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,19 +18,19 @@ import (
 // nolint lll
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		h := c.Writer.Header()
-		h.Set("Access-Control-Allow-Origin", "*")
-		h.Set("Access-Control-Max-Age", "86400")
-		h.Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, UPDATE")
-		h.Set("Access-Control-Allow-Headers", "X-Requested-With, Content-Type, Origin, Authorization, Accept, Client-Security-Token, Accept-Encoding, x-access-token")
-		h.Set("Access-Control-Expose-Headers", "Content-Length")
-		h.Set("Access-Control-Allow-Credentials", "true")
-		h.Set("Cache-Control", "no-cache, no-store, must-revalidate")
-		h.Set("Pragma", "no-cache")
-		h.Set("Expires", "0")
+		s := c.Writer.Header().Set
+		s("Access-Control-Allow-Origin", "*")
+		s("Access-Control-Max-Age", "86400")
+		s("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, UPDATE")
+		s("Access-Control-Allow-Headers", "X-Requested-With, Content-Type, Origin, Authorization, Accept, Client-Security-Token, Accept-Encoding, x-access-token")
+		s("Access-Control-Expose-Headers", "Content-Length")
+		s("Access-Control-Allow-Credentials", "true")
+		s("Cache-Control", "no-cache, no-store, must-revalidate")
+		s("Pragma", "no-cache")
+		s("Expires", "0")
 
-		if c.Request.Method == "OPTIONS" {
-			fmt.Println("OPTIONS")
+		if c.Request.Method == http.MethodOptions {
+			logrus.Infof(http.MethodOptions)
 			c.AbortWithStatus(http.StatusOK)
 		} else {
 			c.Next()
@@ -40,23 +42,20 @@ func CORSMiddleware() gin.HandlerFunc {
 func StaticFileMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uriPath := c.Request.URL.Path
-		method := c.Request.Method
 		assetPath := "public" + uriPath
-		ext := path.Ext(assetPath)
 
-		if method == "GET" && uriPath == "/" {
+		if c.Request.Method == http.MethodGet && uriPath == "/" {
 			assetPath = "public/index.html"
 		}
 
-		if ext == ".map" {
+		if path.Ext(assetPath) == ".map" {
 			c.Status(http.StatusNotFound)
 			c.Abort()
 
 			return
 		}
 
-		fp := os.Getenv("debug")
-		if fp != "" {
+		if os.Getenv("debug") != "" {
 			TryGetLocalFile(c, assetPath)
 		} else {
 			TryGetAssetFile(c, assetPath)
@@ -73,8 +72,7 @@ func StaticFileMiddleware() gin.HandlerFunc {
 // APIMiddleware ...
 func APIMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		method := c.Request.Method
-		key := CreateEndpointKey(method, c.Request.URL.Path)
+		key := CreateEndpointKey(c.Request.Method, c.Request.URL.Path)
 		model, err := GetEndpoint(key)
 
 		if err != nil {
@@ -85,46 +83,43 @@ func APIMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		if model != nil {
-			if model.MimeType != "" {
-				reader := bytes.NewReader(model.FileContent)
-				http.ServeContent(c.Writer, c.Request, model.Filename, time.Now(), reader)
-				c.Abort()
-
-				return
-			}
-
-			Broadcast(c)
-
-			var body interface{}
-
-			_ = json.Unmarshal([]byte(model.Body), &body)
-
-			c.JSON(http.StatusOK, body)
-			c.Abort()
+		if model == nil {
+			c.Next()
 
 			return
 		}
 
-		c.Next()
+		if model.MimeType != "" {
+			reader := bytes.NewReader(model.FileContent)
+			http.ServeContent(c.Writer, c.Request, model.Filename, time.Now(), reader)
+		} else {
+			Broadcast(c)
+
+			var body interface{}
+			_ = json.Unmarshal([]byte(model.Body), &body)
+			c.JSON(http.StatusOK, body)
+		}
+
+		c.Abort()
 	}
 }
 
 // ConfigJsMiddleware ...
 func ConfigJsMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if c.Request.URL.Path == "/config.js" {
-			fileContent := "define('config', { defaultPort:'" + Environments.DefaultPort + "', savePath: '/webcli/api/save', " +
-				"fetchPath: '/webcli/api/endpoint', deletePath: '/webcli/api/deleteendpoint', " +
-				"treePath: '/webcli/api/tree', componentId: ''});"
-			c.Writer.Header().Set("Content-Length", fmt.Sprintf("%d", len(fileContent)))
-			c.Writer.Header().Set("Content-Type", "application/javascript")
-			c.String(http.StatusOK, fileContent)
-			c.Abort()
+		if c.Request.URL.Path != "/config.js" {
+			c.Next()
 
 			return
 		}
 
-		c.Next()
+		fileContent := "define('config', { defaultPort:'" + Environments.DefaultPort +
+			"', savePath: '/webcli/api/save', " +
+			"fetchPath: '/webcli/api/endpoint', deletePath: '/webcli/api/deleteendpoint', " +
+			"treePath: '/webcli/api/tree', componentId: ''});"
+		c.Writer.Header().Set("Content-Length", fmt.Sprintf("%d", len(fileContent)))
+		c.Writer.Header().Set("Content-Type", "application/javascript")
+		c.String(http.StatusOK, fileContent)
+		c.Abort()
 	}
 }

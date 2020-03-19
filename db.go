@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
-	"log"
+	"net/http"
 	"sort"
 	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/boltdb/bolt"
 )
@@ -17,7 +19,7 @@ func OpenDB() *bolt.DB {
 	db, err := bolt.Open(Environments.DBFile, 0600, config)
 
 	if err != nil {
-		log.Fatal(err)
+		logrus.Fatalf("fail to open db file %s error %v", Environments.DBFile, err)
 	}
 
 	return db
@@ -44,7 +46,7 @@ func InitDBValues() {
 	apis := []APIDataModel{
 		{
 			Endpoint: "/api/token/mobiletoken",
-			Method:   "GET",
+			Method:   http.MethodGet,
 			Body: `{
 	"array": [
 		1,
@@ -109,12 +111,13 @@ func SaveEndpoint(model APIDataModel) error {
 			id, _ := bucket.NextSequence()
 			model.ID = int(id)
 		}
+
 		enc, err := model.gobEncode()
 		if err != nil {
 			return fmt.Errorf("could not encode APIDataModel %s: %s", key, err)
 		}
-		err = bucket.Put([]byte(key), enc)
-		return err
+
+		return bucket.Put([]byte(key), enc)
 	})
 
 	return err
@@ -131,8 +134,7 @@ func DeleteEndpoint(endpointKey string) error {
 
 	return db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(Environments.DefaultPort))
-		k := []byte(endpointKey)
-		return b.Delete(k)
+		return b.Delete([]byte(endpointKey))
 	})
 }
 
@@ -153,7 +155,7 @@ func GetEndpoint(endpointKey string) (*APIDataModel, error) {
 		model, err = gobDecode(b.Get(k))
 		return err
 	}); err != nil {
-		fmt.Printf("Could not get content with key: %s", endpointKey)
+		logrus.Warnf("Could not get content with key: %s", endpointKey)
 		return nil, err
 	}
 
@@ -162,12 +164,10 @@ func GetEndpoint(endpointKey string) (*APIDataModel, error) {
 
 // OrderByID ...
 func OrderByID(items map[string]APIDataModel) PairList {
-	pl := make(PairList, len(items))
-	i := 0
+	pl := make(PairList, 0, len(items))
 
 	for k, v := range items {
-		pl[i] = Pair{k, v}
-		i++
+		pl = append(pl, Pair{k, v})
 	}
 
 	sort.Sort(sort.Reverse(pl))
@@ -185,10 +185,9 @@ func EndpointList() []APIDataModel {
 	_ = db.View(func(tx *bolt.Tx) error {
 		c := tx.Bucket([]byte(Environments.DefaultPort)).Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			key := string(k)
 			model, err := gobDecode(v)
 			if err == nil {
-				data[key] = *model
+				data[string(k)] = *model
 			}
 		}
 
