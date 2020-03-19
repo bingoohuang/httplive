@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"sync"
 	"time"
+
+	"github.com/julienschmidt/httprouter"
 
 	"github.com/sirupsen/logrus"
 
@@ -70,6 +73,8 @@ func InitDBValues() {
 			_ = SaveEndpoint(api)
 		}
 	}
+
+	SyncEndpointRouter()
 }
 
 func (model *APIDataModel) gobEncode() ([]byte, error) {
@@ -102,6 +107,8 @@ func SaveEndpoint(model APIDataModel) error {
 
 	key := CreateEndpointKey(model.Method, model.Endpoint)
 
+	defer SyncEndpointRouter()
+
 	db := OpenDB()
 	defer db.Close()
 
@@ -129,6 +136,8 @@ func DeleteEndpoint(endpointKey string) error {
 		return fmt.Errorf("endpointKey")
 	}
 
+	defer SyncEndpointRouter()
+
 	db := OpenDB()
 	defer db.Close()
 
@@ -152,7 +161,10 @@ func GetEndpoint(endpointKey string) (*APIDataModel, error) {
 	if err := db.View(func(tx *bolt.Tx) (err error) {
 		b := tx.Bucket([]byte(Environments.DefaultPort))
 		k := []byte(endpointKey)
-		model, err = gobDecode(b.Get(k))
+		v := b.Get(k)
+		if v != nil {
+			model, err = gobDecode(v)
+		}
 		return err
 	}); err != nil {
 		logrus.Warnf("Could not get content with key: %s", endpointKey)
@@ -173,6 +185,105 @@ func OrderByID(items map[string]APIDataModel) PairList {
 	sort.Sort(sort.Reverse(pl))
 
 	return pl
+}
+
+// nolint gochecknoglobals
+var (
+	endpointRouter       *httprouter.Router
+	endpointRouterLock   sync.Mutex
+	endpointRouterServed bool
+
+	boradcastThrottler = MakeThrottle(1 * time.Second)
+)
+
+// Throttle ...
+type Throttle struct {
+	tokenC chan bool
+	stopC  chan bool
+}
+
+// MakeThrottle ...
+func MakeThrottle(duration time.Duration) *Throttle {
+	t := &Throttle{
+		tokenC: make(chan bool, 1),
+		stopC:  make(chan bool, 1),
+	}
+
+	go func() {
+		ticker := time.NewTicker(duration)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-t.stopC:
+				return
+			case <-ticker.C:
+				select {
+				case t.tokenC <- true:
+				default:
+				}
+			}
+		}
+	}()
+
+	return t
+}
+
+// Stop ...
+func (t *Throttle) Stop() {
+	t.stopC <- true
+}
+
+// Allow ...
+func (t *Throttle) Allow() bool {
+	select {
+	case <-t.tokenC:
+		return true
+	default:
+		return false
+	}
+}
+
+// EndpointServeHTTP ...
+func EndpointServeHTTP(w http.ResponseWriter, r *http.Request) bool {
+	endpointRouterLock.Lock()
+	defer endpointRouterLock.Unlock()
+
+	endpointRouterServed = false
+
+	endpointRouter.ServeHTTP(w, r)
+
+	return endpointRouterServed
+}
+
+// SyncEndpointRouter ...
+func SyncEndpointRouter() {
+	endpointRouterLock.Lock()
+	defer endpointRouterLock.Unlock()
+
+	endpointRouter = httprouter.New()
+
+	for _, endpoint := range EndpointList() {
+		ep := endpoint
+		if ep.MimeType == "" {
+			b := []byte(ep.Body)
+			endpointRouter.Handle(ep.Method, ep.Endpoint,
+				func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+					endpointRouterServed = true
+					w.WriteHeader(http.StatusOK)
+					w.Header().Set("Content-Type", "application/json; charset=utf-8")
+					_, _ = w.Write(b)
+				})
+		} else {
+			endpointRouter.Handle(ep.Method, ep.Endpoint,
+				func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+					endpointRouterServed = true
+					w.WriteHeader(http.StatusOK)
+					reader := bytes.NewReader(ep.FileContent)
+					http.ServeContent(w, r, ep.Filename, time.Now(), reader)
+				})
+		}
+	}
 }
 
 // EndpointList ...

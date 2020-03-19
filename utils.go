@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 
@@ -20,6 +21,7 @@ func CreateEndpointKey(method string, endpoint string) string {
 // Broadcast ...
 func Broadcast(c *gin.Context) {
 	msg := WsMessage{
+		Time:   time.Now().Format("2006-01-02 15:04:05.000"),
 		Host:   c.Request.Host,
 		Body:   GetRequestBody(c),
 		Method: c.Request.Method,

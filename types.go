@@ -117,6 +117,7 @@ type JsTreeDataModel struct {
 
 // WsMessage ...
 type WsMessage struct {
+	Time   string              `json:"time"`
 	Host   string              `json:"host"`
 	Body   interface{}         `json:"body"`
 	Header map[string]string   `json:"header"`

@@ -7,6 +7,7 @@ require (
 	github.com/boltdb/bolt v1.3.1
 	github.com/gin-gonic/gin v1.5.0
 	github.com/gorilla/websocket v1.4.1
+	github.com/julienschmidt/httprouter v1.3.0
 	github.com/sirupsen/logrus v1.4.2
 	github.com/stretchr/testify v1.4.0
 	github.com/urfave/cli v1.22.3

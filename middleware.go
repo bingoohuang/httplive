@@ -1,13 +1,11 @@
 package httplive
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"path"
-	"time"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 
@@ -72,35 +70,30 @@ func StaticFileMiddleware() gin.HandlerFunc {
 // APIMiddleware ...
 func APIMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		key := CreateEndpointKey(c.Request.Method, c.Request.URL.Path)
-		model, err := GetEndpoint(key)
-
-		if err != nil {
-			Broadcast(c)
-			c.JSON(http.StatusNotFound, err)
-			c.Abort()
-
-			return
-		}
-
-		if model == nil {
+		p := c.Request.URL.Path
+		if p == "/" || p == "/config.js" ||
+			strings.HasPrefix(p, "/ws") ||
+			strings.HasPrefix(p, "/webcli/") ||
+			strings.HasPrefix(p, "/fonts/") ||
+			strings.HasPrefix(p, "/app/") ||
+			strings.HasPrefix(p, "/css/") ||
+			strings.HasPrefix(p, "/img/") ||
+			strings.HasPrefix(p, "/components/") ||
+			strings.HasPrefix(p, "/vendor/") {
 			c.Next()
 
 			return
 		}
 
-		if model.MimeType != "" {
-			reader := bytes.NewReader(model.FileContent)
-			http.ServeContent(c.Writer, c.Request, model.Filename, time.Now(), reader)
+		if EndpointServeHTTP(c.Writer, c.Request) {
+			if boradcastThrottler.Allow() {
+				Broadcast(c)
+			}
+
+			c.Abort()
 		} else {
-			Broadcast(c)
-
-			var body interface{}
-			_ = json.Unmarshal([]byte(model.Body), &body)
-			c.JSON(http.StatusOK, body)
+			c.Next()
 		}
-
-		c.Abort()
 	}
 }
 

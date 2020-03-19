@@ -73,18 +73,14 @@ func host(env *httplive.EnvVars) error {
 	httplive.InitDBValues()
 
 	r := gin.Default()
-
-	r.Use(httplive.StaticFileMiddleware())
+	r.Use(httplive.APIMiddleware(), httplive.StaticFileMiddleware(),
+		httplive.CORSMiddleware(), httplive.ConfigJsMiddleware())
 	r.GET("/ws", wshandler)
-	r.Use(httplive.CORSMiddleware(), httplive.ConfigJsMiddleware())
 
 	ga := giu.NewAdaptor()
-
 	gw := ga.Route(r.Group("/webcli"))
-
 	gw.HandleFn(new(httplive.WebCliController))
 
-	r.Use(httplive.APIMiddleware())
 	r.NoRoute(func(c *gin.Context) {
 		httplive.Broadcast(c)
 		c.Status(http.StatusNotFound)
