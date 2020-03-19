@@ -89,6 +89,7 @@ define(["knockout", "toastr", "app/utils", "app/main"], function(
         success: function(data, textStatus, jqXHR) {
           toastr["success"]("Saved...");
           webcli.refreshTree();
+          params.showModal(false);
         },
         error: function(response) {}
       };

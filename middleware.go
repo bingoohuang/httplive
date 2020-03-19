@@ -113,10 +113,15 @@ func ConfigJsMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		fileContent := "define('config', { defaultPort:'" + Environments.DefaultPort +
-			"', savePath: '/webcli/api/save', " +
-			"fetchPath: '/webcli/api/endpoint', deletePath: '/webcli/api/deleteendpoint', " +
-			"treePath: '/webcli/api/tree', componentId: ''});"
+		fileContent := fmt.Sprintf(`
+define('config', { 
+	defaultPort:'%s', 
+	savePath: '/webcli/api/save', 
+	fetchPath: '/webcli/api/endpoint', 
+	deletePath: '/webcli/api/deleteendpoint', 
+	treePath: '/webcli/api/tree', 
+	componentId: ''
+});`, Environments.DefaultPort)
 		c.Writer.Header().Set("Content-Length", fmt.Sprintf("%d", len(fileContent)))
 		c.Writer.Header().Set("Content-Type", "application/javascript")
 		c.String(http.StatusOK, fileContent)
