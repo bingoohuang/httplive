@@ -3,7 +3,7 @@
   font-style: normal;
   font-weight: 400;
   src: local("Open Sans"), local("OpenSans"),
-    url("/fonts/open-sans.woff") format("woff");
+    url("/httplive/fonts/open-sans.woff") format("woff");
 }
 
 @font-face {
@@ -11,7 +11,7 @@
   font-style: normal;
   font-weight: 600;
   src: local("Open Sans Semibold"), local("OpenSans-Semibold"),
-    url("/fonts/open-sans-semibold.woff") format("woff");
+    url("/httplive/fonts/open-sans-semibold.woff") format("woff");
 }
 
 @font-face {
@@ -19,7 +19,7 @@
   font-style: normal;
   font-weight: 700;
   src: local("Open Sans Bold"), local("OpenSans-Bold"),
-    url("/fonts/open-sans-bold.woff") format("woff");
+    url("/httplive/fonts/open-sans-bold.woff") format("woff");
 }
 
 html {

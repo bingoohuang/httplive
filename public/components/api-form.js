@@ -1,4 +1,4 @@
-define(["knockout", "toastr", "app/utils", "app/main"], function(
+define(["knockout", "toastr", "httplive/app/utils", "httplive/app/main"], function(
   ko,
   toastr,
   utils,
@@ -84,7 +84,7 @@ define(["knockout", "toastr", "app/utils", "app/main"], function(
         contentType: false,
         processData: false,
         enctype: "multipart/form-data",
-        url: "/webcli/api/saveendpoint",
+        url: "/httplive/webcli/api/saveendpoint",
         beforeSend: function() {},
         success: function(data, textStatus, jqXHR) {
           toastr["success"]("Saved...");

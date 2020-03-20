@@ -24,7 +24,7 @@ func TryGetLocalFile(c *gin.Context, filePath string) {
 
 // TryGetAssetFile ...
 func TryGetAssetFile(c *gin.Context, filePath string) {
-	logrus.Debugf("fs:bindata asset trygetfile executed for: %s", filePath)
+	logrus.Debugf("fs:bindata asset try getfile executed for: %s", filePath)
 	assetData, err := Asset(filePath)
 
 	if err == nil && assetData != nil {

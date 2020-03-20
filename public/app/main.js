@@ -4,7 +4,7 @@
     "bootstrap",
     "jstree",
     "jsoneditor",
-    "config",
+    "httplive/config",
     "knockout",
     "jstree",
     "clipboard",

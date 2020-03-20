@@ -39,7 +39,7 @@ func CORSMiddleware() gin.HandlerFunc {
 // StaticFileMiddleware ...
 func StaticFileMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		uriPath := c.Request.URL.Path
+		uriPath := strings.TrimPrefix(c.Request.URL.Path, "/httplive")
 		assetPath := "public" + uriPath
 
 		if c.Request.Method == http.MethodGet && uriPath == "/" {
@@ -71,15 +71,7 @@ func StaticFileMiddleware() gin.HandlerFunc {
 func APIMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		p := c.Request.URL.Path
-		if p == "/" || p == "/config.js" ||
-			strings.HasPrefix(p, "/ws") ||
-			strings.HasPrefix(p, "/webcli/") ||
-			strings.HasPrefix(p, "/fonts/") ||
-			strings.HasPrefix(p, "/app/") ||
-			strings.HasPrefix(p, "/css/") ||
-			strings.HasPrefix(p, "/img/") ||
-			strings.HasPrefix(p, "/components/") ||
-			strings.HasPrefix(p, "/vendor/") {
+		if p == "/" || strings.HasPrefix(p, "/httplive/") {
 			c.Next()
 
 			return
@@ -100,19 +92,19 @@ func APIMiddleware() gin.HandlerFunc {
 // ConfigJsMiddleware ...
 func ConfigJsMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if c.Request.URL.Path != "/config.js" {
+		if c.Request.URL.Path != "/httplive/config.js" {
 			c.Next()
 
 			return
 		}
 
 		fileContent := fmt.Sprintf(`
-define('config', { 
+define('httplive/config', { 
 	defaultPort:'%s', 
-	savePath: '/webcli/api/save', 
-	fetchPath: '/webcli/api/endpoint', 
-	deletePath: '/webcli/api/deleteendpoint', 
-	treePath: '/webcli/api/tree', 
+	savePath: '/httplive/webcli/api/save', 
+	fetchPath: '/httplive/webcli/api/endpoint', 
+	deletePath: '/httplive/webcli/api/deleteendpoint', 
+	treePath: '/httplive/webcli/api/tree', 
 	componentId: ''
 });`, Environments.DefaultPort)
 		c.Writer.Header().Set("Content-Length", fmt.Sprintf("%d", len(fileContent)))

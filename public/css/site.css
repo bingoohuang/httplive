@@ -1,9 +1,9 @@
 ﻿#tree .folder {
-  background: url("/img/file_sprite.png") right bottom no-repeat;
+  background: url("/httplive/img/file_sprite.png") right bottom no-repeat;
 }
 
 #tree .file {
-  background: url("/img/file_sprite.png") 0 0 no-repeat;
+  background: url("/httplive/img/file_sprite.png") 0 0 no-repeat;
 }
 
 #tree .file-pdf {

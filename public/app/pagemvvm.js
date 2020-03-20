@@ -1,5 +1,5 @@
 ﻿define([
-  "config",
+  "httplive/config",
   "jquery",
   "bootstrap",
   "jsoneditor",
@@ -8,8 +8,8 @@
   "knockout-jsoneditor",
   "websocket",
   "toastr",
-  "app/utils",
-  "app/main"
+  "httplive/app/utils",
+  "httplive/app/main"
 ], function(
   config,
   $,
@@ -28,13 +28,13 @@
   });
 
   ko.components.register("api-form", {
-    viewModel: { require: "components/api-form" },
-    template: { require: "text!components/api-form.html" }
+    viewModel: { require: "httplive/components/api-form" },
+    template: { require: "text!httplive/components/api-form.html" }
   });
 
   ko.components.register("modal", {
-    viewModel: { require: "components/modal" },
-    template: { require: "text!components/modal.html" }
+    viewModel: { require: "httplive/components/modal" },
+    template: { require: "text!httplive/components/modal.html" }
   });
 
   ko.bindingHandlers.scrollTo = {
@@ -81,7 +81,7 @@
       return "Http Live:" + this.port();
     }, this);
     self.downloadFile = ko.computed(function() {
-      return "/webcli/api/downloadfile?endpoint=" + this.endpoint();
+      return "/httplive/webcli/api/downloadfile?endpoint=" + this.endpoint();
     }, this);
     self.modalContext = ko.computed(function() {
       var id = self.selectedEndpointId();
@@ -126,7 +126,7 @@
       if (self.progress()) {
         var p = "bust=" + new Date().getTime();
         return (
-          '<span class="span-status">Saving&nbsp;</span><img src="/img/auto_saving.gif?' +
+          '<span class="span-status">Saving&nbsp;</span><img src="/httplive/img/auto_saving.gif?' +
           p +
           '" />'
         );
@@ -229,7 +229,7 @@
     location.hostname +
     ":" +
     vm.port() +
-    "/ws?connectionId=" +
+    "/httplive/ws?connectionId=" +
     new Date().getTime();
   var ws = new WebSocket(currentWsUrl);
   send = function(data) {
@@ -282,7 +282,7 @@
       success: function(response) {
         $("#fileresult-overlay").remove();
         if ("filename" in response && response.filename) {
-          var url = "/webcli/api/downloadfile?endpoint=" + response.endpoint;
+          var url = "/httplive/webcli/api/downloadfile?endpoint=" + response.endpoint;
           $(
             "<div id='fileresult-overlay'>" +
               "<button onclick='$(\"#sidebar-downloadfile\")[0].click();' style='background:none; border:none; margin: 0 auto; z-index:5;'>" +

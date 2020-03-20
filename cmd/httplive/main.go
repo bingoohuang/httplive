@@ -75,10 +75,10 @@ func host(env *httplive.EnvVars) error {
 	r := gin.Default()
 	r.Use(httplive.APIMiddleware(), httplive.StaticFileMiddleware(),
 		httplive.CORSMiddleware(), httplive.ConfigJsMiddleware())
-	r.GET("/ws", wshandler)
+	r.GET("/httplive/ws", wshandler)
 
 	ga := giu.NewAdaptor()
-	gw := ga.Route(r.Group("/webcli"))
+	gw := ga.Route(r.Group("/httplive/webcli"))
 	gw.HandleFn(new(httplive.WebCliController))
 
 	r.NoRoute(func(c *gin.Context) {

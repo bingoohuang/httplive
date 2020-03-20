@@ -8,13 +8,13 @@
     <!-- when using the mode "code", it's important to specify charset utf-8 -->
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
     <title data-bind="text: pageTitle"></title>
-    <link href="/css/font-awesome.min.css" rel="stylesheet">
-    <link href="/css/bootstrap.min.css" rel="stylesheet">
-    <link href="/vendor/jsoneditor/jsoneditor.min.css" rel="stylesheet">
-    <link href="/vendor/jstree/themes/default/style.css" rel="stylesheet">
-    <link href="/vendor/toastr/toastr.min.css" rel="stylesheet">
-    <link href="/css/template.css" rel="stylesheet">
-    <link href="/css/site.css" rel="stylesheet">
+    <link href="/httplive/css/font-awesome.min.css" rel="stylesheet">
+    <link href="/httplive/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/httplive/vendor/jsoneditor/jsoneditor.min.css" rel="stylesheet">
+    <link href="/httplive/vendor/jstree/themes/default/style.css" rel="stylesheet">
+    <link href="/httplive/vendor/toastr/toastr.min.css" rel="stylesheet">
+    <link href="/httplive/css/template.css" rel="stylesheet">
+    <link href="/httplive/css/site.css" rel="stylesheet">
     <script type="text/javascript">
         var require = {
             // "urlArgs": "bust=" + (new Date()).getTime(),
@@ -31,32 +31,32 @@
                 "bootstrap": {
                     "deps": ["jquery"]
                 },
-                "app/main": {
+                "httplive/app/main": {
                     "deps": ["jquery"]
                 }
             },
             "map": {
                 '*': {
-                    'css': 'vendor/require-css/css'
+                    'css': 'httplive/vendor/require-css/css'
                 }
             },
             "paths": {
-                "jquery": "vendor/jquery/jquery.min",
-                "bootstrap": "vendor/bootstrap/js/bootstrap.min",
-                "domready": "vendor/requirejs/domready",
-                "text": "vendor/requirejs/text",
-                "knockout": "vendor/knockout/knockout.min",
-                "knockout-jsoneditor": "vendor/knockout/knockout-jsoneditor",
-                "jsoneditor": "vendor/jsoneditor/jsoneditor.min",
-                "keymaster": "vendor/keymaster/keymaster",
-                "jstree": "vendor/jstree/jstree",
-                "websocket": "vendor/websocket/reconnecting-websocket.min",
-                "toastr": "vendor/toastr/toastr.min",
-                "clipboard": "vendor/clipboard/clipboard.min",
+                "jquery": "httplive/vendor/jquery/jquery.min",
+                "bootstrap": "httplive/vendor/bootstrap/js/bootstrap.min",
+                "domready": "httplive/vendor/requirejs/domready",
+                "text": "httplive/vendor/requirejs/text",
+                "knockout": "httplive/vendor/knockout/knockout.min",
+                "knockout-jsoneditor": "httplive/vendor/knockout/knockout-jsoneditor",
+                "jsoneditor": "httplive/vendor/jsoneditor/jsoneditor.min",
+                "keymaster": "httplive/vendor/keymaster/keymaster",
+                "jstree": "httplive/vendor/jstree/jstree",
+                "websocket": "httplive/vendor/websocket/reconnecting-websocket.min",
+                "toastr": "httplive/vendor/toastr/toastr.min",
+                "clipboard": "httplive/vendor/clipboard/clipboard.min",
             }
         };
     </script>
-    <script src="/vendor/requirejs/require.js"></script>
+    <script src="/httplive/vendor/requirejs/require.js"></script>
 </head>
 
 <body>
@@ -89,7 +89,7 @@
             <div class="sidebar-menu">
                 <button class="sidebar-actions" title="Backup database" onclick="javascript: $(this).find('a:first')[0].click();">
                     <i class="fa fa-database"></i>
-                    <a class="display:none;" href="/webcli/api/backup"></a>
+                    <a class="display:none;" href="/httplive/webcli/api/backup"></a>
                 </button>
                 <button class="sidebar-actions" data-bind="click: createApi" type="button" title="New endpoint">
                     <i class="fa fa-plus"></i>
@@ -136,7 +136,7 @@
     <div data-bind="component: { name: 'modal', 
         params: { componentName: modalComponentName, title: modalComponentTitle, showModal: showModal, context: modalContext}}"></div>
     <script>
-        require(["domready", "jsoneditor", "jstree", "app/main", 'app/pagemvvm'], function (domReady) {});
+        require(["domready", "jsoneditor", "jstree", "httplive/app/main", 'httplive/app/pagemvvm'], function (domReady) {});
     </script>
 </body>
 
