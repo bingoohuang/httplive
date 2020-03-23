@@ -2,55 +2,134 @@ package httplive
 
 import (
 	"bytes"
-	"encoding/gob"
+	"database/sql"
 	"fmt"
 	"net/http"
-	"sort"
 	"sync"
 	"time"
 
+	"github.com/bingoohuang/sqlx"
 	"github.com/julienschmidt/httprouter"
-
-	"github.com/sirupsen/logrus"
-
-	"github.com/boltdb/bolt"
+	_ "github.com/mattn/go-sqlite3" // import sqlite3
 )
 
-// OpenDB ...
-func OpenDB() *bolt.DB {
-	config := &bolt.Options{Timeout: 1 * time.Second} // nolint gomnd
-	db, err := bolt.Open(Environments.DBFile, 0600, config)
+const sqlstr = `
+-- name: CreateTable
+CREATE TABLE IF NOT EXISTS httplive_endpoint (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	endpoint TEXT NOT NULL UNIQUE,
+	methods TEXT NOT NULL,
+	mime_type TEXT,
+	filename TEXT,
+	body TEXT,
+	create_time TEXT NOT NULL,
+	update_time TEXT NOT NULL,
+	deleted_at TEXT NULL
+);
 
+-- name: FindEndpoint
+SELECT id, endpoint, methods, mime_type, filename, body, create_time, update_time, deleted_at
+FROM httplive_endpoint
+WHERE id = :1;
+
+-- name: ListEndpoints
+SELECT id, endpoint, methods, mime_type, filename, body, create_time, update_time, deleted_at
+FROM httplive_endpoint
+WHERE deleted_at = '' or deleted_at IS NULL 
+ORDER BY id;
+
+-- name: AddEndpoint
+INSERT INTO httplive_endpoint(endpoint, methods, mime_type, filename, body, create_time, update_time, deleted_at)
+VALUES (:endpoint, :methods, :mime_type, :filename, :body, :create_time, :update_time, :deleted_at);
+
+-- name: AddEndpointID
+INSERT INTO httplive_endpoint(id, endpoint, methods, mime_type, filename, body, create_time, update_time, deleted_at)
+VALUES (:id, :endpoint, :methods, :mime_type, :filename, :body, :create_time, :update_time, :deleted_at);
+
+-- name: UpdateEndpoint
+UPDATE httplive_endpoint
+SET endpoint = :endpoint, methods = :methods, mime_type = :mime_type, filename = :filename,
+	body = :body, create_time = :create_time, update_time = :update_time, deleted_at = :deleted_at
+WHERE id = :id;
+
+-- name: DeleteEndpoint
+UPDATE httplive_endpoint
+SET deleted_at = :deleted_at
+WHERE id = :id;
+`
+
+// Endpoint is the structure for table httplive_endpoint.
+type Endpoint struct {
+	ID         ID     `name:"id"`
+	Endpoint   string `name:"endpoint"`
+	Methods    string `name:"methods"`
+	MimeType   string `name:"mime_type"`
+	Filename   string `name:"filename"`
+	Body       string `name:"body"`
+	CreateTime string `name:"create_time"`
+	UpdateTime string `name:"update_time"`
+	DeletedAt  string `name:"deleted_at"`
+}
+
+// Dao defines the api to access the database.
+type Dao struct {
+	CreateTable    func()
+	ListEndpoints  func() []Endpoint
+	FindEndpoint   func(ID ID) *Endpoint
+	AddEndpoint    func(Endpoint)
+	AddEndpointID  func(Endpoint)
+	UpdateEndpoint func(Endpoint)
+	DeleteEndpoint func(Endpoint)
+	Logger         *sqlx.DaoLogrus
+}
+
+// CreateDao creates a dao.
+func CreateDao(db *sql.DB) (*Dao, error) {
+	dao := &Dao{Logger: &sqlx.DaoLogrus{}}
+	err := sqlx.CreateDao(db, dao, sqlx.WithSQLStr(sqlstr))
+
+	return dao, err
+}
+
+// nolint gochecknoglobals
+var dbLock sync.Mutex
+
+// DBDo executes the f.
+func DBDo(f func(dao *Dao) error) error {
+	dbLock.Lock()
+	defer dbLock.Unlock()
+
+	db, err := sql.Open("sqlite3", Environments.DBFile)
 	if err != nil {
-		logrus.Fatalf("fail to open db file %s error %v", Environments.DBFile, err)
+		return err
 	}
 
-	return db
-}
-
-// CreateDBBucket ...
-func CreateDBBucket() error {
-	db := OpenDB()
 	defer db.Close()
+	dao, err := CreateDao(db)
 
-	err := db.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucketIfNotExists([]byte(Environments.DefaultPort))
-		if err != nil {
-			return fmt.Errorf("create bucket: %s", err)
-		}
-		return nil
-	})
+	if err != nil {
+		return err
+	}
 
-	return err
+	return f(dao)
 }
 
-// InitDBValues ...
-func InitDBValues() {
-	apis := []APIDataModel{
-		{
-			Endpoint: "/api/token/mobiletoken",
-			Method:   http.MethodGet,
-			Body: `{
+// CreateDB ...
+func CreateDB() error {
+	if err := DBDo(createDB); err != nil {
+		return err
+	}
+
+	SyncEndpointRouter()
+	return nil
+}
+
+func createDB(dao *Dao) error {
+	dao.CreateTable()
+
+	demo := dao.FindEndpoint("0")
+	if demo == nil {
+		const body = `{
 	"array": [
 		1,
 		2,
@@ -65,38 +144,25 @@ func InitDBValues() {
 		"e": "f"
 	},
 	"string": "Hello World"
-}`}}
+}`
 
-	for _, api := range apis {
-		key := CreateEndpointKey(api.Method, api.Endpoint)
-		if model, _ := GetEndpoint(key); model == nil {
-			_ = SaveEndpoint(api)
+		now := time.Now().Format("2006-01-02 15:04:05.000")
+		ep := Endpoint{
+			ID:         "0",
+			Endpoint:   "/api/demo",
+			Methods:    http.MethodGet,
+			MimeType:   "",
+			Filename:   "",
+			Body:       body,
+			CreateTime: now,
+			UpdateTime: now,
+			DeletedAt:  "",
 		}
+
+		dao.AddEndpointID(ep)
 	}
 
-	SyncEndpointRouter()
-}
-
-func (model *APIDataModel) gobEncode() ([]byte, error) {
-	buf := new(bytes.Buffer)
-	err := gob.NewEncoder(buf).Encode(model)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
-}
-
-func gobDecode(data []byte) (*APIDataModel, error) {
-	var model APIDataModel
-	err := gob.NewDecoder(bytes.NewBuffer(data)).Decode(&model)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &model, nil
+	return nil
 }
 
 // SaveEndpoint ...
@@ -105,86 +171,97 @@ func SaveEndpoint(model APIDataModel) error {
 		return fmt.Errorf("model endpoint and method could not be empty")
 	}
 
-	key := CreateEndpointKey(model.Method, model.Endpoint)
-
 	defer SyncEndpointRouter()
 
-	db := OpenDB()
-	defer db.Close()
-
-	err := db.Update(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(Environments.DefaultPort))
-		if model.ID <= 0 {
-			id, _ := bucket.NextSequence()
-			model.ID = int(id)
+	return DBDo(func(dao *Dao) error {
+		old := dao.FindEndpoint(model.ID)
+		bean := CreateEndpoint(model, old)
+		if old == nil {
+			dao.AddEndpoint(bean)
+		} else {
+			dao.UpdateEndpoint(bean)
 		}
 
-		enc, err := model.gobEncode()
-		if err != nil {
-			return fmt.Errorf("could not encode APIDataModel %s: %s", key, err)
-		}
-
-		return bucket.Put([]byte(key), enc)
+		return nil
 	})
+}
 
-	return err
+// CreateAPIDataModel creates APIDataModel from Endpoint
+func CreateAPIDataModel(ep *Endpoint) *APIDataModel {
+	if ep == nil {
+		return nil
+	}
+
+	m := &APIDataModel{
+		ID:       ep.ID,
+		Endpoint: ep.Endpoint,
+		Method:   ep.Methods,
+		MimeType: ep.MimeType,
+		Filename: ep.Filename,
+	}
+
+	if ep.Filename != "" {
+		m.FileContent = []byte(ep.Body)
+	} else {
+		m.Body = ep.Body
+	}
+
+	return m
+}
+
+// CreateEndpoint creates an endpoint from APIDataModel
+func CreateEndpoint(model APIDataModel, old *Endpoint) Endpoint {
+	now := time.Now().Format("2006-01-02 15:04:05.000")
+	body := model.Body
+
+	if body == "" {
+		body = string(model.FileContent)
+	}
+
+	ep := Endpoint{
+		ID:         model.ID,
+		Endpoint:   model.Endpoint,
+		Methods:    model.Method,
+		MimeType:   model.MimeType,
+		Filename:   model.Filename,
+		Body:       body,
+		CreateTime: now,
+		UpdateTime: now,
+		DeletedAt:  "",
+	}
+
+	if old != nil {
+		if old.Body != "" && ep.Body == "" {
+			ep.Body = old.Body
+		}
+	}
+
+	return ep
 }
 
 // DeleteEndpoint ...
-func DeleteEndpoint(endpointKey string) error {
-	if endpointKey == "" {
-		return fmt.Errorf("endpointKey")
-	}
-
+func DeleteEndpoint(id string) error {
 	defer SyncEndpointRouter()
 
-	db := OpenDB()
-	defer db.Close()
+	return DBDo(func(dao *Dao) error {
+		dao.DeleteEndpoint(Endpoint{ID: ID(id), DeletedAt: time.Now().Format("2006-01-02 15:04:05.000")})
 
-	return db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(Environments.DefaultPort))
-		return b.Delete([]byte(endpointKey))
+		return nil
 	})
 }
 
 // GetEndpoint ...
-func GetEndpoint(endpointKey string) (*APIDataModel, error) {
-	if endpointKey == "" {
-		return nil, fmt.Errorf("endpointKey")
-	}
-
+func GetEndpoint(id ID) (*APIDataModel, error) {
 	var model *APIDataModel
 
-	db := OpenDB()
-	defer db.Close()
+	err := DBDo(func(dao *Dao) error {
+		ep := dao.FindEndpoint(id)
+		model = CreateAPIDataModel(ep)
 
-	if err := db.View(func(tx *bolt.Tx) (err error) {
-		b := tx.Bucket([]byte(Environments.DefaultPort))
-		k := []byte(endpointKey)
-		v := b.Get(k)
-		if v != nil {
-			model, err = gobDecode(v)
-		}
-		return err
-	}); err != nil {
-		logrus.Warnf("Could not get content with key: %s", endpointKey)
-		return nil, err
-	}
+		return nil
+	})
 
-	return model, nil
-}
-
-// OrderByID ...
-func OrderByID(items map[string]APIDataModel) PairList {
-	pl := make(PairList, 0, len(items))
-
-	for k, v := range items {
-		pl = append(pl, Pair{k, v})
-	}
-
-	sort.Sort(sort.Reverse(pl))
-
-	return pl
+	return model, err
 }
 
 // nolint gochecknoglobals
@@ -268,7 +345,7 @@ func SyncEndpointRouter() {
 		if ep.MimeType == "" {
 			b := []byte(ep.Body)
 			endpointRouter.Handle(ep.Method, ep.Endpoint,
-				func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+				func(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
 					endpointRouterServed = true
 					w.WriteHeader(http.StatusOK)
 					w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -276,9 +353,10 @@ func SyncEndpointRouter() {
 				})
 		} else {
 			endpointRouter.Handle(ep.Method, ep.Endpoint,
-				func(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+				func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 					endpointRouterServed = true
 					w.WriteHeader(http.StatusOK)
+					w.Header().Set("Content-Disposition", `attachment; filename="`+ep.Filename+`"`)
 					reader := bytes.NewReader(ep.FileContent)
 					http.ServeContent(w, r, ep.Filename, time.Now(), reader)
 				})
@@ -288,28 +366,19 @@ func SyncEndpointRouter() {
 
 // EndpointList ...
 func EndpointList() []APIDataModel {
-	data := make(map[string]APIDataModel)
+	var endPoints []Endpoint
 
-	db := OpenDB()
-	defer db.Close()
-
-	_ = db.View(func(tx *bolt.Tx) error {
-		c := tx.Bucket([]byte(Environments.DefaultPort)).Cursor()
-		for k, v := c.First(); k != nil; k, v = c.Next() {
-			model, err := gobDecode(v)
-			if err == nil {
-				data[string(k)] = *model
-			}
-		}
+	_ = DBDo(func(dao *Dao) error {
+		endPoints = dao.ListEndpoints()
 
 		return nil
 	})
 
-	pairList := OrderByID(data)
-	items := make([]APIDataModel, len(pairList))
+	items := make([]APIDataModel, len(endPoints))
 
-	for i, v := range pairList {
-		items[i] = v.Value
+	for i, v := range endPoints {
+		v := v
+		items[i] = *CreateAPIDataModel(&v)
 	}
 
 	return items

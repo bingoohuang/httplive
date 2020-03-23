@@ -6,17 +6,15 @@ import (
 	"mime"
 	"net/http"
 	"path"
-	"strconv"
-	"strings"
+	"path/filepath"
 
 	"github.com/bingoohuang/gor/giu"
-	"github.com/boltdb/bolt"
 	"github.com/gin-gonic/gin"
 )
 
 func createJsTreeModel(a APIDataModel) JsTreeDataModel {
 	model := JsTreeDataModel{
-		ID:        a.ID,
+		ID:        a.ID.Int(),
 		OriginKey: CreateEndpointKey(a.Method, a.Endpoint),
 		Key:       a.Endpoint,
 		Text:      a.Endpoint,
@@ -71,17 +69,10 @@ type backupT struct {
 }
 
 // Backup ...
-func (ctrl WebCliController) Backup(c *gin.Context, _ backupT) error {
-	db := OpenDB()
-	defer db.Close()
+func (ctrl WebCliController) Backup(c *gin.Context, _ backupT) {
+	c.Header("Content-Disposition", `attachment; filename="`+filepath.Base(Environments.DBFile)+`"`)
 
-	return db.View(func(tx *bolt.Tx) error {
-		c.Writer.Header().Set("Content-Type", "application/octet-stream")
-		c.Writer.Header().Set("Content-Disposition", `attachment; filename="httplive.db"`)
-		c.Writer.Header().Set("Content-Length", strconv.Itoa(int(tx.Size())))
-		_, err := tx.WriteTo(c.Writer)
-		return err
-	})
+	http.ServeFile(c.Writer, c.Request, Environments.DBFile)
 }
 
 type downloadFileT struct {
@@ -89,26 +80,24 @@ type downloadFileT struct {
 }
 
 // DownloadFile ...
-func (ctrl WebCliController) DownloadFile(c *gin.Context, _ downloadFileT) {
-	query := c.Request.URL.Query()
-	endpoint := query.Get("endpoint")
+func (ctrl WebCliController) DownloadFile(c *gin.Context, _ downloadFileT) error {
+	id, _ := c.GetQuery("id")
+	model, err := GetEndpoint(ID(id))
 
-	if endpoint != "" {
-		key := CreateEndpointKey(http.MethodGet, endpoint)
-		model, err := GetEndpoint(key)
+	if err != nil {
+		return err
+	}
 
-		if err == nil && model != nil {
-			if model.MimeType != "" {
-				c.Writer.Header().Set("Content-Disposition", `attachment; filename="`+model.Filename+`"`)
+	if model != nil {
+		c.Header("Content-Disposition", `attachment; filename="`+model.Filename+`"`)
+		c.Data(http.StatusOK, model.MimeType, model.FileContent)
 
-				c.Data(http.StatusOK, model.MimeType, model.FileContent)
-
-				return
-			}
-		}
+		return nil
 	}
 
 	c.Status(http.StatusNotFound)
+
+	return nil
 }
 
 type endpointT struct {
@@ -116,26 +105,26 @@ type endpointT struct {
 }
 
 // Endpoint ...
-func (ctrl WebCliController) Endpoint(c *gin.Context, _ endpointT) (giu.HTTPStatus, interface{}) {
-	query := c.Request.URL.Query()
-	endpoint := query.Get("endpoint")
-	method := query.Get("method")
+func (ctrl WebCliController) Endpoint(c *gin.Context, _ endpointT) (giu.HTTPStatus, interface{}, error) {
+	id := c.Query("id")
+	model, err := GetEndpoint(ID(id))
 
-	if endpoint == "" || method == "" {
-		return giu.HTTPStatus(http.StatusNotFound), gin.H{"error": "endpoint and method required"}
+	if err != nil {
+		return giu.HTTPStatus(http.StatusInternalServerError), gin.H{"error": err.Error()}, err
 	}
 
-	key := CreateEndpointKey(method, endpoint)
-	model, _ := GetEndpoint(key)
+	if model != nil {
+		return giu.HTTPStatus(http.StatusOK), model, nil
+	}
 
-	return giu.HTTPStatus(http.StatusOK), model
+	return giu.HTTPStatus(http.StatusNotFound), gin.H{"error": "endpoint and method required"}, nil
 }
 
 type saveT struct {
 	giu.T `url:"POST /api/save"`
 }
 
-// Save ...
+// Save 保存body.
 func (ctrl WebCliController) Save(model APIDataModel, _ saveT) (giu.HTTPStatus, interface{}) {
 	if err := SaveEndpoint(model); err != nil {
 		return giu.HTTPStatus(http.StatusBadRequest), gin.H{"error": err.Error()}
@@ -148,102 +137,35 @@ type saveEndpointT struct {
 	giu.T `url:"POST /api/saveendpoint"`
 }
 
-// SaveEndpoint ...
-func (ctrl WebCliController) SaveEndpoint(model EndpointModel, c *gin.Context, _ saveEndpointT) {
-	mimeType, filename, fileContent, abort := parseFileContent(c, model)
-	if abort {
-		return
+// SaveEndpoint 保存路径、方法等变更.
+func (ctrl WebCliController) SaveEndpoint(model APIDataModel, c *gin.Context, _ saveEndpointT) {
+	mimeType, filename, fileContent := parseFileContent(c)
+	if filename != "" {
+		model.MimeType = mimeType
+		model.Filename = filename
+		model.Body = string(fileContent)
 	}
 
-	if key := model.OriginKey; key != "" {
-		if updateEndpoint(c, model, key, mimeType, filename, fileContent) {
-			return
-		}
-	} else {
-		if newEndpoint(c, model, filename, mimeType, fileContent) {
-			return
-		}
+	if err := SaveEndpoint(model); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"success": "ok"})
 }
 
-func newEndpoint(c *gin.Context, model EndpointModel, filename, mimeType string, fileContent []byte) bool {
-	endpoint := APIDataModel{
-		Endpoint:    model.Endpoint,
-		Method:      model.Method,
-		Filename:    filename,
-		MimeType:    mimeType,
-		FileContent: fileContent}
-
-	if filename != "" {
-		if strings.HasSuffix(endpoint.Endpoint, "/") {
-			endpoint.Endpoint += filename
-		} else {
-			endpoint.Endpoint += "/" + filename
-		}
+func parseFileContent(c *gin.Context) (mimeType, filename string, fileContent []byte) {
+	file, err := c.FormFile("file")
+	if err != nil || file == nil {
+		return mimeType, filename, fileContent
 	}
 
-	err := SaveEndpoint(endpoint)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		c.Abort()
+	f, _ := file.Open()
+	fileContent, _ = ioutil.ReadAll(f)
+	mimeType = mime.TypeByExtension(path.Ext(file.Filename))
+	filename = file.Filename
 
-		return true
-	}
-
-	return false
-}
-
-func updateEndpoint(c *gin.Context, model EndpointModel, key, mimeType, filename string, fileContent []byte) bool {
-	endpoint, _ := GetEndpoint(key)
-	if endpoint == nil {
-		return false
-	}
-
-	endpoint.Method = model.Method
-	endpoint.Endpoint = model.Endpoint
-	endpoint.MimeType = mimeType
-	endpoint.FileContent = fileContent
-	endpoint.Filename = filename
-
-	if filename != "" {
-		if !strings.HasSuffix(endpoint.Endpoint, "/") {
-			endpoint.Endpoint += "/"
-		}
-
-		endpoint.Endpoint += filename
-	}
-
-	_ = DeleteEndpoint(key)
-
-	if err := SaveEndpoint(*endpoint); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		c.Abort()
-
-		return true
-	}
-
-	return false
-}
-
-func parseFileContent(c *gin.Context, model EndpointModel) (mimeType, filename string, fileContent []byte, abort bool) {
-	if model.IsFileResult {
-		file, err := c.FormFile("file")
-		if err != nil || file == nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			c.Abort()
-
-			return "", "", nil, true
-		}
-
-		f, _ := file.Open()
-		fileContent, _ = ioutil.ReadAll(f)
-		mimeType = mime.TypeByExtension(path.Ext(file.Filename))
-		filename = file.Filename
-	}
-
-	return mimeType, filename, fileContent, false
+	return mimeType, filename, fileContent
 }
 
 type deleteEndpointT struct {
@@ -252,14 +174,8 @@ type deleteEndpointT struct {
 
 // DeleteEndpoint ...
 func (ctrl WebCliController) DeleteEndpoint(c *gin.Context, _ deleteEndpointT) {
-	method, endpoint := c.Query("method"), c.Query("endpoint")
-
-	if endpoint == "" || method == "" {
-		c.JSON(http.StatusNotFound, gin.H{"error": "endpoint and method required"})
-		return
-	}
-
-	_ = DeleteEndpoint(CreateEndpointKey(method, endpoint))
+	id := c.Query("id")
+	_ = DeleteEndpoint(id)
 
 	c.JSON(http.StatusOK, gin.H{"success": "ok"})
 }

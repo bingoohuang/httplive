@@ -1,12 +1,13 @@
 package httplive
 
+import "github.com/bingoohuang/gou/str"
+
 // EnvVars ...
 type EnvVars struct {
-	WorkingDir  string
-	DBFile      string
-	DBFullPath  string
-	DefaultPort string
-	Ports       string // Hosting ports, eg. 5003,5004.
+	WorkingDir string
+	DBFile     string
+	DBFullPath string
+	Ports      string // Hosting ports, eg. 5003,5004.
 }
 
 // IPResponse ...
@@ -73,23 +74,30 @@ type BasicAuthResponse struct {
 // WebCliController ...
 type WebCliController struct{}
 
+// ID is the ID for UnmarshalJSON from integer.
+type ID string
+
+// UnmarshalJSON unmarshals JSON from integer or string.
+func (i *ID) UnmarshalJSON(b []byte) error {
+	*i = ID(b)
+
+	return nil
+}
+
+// Int convert ID to integer.
+func (i ID) Int() int {
+	return str.ParseInt(string(i))
+}
+
 // APIDataModel ...
 type APIDataModel struct {
-	ID          int    `json:"id"`
-	Endpoint    string `json:"endpoint"`
-	Method      string `json:"method"`
+	ID          ID     `json:"id" form:"id"`
+	Endpoint    string `json:"endpoint" form:"endpoint"`
+	Method      string `json:"method" form:"method"`
 	MimeType    string `json:"mimeType"`
 	Filename    string `json:"filename"`
 	FileContent []byte `json:"-"`
 	Body        string `json:"body"`
-}
-
-// EndpointModel ...
-type EndpointModel struct {
-	OriginKey    string `form:"originKey"`
-	Endpoint     string `form:"endpoint"`
-	Method       string `form:"method"`
-	IsFileResult bool   `form:"isFileResult"`
 }
 
 // Pair ...

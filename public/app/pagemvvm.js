@@ -81,7 +81,7 @@
       return "Http Live:" + this.port();
     }, this);
     self.downloadFile = ko.computed(function() {
-      return "/httplive/webcli/api/downloadfile?endpoint=" + this.endpoint();
+      return "/httplive/webcli/api/downloadfile?id=" + this.selectedEndpointId();
     }, this);
     self.modalContext = ko.computed(function() {
       var id = self.selectedEndpointId();
@@ -188,14 +188,10 @@
 
       if ($toast.find("#deleteBtn").length) {
         $toast.delegate("#deleteBtn", "click", function() {
-          var type = self.type();
-          var endpoint = self.endpoint();
+          var id = self.selectedEndpointId();
           var url =
             config.deletePath +
-            "?endpoint=" +
-            encodeURIComponent(endpoint) +
-            "&method=" +
-            type;
+            "?id=" +id;
           $.ajax({
             type: "GET",
             cache: false,
@@ -265,12 +261,7 @@
     vm.selectedEndpointId(id);
     vm.selectedOriginKey(originKey);
     vm.selectedEndpoint(true);
-    var url =
-      config.fetchPath +
-      "?endpoint=" +
-      encodeURIComponent(endpoint) +
-      "&method=" +
-      type;
+    var url = config.fetchPath + "?id=" + id;
 
     $.ajax({
       type: "GET",
@@ -282,7 +273,6 @@
       success: function(response) {
         $("#fileresult-overlay").remove();
         if ("filename" in response && response.filename) {
-          var url = "/httplive/webcli/api/downloadfile?endpoint=" + response.endpoint;
           $(
             "<div id='fileresult-overlay'>" +
               "<button onclick='$(\"#sidebar-downloadfile\")[0].click();' style='background:none; border:none; margin: 0 auto; z-index:5;'>" +

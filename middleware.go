@@ -3,7 +3,6 @@ package httplive
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"path"
 	"strings"
 
@@ -16,16 +15,15 @@ import (
 // nolint lll
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		s := c.Writer.Header().Set
-		s("Access-Control-Allow-Origin", "*")
-		s("Access-Control-Max-Age", "86400")
-		s("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, UPDATE")
-		s("Access-Control-Allow-Headers", "X-Requested-With, Content-Type, Origin, Authorization, Accept, Client-Security-Token, Accept-Encoding, x-access-token")
-		s("Access-Control-Expose-Headers", "Content-Length")
-		s("Access-Control-Allow-Credentials", "true")
-		s("Cache-Control", "no-cache, no-store, must-revalidate")
-		s("Pragma", "no-cache")
-		s("Expires", "0")
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Max-Age", "86400")
+		c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, UPDATE")
+		c.Header("Access-Control-Allow-Headers", "X-Requested-With, Content-Type, Origin, Authorization, Accept, Client-Security-Token, Accept-Encoding, x-access-token")
+		c.Header("Access-Control-Expose-Headers", "Content-Length")
+		c.Header("Access-Control-Allow-Credentials", "true")
+		c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+		c.Header("Pragma", "no-cache")
+		c.Header("Expires", "0")
 
 		if c.Request.Method == http.MethodOptions {
 			logrus.Infof(http.MethodOptions)
@@ -39,7 +37,15 @@ func CORSMiddleware() gin.HandlerFunc {
 // StaticFileMiddleware ...
 func StaticFileMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		uriPath := strings.TrimPrefix(c.Request.URL.Path, "/httplive")
+		p := c.Request.URL.Path
+		if HasAnyPrefix(p, "/httplive/webcli", "/httplive/ws") {
+			c.Next()
+
+			return
+		}
+
+		uriPath := strings.TrimPrefix(p, "/httplive")
+
 		assetPath := "public" + uriPath
 
 		if c.Request.Method == http.MethodGet && uriPath == "/" {
@@ -53,11 +59,7 @@ func StaticFileMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		if os.Getenv("debug") != "" {
-			TryGetLocalFile(c, assetPath)
-		} else {
-			TryGetAssetFile(c, assetPath)
-		}
+		TryGetFile(c, assetPath)
 
 		if c.IsAborted() {
 			return
@@ -67,11 +69,22 @@ func StaticFileMiddleware() gin.HandlerFunc {
 	}
 }
 
+// HasAnyPrefix tells that s has prefix of any prefixes.
+func HasAnyPrefix(s string, prefixes ...string) bool {
+	for _, p := range prefixes {
+		if strings.HasPrefix(s, p) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // APIMiddleware ...
 func APIMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		p := c.Request.URL.Path
-		if p == "/" || strings.HasPrefix(p, "/httplive/") {
+		if p == "/" || p == "/favicon.ico" || strings.HasPrefix(p, "/httplive/") {
 			c.Next()
 
 			return
@@ -106,7 +119,7 @@ define('httplive/config', {
 	deletePath: '/httplive/webcli/api/deleteendpoint', 
 	treePath: '/httplive/webcli/api/tree', 
 	componentId: ''
-});`, Environments.DefaultPort)
+});`, Environments.Ports)
 		c.Writer.Header().Set("Content-Length", fmt.Sprintf("%d", len(fileContent)))
 		c.Writer.Header().Set("Content-Type", "application/javascript")
 		c.String(http.StatusOK, fileContent)

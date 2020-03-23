@@ -19,6 +19,8 @@ import (
 )
 
 func main() {
+	logrus.SetLevel(logrus.DebugLevel)
+
 	//gin.SetMode(gin.ReleaseMode)
 	app := cli.NewApp()
 	env := &httplive.Environments
@@ -59,18 +61,17 @@ func createDB(env *httplive.EnvVars) error {
 
 	env.DBFile = fullPath
 
-	return httplive.CreateDBBucket()
+	return httplive.CreateDB()
 }
 
 func host(env *httplive.EnvVars) error {
 	portsArr := strings.Split(env.Ports, ",")
 
 	env.WorkingDir, _ = os.Getwd()
-	env.DefaultPort = portsArr[0]
-
-	_ = createDB(env)
-
-	httplive.InitDBValues()
+	if err := createDB(env); err != nil {
+		logrus.Warnf("failed to create DB %v", err)
+		return err
+	}
 
 	r := gin.Default()
 	r.Use(httplive.APIMiddleware(), httplive.StaticFileMiddleware(),
@@ -80,12 +81,6 @@ func host(env *httplive.EnvVars) error {
 	ga := giu.NewAdaptor()
 	gw := ga.Route(r.Group("/httplive/webcli"))
 	gw.HandleFn(new(httplive.WebCliController))
-
-	r.NoRoute(func(c *gin.Context) {
-		httplive.Broadcast(c)
-		c.Status(http.StatusNotFound)
-		c.File("./public/404.html")
-	})
 
 	for _, p := range portsArr {
 		go func(port string) {

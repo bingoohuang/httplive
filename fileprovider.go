@@ -11,6 +11,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// TryGetFile ...
+func TryGetFile(c *gin.Context, assetPath string) {
+	if os.Getenv("debug") != "" {
+		TryGetLocalFile(c, assetPath)
+	} else {
+		TryGetAssetFile(c, assetPath)
+	}
+}
+
 // TryGetLocalFile ...
 func TryGetLocalFile(c *gin.Context, filePath string) {
 	logrus.Debugf("fs:dev local file for: %s", filePath)

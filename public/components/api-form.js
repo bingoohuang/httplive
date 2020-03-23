@@ -71,6 +71,8 @@ define(["knockout", "toastr", "httplive/app/utils", "httplive/app/main"], functi
       var formData = new FormData();
       utils.objectToFormData(JSON.parse(ko.toJSON(this)), formData);
 
+      formData.append("id", idValue);
+
       var file = $("#file");
       if (file.length > 0) {
         var fileInput = file[0].files[0];
