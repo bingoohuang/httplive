@@ -121,6 +121,7 @@ func CreateDB() error {
 	}
 
 	SyncEndpointRouter()
+
 	return nil
 }
 
