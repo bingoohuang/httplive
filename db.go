@@ -32,6 +32,11 @@ SELECT id, endpoint, methods, mime_type, filename, body, create_time, update_tim
 FROM httplive_endpoint
 WHERE id = :1;
 
+-- name: FindByEndpoint
+SELECT id, endpoint, methods, mime_type, filename, body, create_time, update_time, deleted_at
+FROM httplive_endpoint
+WHERE endpoint = :1;
+
 -- name: ListEndpoints
 SELECT id, endpoint, methods, mime_type, filename, body, create_time, update_time, deleted_at
 FROM httplive_endpoint
@@ -76,6 +81,7 @@ type Dao struct {
 	CreateTable    func()
 	ListEndpoints  func() []Endpoint
 	FindEndpoint   func(ID ID) *Endpoint
+	FindByEndpoint func(endpoint string) *Endpoint
 	AddEndpoint    func(Endpoint)
 	AddEndpointID  func(Endpoint)
 	UpdateEndpoint func(Endpoint)
@@ -167,24 +173,31 @@ func createDB(dao *Dao) error {
 }
 
 // SaveEndpoint ...
-func SaveEndpoint(model APIDataModel) error {
+func SaveEndpoint(model APIDataModel) (*Endpoint, error) {
 	if model.Endpoint == "" || model.Method == "" {
-		return fmt.Errorf("model endpoint and method could not be empty")
+		return nil, fmt.Errorf("model endpoint and method could not be empty")
 	}
 
 	defer SyncEndpointRouter()
 
-	return DBDo(func(dao *Dao) error {
+	var ep *Endpoint
+
+	err := DBDo(func(dao *Dao) error {
 		old := dao.FindEndpoint(model.ID)
 		bean := CreateEndpoint(model, old)
+
 		if old == nil {
 			dao.AddEndpoint(bean)
+			ep = dao.FindByEndpoint(bean.Endpoint)
 		} else {
 			dao.UpdateEndpoint(bean)
+			ep = &bean
 		}
 
 		return nil
 	})
+
+	return ep, err
 }
 
 // CreateAPIDataModel creates APIDataModel from Endpoint

@@ -126,11 +126,11 @@ type saveT struct {
 
 // Save 保存body.
 func (ctrl WebCliController) Save(model APIDataModel, _ saveT) (giu.HTTPStatus, interface{}) {
-	if err := SaveEndpoint(model); err != nil {
+	if dp, err := SaveEndpoint(model); err != nil {
 		return giu.HTTPStatus(http.StatusBadRequest), gin.H{"error": err.Error()}
+	} else {
+		return giu.HTTPStatus(http.StatusOK), gin.H{"data": dp}
 	}
-
-	return giu.HTTPStatus(http.StatusOK), gin.H{"success": "ok"}
 }
 
 type saveEndpointT struct {
@@ -146,12 +146,11 @@ func (ctrl WebCliController) SaveEndpoint(model APIDataModel, c *gin.Context, _ 
 		model.Body = string(fileContent)
 	}
 
-	if err := SaveEndpoint(model); err != nil {
+	if dp, err := SaveEndpoint(model); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
+	} else {
+		c.JSON(http.StatusOK, gin.H{"data": dp})
 	}
-
-	c.JSON(http.StatusOK, gin.H{"success": "ok"})
 }
 
 func parseFileContent(c *gin.Context) (mimeType, filename string, fileContent []byte) {
