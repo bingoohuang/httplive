@@ -184,6 +184,10 @@ func SaveEndpoint(model APIDataModel) (*Endpoint, error) {
 
 	err := DBDo(func(dao *Dao) error {
 		old := dao.FindEndpoint(model.ID)
+		if old == nil {
+			old = dao.FindByEndpoint(model.Endpoint)
+		}
+
 		bean := CreateEndpoint(model, old)
 
 		if old == nil {
@@ -247,6 +251,10 @@ func CreateEndpoint(model APIDataModel, old *Endpoint) Endpoint {
 	if old != nil {
 		if old.Body != "" && ep.Body == "" {
 			ep.Body = old.Body
+		}
+
+		if old.ID != "" && ep.ID == "" {
+			ep.ID = old.ID
 		}
 	}
 

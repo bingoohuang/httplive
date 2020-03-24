@@ -97,12 +97,21 @@
       })
       .on("ready.jstree", function() {
         webcli.publish(webcli.events.treeReady, {});
-      });
+      })
+          .on("refresh.jstree", function () {
+            let t = $("#tree");
+            let selectedID= t.attr('selectedID')
+            if (selectedID) {
+              // https://stackoverflow.com/questions/8466370/how-to-select-a-specific-node-programmatically
+              t.find("li[id=" + selectedID + "] a").click();
+              t.attr('selectedID', null);
+            }
+          });
 
-    webcli.refreshTree = function() {
-      $("#tree")
-        .jstree(true)
-        .refresh();
+    webcli.refreshTree = function(id) {
+      let t = $("#tree")
+      t.attr('selectedID', id)
+      t.jstree(true).refresh();
     };
 
     return webcli;

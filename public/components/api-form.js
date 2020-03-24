@@ -90,7 +90,7 @@ define(["knockout", "toastr", "httplive/app/utils", "httplive/app/main"], functi
         beforeSend: function() {},
         success: function(data, textStatus, jqXHR) {
           toastr["success"]("Saved...");
-          webcli.refreshTree();
+          webcli.refreshTree(data.data.ID);
           params.showModal(false);
         },
         error: function(response) {}
