@@ -126,11 +126,13 @@ type saveT struct {
 
 // Save 保存body.
 func (ctrl WebCliController) Save(model APIDataModel, _ saveT) (giu.HTTPStatus, interface{}) {
-	if dp, err := SaveEndpoint(model); err != nil {
+	dp, err := SaveEndpoint(model)
+
+	if err != nil {
 		return giu.HTTPStatus(http.StatusBadRequest), gin.H{"error": err.Error()}
-	} else {
-		return giu.HTTPStatus(http.StatusOK), gin.H{"data": dp}
 	}
+
+	return giu.HTTPStatus(http.StatusOK), gin.H{"data": dp}
 }
 
 type saveEndpointT struct {
