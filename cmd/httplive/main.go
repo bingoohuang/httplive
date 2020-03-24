@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/bingoohuang/gou/htt"
+
 	"github.com/sirupsen/logrus"
 
 	"github.com/bingoohuang/gor/giu"
@@ -87,6 +89,8 @@ func host(env *httplive.EnvVars) error {
 			_ = r.Run(":" + port)
 		}(p)
 	}
+
+	htt.OpenExplorer(portsArr[0])
 
 	select {}
 }
