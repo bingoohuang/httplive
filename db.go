@@ -33,7 +33,7 @@ type Dao struct {
 	ListEndpoints   func() []Endpoint
 	FindEndpoint    func(ID ID) *Endpoint
 	FindByEndpoint  func(endpoint string) *Endpoint
-	AddEndpoint     func(Endpoint)
+	AddEndpoint     func(Endpoint) int
 	LastInsertRowID func() ID
 	AddEndpointID   func(Endpoint)
 	UpdateEndpoint  func(Endpoint)
@@ -151,8 +151,8 @@ func SaveEndpoint(model APIDataModel) (*Endpoint, error) {
 		bean := CreateEndpoint(model, old)
 
 		if old == nil {
-			dao.AddEndpoint(bean)
-			bean.ID = dao.LastInsertRowID()
+			lastInsertRowID := dao.AddEndpoint(bean)
+			bean.ID = ID(fmt.Sprintf("%d", lastInsertRowID))
 		} else {
 			dao.UpdateEndpoint(bean)
 		}
