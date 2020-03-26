@@ -9,59 +9,10 @@ import (
 	"time"
 
 	"github.com/bingoohuang/sqlx"
+	"github.com/gobuffalo/packr/v2"
 	"github.com/julienschmidt/httprouter"
 	_ "github.com/mattn/go-sqlite3" // import sqlite3
 )
-
-const sqlstr = `
--- name: CreateTable
-CREATE TABLE IF NOT EXISTS httplive_endpoint (
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	endpoint TEXT NOT NULL UNIQUE,
-	methods TEXT NOT NULL,
-	mime_type TEXT,
-	filename TEXT,
-	body TEXT,
-	create_time TEXT NOT NULL,
-	update_time TEXT NOT NULL,
-	deleted_at TEXT NULL
-);
-
--- name: FindEndpoint
-SELECT id, endpoint, methods, mime_type, filename, body, create_time, update_time, deleted_at
-FROM httplive_endpoint
-WHERE id = :1;
-
--- name: FindByEndpoint
-SELECT id, endpoint, methods, mime_type, filename, body, create_time, update_time, deleted_at
-FROM httplive_endpoint
-WHERE endpoint = :1;
-
--- name: ListEndpoints
-SELECT id, endpoint, methods, mime_type, filename, body, create_time, update_time, deleted_at
-FROM httplive_endpoint
-WHERE deleted_at = '' or deleted_at IS NULL 
-ORDER BY id;
-
--- name: AddEndpoint
-INSERT INTO httplive_endpoint(endpoint, methods, mime_type, filename, body, create_time, update_time, deleted_at)
-VALUES (:endpoint, :methods, :mime_type, :filename, :body, :create_time, :update_time, :deleted_at);
-
--- name: AddEndpointID
-INSERT INTO httplive_endpoint(id, endpoint, methods, mime_type, filename, body, create_time, update_time, deleted_at)
-VALUES (:id, :endpoint, :methods, :mime_type, :filename, :body, :create_time, :update_time, :deleted_at);
-
--- name: UpdateEndpoint
-UPDATE httplive_endpoint
-SET endpoint = :endpoint, methods = :methods, mime_type = :mime_type, filename = :filename,
-	body = :body, create_time = :create_time, update_time = :update_time, deleted_at = :deleted_at
-WHERE id = :id;
-
--- name: DeleteEndpoint
-UPDATE httplive_endpoint
-SET deleted_at = :deleted_at
-WHERE id = :id;
-`
 
 // Endpoint is the structure for table httplive_endpoint.
 type Endpoint struct {
@@ -78,21 +29,30 @@ type Endpoint struct {
 
 // Dao defines the api to access the database.
 type Dao struct {
-	CreateTable    func()
-	ListEndpoints  func() []Endpoint
-	FindEndpoint   func(ID ID) *Endpoint
-	FindByEndpoint func(endpoint string) *Endpoint
-	AddEndpoint    func(Endpoint)
-	AddEndpointID  func(Endpoint)
-	UpdateEndpoint func(Endpoint)
-	DeleteEndpoint func(Endpoint)
-	Logger         *sqlx.DaoLogrus
+	CreateTable     func()
+	ListEndpoints   func() []Endpoint
+	FindEndpoint    func(ID ID) *Endpoint
+	FindByEndpoint  func(endpoint string) *Endpoint
+	AddEndpoint     func(Endpoint)
+	LastInsertRowID func() ID
+	AddEndpointID   func(Endpoint)
+	UpdateEndpoint  func(Endpoint)
+	DeleteEndpoint  func(Endpoint)
+	Logger          sqlx.DaoLogger
 }
 
 // CreateDao creates a dao.
 func CreateDao(db *sql.DB) (*Dao, error) {
 	dao := &Dao{Logger: &sqlx.DaoLogrus{}}
-	err := sqlx.CreateDao(db, dao, sqlx.WithSQLStr(sqlstr))
+
+	box := packr.New("myBox", "assets")
+
+	s, err := box.FindString("httplive.sql")
+	if err != nil {
+		return nil, err
+	}
+
+	err = sqlx.CreateDao(db, dao, sqlx.WithSQLStr(s))
 
 	return dao, err
 }
@@ -192,11 +152,12 @@ func SaveEndpoint(model APIDataModel) (*Endpoint, error) {
 
 		if old == nil {
 			dao.AddEndpoint(bean)
-			ep = dao.FindByEndpoint(bean.Endpoint)
+			bean.ID = dao.LastInsertRowID()
 		} else {
 			dao.UpdateEndpoint(bean)
-			ep = &bean
 		}
+
+		ep = &bean
 
 		return nil
 	})
