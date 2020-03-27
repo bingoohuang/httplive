@@ -52,7 +52,7 @@ func CreateDao(db *sql.DB) (*Dao, error) {
 		return nil, err
 	}
 
-	err = sqlx.CreateDao(db, dao, sqlx.WithSQLStr(s))
+	err = sqlx.CreateDao(dao, sqlx.WithDB(db), sqlx.WithSQLStr(s))
 
 	return dao, err
 }
