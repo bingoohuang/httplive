@@ -26,5 +26,11 @@ install: proxy
 	go install -ldflags="-s -w" ./...
 	upx ~/go/bin/httplive
 
+# https://hub.docker.com/_/golang
+# docker run --rm -v "$PWD":/usr/src/myapp -v "$HOME/dockergo":/go -w /usr/src/myapp golang make docker
+# docker run --rm -it -v "$PWD":/usr/src/myapp -w /usr/src/myapp golang bash
+# 静态连接 glibc
+docker:
+	go install -v -x -a -ldflags '-extldflags "-static" -s -w' ./...
 test: proxy
 	go test ./...
