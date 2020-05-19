@@ -1,3 +1,5 @@
+# HttpLive
+
 [![Build Status](https://travis-ci.org/bingoohuang/httplive.svg?branch=master)](https://travis-ci.org/bingoohuang/httplive)
 
 The **HttpLive** is a tool for **API designers, Proxy, mobile and web application developers**
@@ -15,7 +17,7 @@ Load balancing, Round-robin operations can be operated easily with multi-port mo
 With the support of HttpLive you; we can make it more useful without compromising on simple usage
 and increase the productivity of our development and testing environments.
 
-### Installation
+## Installation
 
     go get github.com/bingoohuang/httplive/...
 
@@ -26,7 +28,7 @@ Make sure your PATH includes the \$GOPATH/bin directory so your commands can be 
 
     httplive -h
 
-### Arguments
+## Arguments
 
     --dbpath, -d
 
@@ -49,13 +51,13 @@ For httplive application running with port 5003:
 this key will be stored in the **bucket 5003**. Therefor if you running app as single port with 5004
 you cannot access the keys of 5003 port. You can use multi-port host to overcome this situation.
 
-### Compiling the UI into the Go binary
+## Compiling the UI into the Go binary
 
     go get github.com/jteeuwen/go-bindata/...
     go-bindata -pkg "httplive" -o "bindata.go" public/...
     go install -ldflags="-s -w" ./...
 
-### Todo
+## Todo
 
 Tests
 
@@ -66,3 +68,7 @@ Simple console to display the information of the incoming request under the UI e
 Upload a database file from the web interface.
 
 [Watch the video](https://youtu.be/AG5_llcBogk)
+
+## Resources
+
+- [endpoints.dev store the details of any HTTP request and display them](https://www.endpoints.dev/)
