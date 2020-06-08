@@ -72,3 +72,4 @@ Upload a database file from the web interface.
 ## Resources
 
 - [endpoints.dev store the details of any HTTP request and display them](https://www.endpoints.dev/)
+- [Smocker is a simple and efficient HTTP mock server](https://github.com/Thiht/smocker)
