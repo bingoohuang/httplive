@@ -16,44 +16,19 @@ CREATE TABLE IF NOT EXISTS httplive_endpoint
 SELECT last_insert_rowid();
 
 -- name: FindEndpoint
-SELECT id,
-       endpoint,
-       methods,
-       mime_type,
-       filename,
-       body,
-       create_time,
-       update_time,
-       deleted_at
+SELECT id, endpoint, methods, mime_type, filename, body, create_time, update_time, deleted_at
 FROM httplive_endpoint
 WHERE id = ':1';
 
 -- name: FindByEndpoint
-SELECT id,
-       endpoint,
-       methods,
-       mime_type,
-       filename,
-       body,
-       create_time,
-       update_time,
-       deleted_at
+SELECT id, endpoint, methods, mime_type, filename, body, create_time, update_time, deleted_at
 FROM httplive_endpoint
 WHERE endpoint = ':1';
 
 -- name: ListEndpoints
-SELECT id,
-       endpoint,
-       methods,
-       mime_type,
-       filename,
-       body,
-       create_time,
-       update_time,
-       deleted_at
+SELECT id, endpoint, methods, mime_type, filename, body, create_time, update_time, deleted_at
 FROM httplive_endpoint
-WHERE deleted_at = ''
-   or deleted_at IS NULL
+WHERE deleted_at = '' or deleted_at IS NULL
 ORDER BY id;
 
 -- name: AddEndpoint
