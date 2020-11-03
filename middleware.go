@@ -90,9 +90,9 @@ func APIMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		if EndpointServeHTTP(c.Writer, c.Request) {
+		if yes, response := EndpointServeHTTP(c.Writer, c.Request); yes {
 			if boradcastThrottler.Allow() {
-				Broadcast(c)
+				Broadcast(c, response)
 			}
 
 			c.Abort()

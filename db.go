@@ -3,8 +3,13 @@ package httplive
 import (
 	"bytes"
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"github.com/Knetic/govaluate"
+	"github.com/tidwall/gjson"
+	"io/ioutil"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -95,8 +100,11 @@ func createDB(dao *Dao) error {
 	dao.CreateTable()
 
 	demo := dao.FindEndpoint("0")
-	if demo == nil {
-		const body = `{
+	if demo != nil {
+		return nil
+	}
+
+	const body = `{
 	"array": [
 		1,
 		2,
@@ -113,21 +121,64 @@ func createDB(dao *Dao) error {
 	"string": "Hello World"
 }`
 
-		now := time.Now().Format("2006-01-02 15:04:05.000")
-		ep := Endpoint{
-			ID:         "0",
-			Endpoint:   "/api/demo",
-			Methods:    http.MethodGet,
-			MimeType:   "",
-			Filename:   "",
-			Body:       body,
-			CreateTime: now,
-			UpdateTime: now,
-			DeletedAt:  "",
-		}
-
-		dao.AddEndpointID(ep)
-	}
+	now := time.Now().Format("2006-01-02 15:04:05.000")
+	dao.AddEndpointID(Endpoint{
+		ID:         "0",
+		Endpoint:   "/api/demo",
+		Methods:    http.MethodGet,
+		MimeType:   "",
+		Filename:   "",
+		Body:       body,
+		CreateTime: now,
+		UpdateTime: now,
+		DeletedAt:  "",
+	})
+	dao.AddEndpointID(Endpoint{
+		ID:       "1",
+		Endpoint: "/dynamic/demo",
+		Methods:  http.MethodPost,
+		MimeType: "",
+		Filename: "",
+		Body: `
+{
+  "dynamic": [
+    {
+      "condition":"json_name == 'bingoo'",
+      "response": {
+        "name":"bingoo"
+      }
+    },
+    {
+      "condition":"json_name == 'huang'",
+      "response": {
+        "name":"huang",
+        "age":100
+      }
+    },
+    {
+      "condition":"json_name == 'ding' && json_age == 10",
+      "response": {
+        "name":"xxx",
+        "age":100,
+        "xxx":3000
+      }
+    }
+    ,
+    {
+      "condition":"json_name == 'ding' && json_age == 20",
+      "response": {
+        "name":"xxx",
+        "age":100,
+        "xxx":3000
+      }
+    }
+  ]
+}
+`,
+		CreateTime: now,
+		UpdateTime: now,
+		DeletedAt:  "",
+	})
 
 	return nil
 }
@@ -252,6 +303,7 @@ var (
 	endpointRouter       *httprouter.Router
 	endpointRouterLock   sync.Mutex
 	endpointRouterServed bool
+	endpointRouterBody   []byte
 
 	boradcastThrottler = MakeThrottle(1 * time.Second)
 )
@@ -304,16 +356,26 @@ func (t *Throttle) Allow() bool {
 	}
 }
 
+func CompactJSON(data []byte) []byte {
+	compactedBuffer := new(bytes.Buffer)
+	if err := json.Compact(compactedBuffer, data); err != nil {
+		return data
+	}
+
+	return compactedBuffer.Bytes()
+}
+
 // EndpointServeHTTP ...
-func EndpointServeHTTP(w http.ResponseWriter, r *http.Request) bool {
+func EndpointServeHTTP(w http.ResponseWriter, r *http.Request) (bool, []byte) {
 	endpointRouterLock.Lock()
 	defer endpointRouterLock.Unlock()
 
 	endpointRouterServed = false
+	endpointRouterBody = nil
 
 	endpointRouter.ServeHTTP(w, r)
 
-	return endpointRouterServed
+	return endpointRouterServed, endpointRouterBody
 }
 
 // SyncEndpointRouter ...
@@ -328,11 +390,16 @@ func SyncEndpointRouter() {
 		if ep.MimeType == "" {
 			b := []byte(ep.Body)
 			endpointRouter.Handle(ep.Method, ep.Endpoint,
-				func(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
+				func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 					endpointRouterServed = true
 					w.WriteHeader(http.StatusOK)
 					w.Header().Set("Content-Type", "application/json; charset=utf-8")
-					_, _ = w.Write(b)
+
+					if !dynamic(ep.Body, r, w, p) {
+						endpointRouterBody = b
+						_, _ = w.Write(b)
+					}
+
 				})
 		} else {
 			endpointRouter.Handle(ep.Method, ep.Endpoint,
@@ -345,6 +412,92 @@ func SyncEndpointRouter() {
 				})
 		}
 	}
+}
+
+type DynamicValue struct {
+	Condition string          `json:"condition"`
+	Response  json.RawMessage `json:"response"`
+}
+
+func dynamic(respBody string, r *http.Request, w http.ResponseWriter, p httprouter.Params) bool {
+	reqBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		fmt.Println(err)
+		//log.Printf("Error reading body: %v", err)
+		//http.Error(w, "can't read body", http.StatusBadRequest)
+		return false
+	}
+
+	// Work / inspect body. You may even modify it!
+
+	// And now set a new body, which will simulate the same data we read:
+	r.Body = ioutil.NopCloser(bytes.NewBuffer(reqBody))
+
+	if !strings.HasPrefix(r.URL.Path, "/dynamic") {
+		return false
+	}
+
+	dynamic := gjson.Get(respBody, "dynamic")
+	if dynamic.Type != gjson.JSON {
+		return false
+	}
+
+	var dynamicValues []DynamicValue
+	if err := json.Unmarshal([]byte(dynamic.Raw), &dynamicValues); err != nil {
+		fmt.Println(err)
+		return false
+	}
+
+	for _, v := range dynamicValues {
+		expr, err := govaluate.NewEvaluableExpression(v.Condition)
+		if err != nil {
+			fmt.Println(err)
+			return false
+		}
+
+		parameters := make(map[string]interface{})
+		for _, va := range expr.Vars() {
+			if strings.HasPrefix(va, "json_") {
+				parameters[va] = gjson.GetBytes(reqBody, va[5:]).Value()
+			} else if strings.HasPrefix(va, "query_") {
+				parameters[va] = r.URL.Query().Get(va[6:])
+			} else if strings.HasPrefix(va, "router_") {
+				// /user/:user
+				parameters[va] = p.ByName(va[7:])
+			} else if strings.HasPrefix(va, "header_") {
+				parameters[va] = r.Header.Get(va[7:])
+			} else {
+				va = gjson.Get(respBody, va).String()
+				var vaValue interface{} = nil
+				if strings.HasPrefix(va, "json:") {
+					vaValue = gjson.GetBytes(reqBody, va[5:]).Value()
+				} else if strings.HasPrefix(va, "query:") {
+					vaValue = r.URL.Query().Get(va[6:])
+				} else if strings.HasPrefix(va, "router:") {
+					// /user/:user
+					vaValue = p.ByName(va[7:])
+				} else if strings.HasPrefix(va, "header:") {
+					vaValue = r.Header.Get(va[7:])
+				}
+
+				parameters[va] = vaValue
+			}
+		}
+
+		evaluateResult, err := expr.Evaluate(parameters)
+		if err != nil {
+			fmt.Println(err)
+			return false
+		}
+
+		if yes, ok := evaluateResult.(bool); ok && yes {
+			endpointRouterBody = v.Response
+			_, _ = w.Write(v.Response)
+			return true
+		}
+	}
+
+	return false
 }
 
 // EndpointList ...

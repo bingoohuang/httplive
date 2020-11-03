@@ -19,15 +19,16 @@ func CreateEndpointKey(method string, endpoint string) string {
 }
 
 // Broadcast ...
-func Broadcast(c *gin.Context) {
+func Broadcast(c *gin.Context, response []byte) {
 	msg := WsMessage{
-		Time:   time.Now().Format("2006-01-02 15:04:05.000"),
-		Host:   c.Request.Host,
-		Body:   GetRequestBody(c),
-		Method: c.Request.Method,
-		Path:   c.Request.URL.Path,
-		Query:  c.Request.URL.Query(),
-		Header: GetHeaders(c),
+		Time:     time.Now().Format("2006-01-02 15:04:05.000"),
+		Host:     c.Request.Host,
+		Body:     GetRequestBody(c),
+		Method:   c.Request.Method,
+		Path:     c.Request.URL.Path,
+		Query:    c.Request.URL.Query(),
+		Header:   GetHeaders(c),
+		Response: CompactJSON(response),
 	}
 
 	for id, conn := range Clients {

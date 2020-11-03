@@ -1,6 +1,9 @@
 package httplive
 
-import "github.com/bingoohuang/gou/str"
+import (
+	"encoding/json"
+	"github.com/bingoohuang/gou/str"
+)
 
 // EnvVars ...
 type EnvVars struct {
@@ -125,11 +128,12 @@ type JsTreeDataModel struct {
 
 // WsMessage ...
 type WsMessage struct {
-	Time   string              `json:"time"`
-	Host   string              `json:"host"`
-	Body   interface{}         `json:"body"`
-	Header map[string]string   `json:"header"`
-	Method string              `json:"method"`
-	Path   string              `json:"path"`
-	Query  map[string][]string `json:"query"`
+	Time     string              `json:"time"`
+	Host     string              `json:"host"`
+	Body     interface{}         `json:"body"`
+	Response json.RawMessage     `json:"response"`
+	Header   map[string]string   `json:"header"`
+	Method   string              `json:"method"`
+	Path     string              `json:"path"`
+	Query    map[string][]string `json:"query"`
 }
