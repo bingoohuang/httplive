@@ -81,7 +81,7 @@
         plugins: ["state", "types", "unique", "themes", "ui"]
       })
       .on("changed.jstree", function(e, data) {
-        if (data.node) {
+        if (data.node && data.node.original.type !== "root") {
           var id = data.node.original.id;
           var endpoint = data.node.original.key;
           var originKey = data.node.original.originKey;
