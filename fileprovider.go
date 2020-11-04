@@ -15,16 +15,16 @@ import (
 )
 
 // TryGetFile ...
-func TryGetFile(c *gin.Context, assetPath string) {
+func TryGetFile(c *gin.Context, assetPath string) bool {
 	if os.Getenv("debug") != "" {
-		TryGetLocalFile(c, assetPath)
-	} else {
-		TryGetAssetFile(c, assetPath)
+		return TryGetLocalFile(c, assetPath)
 	}
+
+	return TryGetAssetFile(c, assetPath)
 }
 
 // TryGetLocalFile ...
-func TryGetLocalFile(c *gin.Context, filePath string) {
+func TryGetLocalFile(c *gin.Context, filePath string) bool {
 	logrus.Debugf("fs:dev local file for: %s", filePath)
 	f := path.Join(Environments.WorkingDir, filePath)
 
@@ -34,12 +34,14 @@ func TryGetLocalFile(c *gin.Context, filePath string) {
 		contentType := mime.TypeByExtension(ext)
 		fileData, _ := ioutil.ReadFile(f)
 		c.Data(http.StatusOK, contentType, ReplaceContextPath(fileData))
-		c.Abort()
+		return true
 	}
+
+	return false
 }
 
 // TryGetAssetFile ...
-func TryGetAssetFile(c *gin.Context, filePath string) {
+func TryGetAssetFile(c *gin.Context, filePath string) bool {
 	logrus.Debugf("fs:bindata asset try getfile executed for: %s", filePath)
 	assetData, err := Asset(filePath)
 
@@ -47,8 +49,10 @@ func TryGetAssetFile(c *gin.Context, filePath string) {
 		ext := path.Ext(filePath)
 		contentType := mime.TypeByExtension(ext)
 		c.Data(http.StatusOK, contentType, ReplaceContextPath(assetData))
-		c.Abort()
+		return true
 	}
+
+	return false
 }
 
 func ReplaceContextPathString(data string) string {

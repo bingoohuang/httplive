@@ -3,7 +3,6 @@ package httplive
 import (
 	"fmt"
 	"net/http"
-	"path"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -28,9 +27,10 @@ func CORSMiddleware() gin.HandlerFunc {
 		if c.Request.Method == http.MethodOptions {
 			logrus.Infof(http.MethodOptions)
 			c.AbortWithStatus(http.StatusOK)
-		} else {
-			c.Next()
+			return
 		}
+
+		c.Next()
 	}
 }
 
@@ -40,28 +40,17 @@ func StaticFileMiddleware() gin.HandlerFunc {
 		p := TrimContextPath(c)
 		if HasAnyPrefix(p, "/httplive/webcli", "/httplive/ws") {
 			c.Next()
-
 			return
 		}
 
 		uriPath := strings.TrimPrefix(p, "/httplive")
-
 		assetPath := "public" + uriPath
-
 		if c.Request.Method == http.MethodGet && uriPath == "/" {
 			assetPath = "public/index.html"
 		}
 
-		if path.Ext(assetPath) == ".map" {
-			c.Status(http.StatusNotFound)
+		if TryGetFile(c, assetPath) {
 			c.Abort()
-
-			return
-		}
-
-		TryGetFile(c, assetPath)
-
-		if c.IsAborted() {
 			return
 		}
 
@@ -86,7 +75,6 @@ func APIMiddleware() gin.HandlerFunc {
 		p := TrimContextPath(c)
 		if p == "/" || p == "/favicon.ico" || strings.HasPrefix(p, "/httplive/") {
 			c.Next()
-
 			return
 		}
 
@@ -96,9 +84,10 @@ func APIMiddleware() gin.HandlerFunc {
 			}
 
 			c.Abort()
-		} else {
-			c.Next()
+			return
 		}
+
+		c.Next()
 	}
 }
 
@@ -121,7 +110,6 @@ func ConfigJsMiddleware() gin.HandlerFunc {
 		p := TrimContextPath(c)
 		if p != "/httplive/config.js" {
 			c.Next()
-
 			return
 		}
 
