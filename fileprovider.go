@@ -1,10 +1,13 @@
 package httplive
 
 import (
+	"bytes"
+	"io/ioutil"
 	"mime"
 	"net/http"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 
@@ -26,7 +29,11 @@ func TryGetLocalFile(c *gin.Context, filePath string) {
 	f := path.Join(Environments.WorkingDir, filePath)
 
 	if _, err := os.Stat(f); err == nil {
-		c.File(f)
+		//c.File(f)
+		ext := path.Ext(filePath)
+		contentType := mime.TypeByExtension(ext)
+		fileData, _ := ioutil.ReadFile(f)
+		c.Data(http.StatusOK, contentType, ReplaceContextPath(fileData))
 		c.Abort()
 	}
 }
@@ -39,7 +46,30 @@ func TryGetAssetFile(c *gin.Context, filePath string) {
 	if err == nil && assetData != nil {
 		ext := path.Ext(filePath)
 		contentType := mime.TypeByExtension(ext)
-		c.Data(http.StatusOK, contentType, assetData)
+		c.Data(http.StatusOK, contentType, ReplaceContextPath(assetData))
 		c.Abort()
 	}
+}
+
+func ReplaceContextPathString(data string) string {
+	if Environments.ContextPath == "/" {
+		data = strings.ReplaceAll(data, "${ContextPath}", "")
+		data = strings.ReplaceAll(data, "${ContextPathSlash}", "/")
+	} else {
+		data = strings.ReplaceAll(data, "${ContextPath}", Environments.ContextPath)
+		data = strings.ReplaceAll(data, "${ContextPathSlash}", Environments.ContextPath+"/")
+	}
+
+	return data
+}
+func ReplaceContextPath(data []byte) []byte {
+	if Environments.ContextPath == "/" {
+		data = bytes.ReplaceAll(data, []byte("${ContextPath}"), []byte(""))
+		data = bytes.ReplaceAll(data, []byte("${ContextPathSlash}"), []byte("/"))
+	} else {
+		data = bytes.ReplaceAll(data, []byte("${ContextPath}"), []byte(Environments.ContextPath))
+		data = bytes.ReplaceAll(data, []byte("${ContextPathSlash}"), []byte(Environments.ContextPath+"/"))
+	}
+
+	return data
 }

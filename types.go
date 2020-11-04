@@ -2,15 +2,28 @@ package httplive
 
 import (
 	"encoding/json"
+	"strings"
+
 	"github.com/bingoohuang/gou/str"
 )
 
 // EnvVars ...
 type EnvVars struct {
-	WorkingDir string
-	DBFile     string
-	DBFullPath string
-	Ports      string // Hosting ports, eg. 5003,5004.
+	WorkingDir  string
+	DBFile      string
+	DBFullPath  string
+	Ports       string // Hosting ports, eg. 5003,5004.
+	ContextPath string
+}
+
+func (r *EnvVars) Init() {
+	if strings.HasSuffix(r.ContextPath, "/") {
+		r.ContextPath = r.ContextPath[:len(r.ContextPath)-1]
+	}
+
+	if !strings.HasPrefix(r.ContextPath, "/") {
+		r.ContextPath = "/" + r.ContextPath
+	}
 }
 
 // IPResponse ...

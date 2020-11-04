@@ -2,7 +2,6 @@
   [
     "jquery",
     "bootstrap",
-    "jstree",
     "jsoneditor",
     "httplive/config",
     "knockout",
@@ -13,7 +12,6 @@
   function(
     $,
     bootstrap,
-    jstree,
     jsoneditor,
     config,
     ko,

@@ -3,10 +3,11 @@ package httplive_test
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Knetic/govaluate"
-	"github.com/tidwall/gjson"
 	"strings"
 	"testing"
+
+	"github.com/Knetic/govaluate"
+	"github.com/tidwall/gjson"
 )
 
 type DynamicValue struct {

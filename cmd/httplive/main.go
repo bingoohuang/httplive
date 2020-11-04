@@ -5,9 +5,12 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
+	"time"
 
-	"github.com/bingoohuang/gou/htt"
+	"github.com/bingoohuang/gou/ran"
+	"github.com/skratchdot/open-golang/open"
 
 	"github.com/sirupsen/logrus"
 
@@ -43,6 +46,12 @@ func main() {
 			Usage:       "Full path of the httplive.db.",
 			Destination: &env.DBFullPath,
 		},
+		cli.StringFlag{
+			Name:        "contextpath, c",
+			Value:       "",
+			Usage:       "context path of httplive service",
+			Destination: &env.ContextPath,
+		},
 	}
 
 	app.Action = func(c *cli.Context) error { return host(env) }
@@ -67,6 +76,7 @@ func createDB(env *httplive.EnvVars) error {
 }
 
 func host(env *httplive.EnvVars) error {
+	env.Init()
 	portsArr := strings.Split(env.Ports, ",")
 
 	env.WorkingDir, _ = os.Getwd()
@@ -78,10 +88,11 @@ func host(env *httplive.EnvVars) error {
 	r := gin.Default()
 	r.Use(httplive.APIMiddleware(), httplive.StaticFileMiddleware(),
 		httplive.CORSMiddleware(), httplive.ConfigJsMiddleware())
-	r.GET("/httplive/ws", wshandler)
+
+	r.GET(httplive.JoinContextPath("/httplive/ws"), wshandler)
 
 	ga := giu.NewAdaptor()
-	gw := ga.Route(r.Group("/httplive/webcli"))
+	gw := ga.Route(r.Group(httplive.JoinContextPath("/httplive/webcli")))
 	gw.HandleFn(new(httplive.WebCliController))
 
 	for _, p := range portsArr {
@@ -90,9 +101,27 @@ func host(env *httplive.EnvVars) error {
 		}(p)
 	}
 
-	htt.OpenExplorer(portsArr[0])
+	OpenExplorerWithContext(env.ContextPath, portsArr[0])
 
 	select {}
+}
+
+// OpenExplorerWithContext ...
+func OpenExplorerWithContext(contextPath, port string) {
+	go func() {
+		time.Sleep(100 * time.Millisecond) // nolint gomnd
+
+		switch runtime.GOOS {
+		case "windows":
+			fallthrough
+		case "darwin":
+			if contextPath == "/" {
+				_ = open.Run("http://127.0.0.1:" + port + "?" + ran.String(10))
+			} else {
+				_ = open.Run("http://127.0.0.1:" + port + contextPath + "?" + ran.String(10))
+			}
+		}
+	}()
 }
 
 // nolint gochecknoglobals

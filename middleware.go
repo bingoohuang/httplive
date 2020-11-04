@@ -37,7 +37,7 @@ func CORSMiddleware() gin.HandlerFunc {
 // StaticFileMiddleware ...
 func StaticFileMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		p := c.Request.URL.Path
+		p := TrimContextPath(c)
 		if HasAnyPrefix(p, "/httplive/webcli", "/httplive/ws") {
 			c.Next()
 
@@ -83,7 +83,7 @@ func HasAnyPrefix(s string, prefixes ...string) bool {
 // APIMiddleware ...
 func APIMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		p := c.Request.URL.Path
+		p := TrimContextPath(c)
 		if p == "/" || p == "/favicon.ico" || strings.HasPrefix(p, "/httplive/") {
 			c.Next()
 
@@ -102,24 +102,38 @@ func APIMiddleware() gin.HandlerFunc {
 	}
 }
 
+func TrimContextPath(c *gin.Context) string {
+	p := c.Request.URL.Path
+	if Environments.ContextPath != "/" {
+		p = strings.TrimPrefix(p, Environments.ContextPath)
+	}
+
+	if p == "" {
+		return "/"
+	}
+
+	return p
+}
+
 // ConfigJsMiddleware ...
 func ConfigJsMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if c.Request.URL.Path != "/httplive/config.js" {
+		p := TrimContextPath(c)
+		if p != "/httplive/config.js" {
 			c.Next()
 
 			return
 		}
 
-		fileContent := fmt.Sprintf(`
+		fileContent := ReplaceContextPathString(fmt.Sprintf(`
 define('httplive/config', { 
 	defaultPort:'%s', 
-	savePath: '/httplive/webcli/api/save', 
-	fetchPath: '/httplive/webcli/api/endpoint', 
-	deletePath: '/httplive/webcli/api/deleteendpoint', 
-	treePath: '/httplive/webcli/api/tree', 
+	savePath: '${ContextPath}/httplive/webcli/api/save', 
+	fetchPath: '${ContextPath}/httplive/webcli/api/endpoint', 
+	deletePath: '${ContextPath}/httplive/webcli/api/deleteendpoint', 
+	treePath: '${ContextPath}/httplive/webcli/api/tree', 
 	componentId: ''
-});`, Environments.Ports)
+});`, Environments.Ports))
 		c.Writer.Header().Set("Content-Length", fmt.Sprintf("%d", len(fileContent)))
 		c.Writer.Header().Set("Content-Type", "application/javascript")
 		c.String(http.StatusOK, fileContent)

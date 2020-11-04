@@ -5,13 +5,15 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/Knetic/govaluate"
-	"github.com/tidwall/gjson"
 	"io/ioutil"
 	"net/http"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/Knetic/govaluate"
+	"github.com/tidwall/gjson"
 
 	"github.com/bingoohuang/sqlx"
 	"github.com/gobuffalo/packr/v2"
@@ -384,6 +386,14 @@ func EndpointServeHTTP(w http.ResponseWriter, r *http.Request) (bool, []byte) {
 	return endpointRouterServed, endpointRouterBody
 }
 
+func JoinContextPath(s string) string {
+	if Environments.ContextPath == "/" {
+		return s
+	}
+
+	return filepath.Join(Environments.ContextPath, s)
+}
+
 // SyncEndpointRouter ...
 func SyncEndpointRouter() {
 	endpointRouterLock.Lock()
@@ -393,9 +403,10 @@ func SyncEndpointRouter() {
 
 	for _, endpoint := range EndpointList() {
 		ep := endpoint
+		path := JoinContextPath(ep.Endpoint)
 		if ep.MimeType == "" {
 			b := []byte(ep.Body)
-			endpointRouter.Handle(ep.Method, ep.Endpoint,
+			endpointRouter.Handle(ep.Method, path,
 				func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 					endpointRouterServed = true
 
@@ -409,7 +420,7 @@ func SyncEndpointRouter() {
 
 				})
 		} else {
-			endpointRouter.Handle(ep.Method, ep.Endpoint,
+			endpointRouter.Handle(ep.Method, path,
 				func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 					endpointRouterServed = true
 					w.WriteHeader(http.StatusOK)
