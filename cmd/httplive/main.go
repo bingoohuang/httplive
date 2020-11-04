@@ -68,6 +68,8 @@ func createDB(env *httplive.EnvVars) error {
 		if _, err := os.Stat(p); os.IsNotExist(err) {
 			logrus.Fatalf("fullPath %s error %v", fullPath, err)
 		}
+
+		fullPath = path.Join(p, "httplive.db")
 	}
 
 	env.DBFile = fullPath
