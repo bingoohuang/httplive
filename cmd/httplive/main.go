@@ -24,9 +24,7 @@ import (
 )
 
 func main() {
-	logrus.SetLevel(logrus.DebugLevel)
-
-	//gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.ReleaseMode)
 	app := cli.NewApp()
 	env := &httplive.Environments
 
@@ -87,7 +85,7 @@ func host(env *httplive.EnvVars) error {
 		return err
 	}
 
-	r := gin.Default()
+	r := gin.New()
 	r.Use(httplive.APIMiddleware(), httplive.StaticFileMiddleware(),
 		httplive.CORSMiddleware(), httplive.ConfigJsMiddleware())
 

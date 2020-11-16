@@ -78,9 +78,9 @@ func APIMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		if yes, response := EndpointServeHTTP(c.Writer, c.Request); yes {
+		if result := EndpointServeHTTP(c.Writer, c.Request); result.RouterServed {
 			if boradcastThrottler.Allow() {
-				Broadcast(c, response)
+				Broadcast(c, result.RouterBody)
 			}
 
 			c.Abort()
@@ -114,12 +114,12 @@ func ConfigJsMiddleware() gin.HandlerFunc {
 		}
 
 		fileContent := ReplaceContextPathString(fmt.Sprintf(`
-define('httplive/config', { 
-	defaultPort:'%s', 
-	savePath: '${ContextPath}/httplive/webcli/api/save', 
-	fetchPath: '${ContextPath}/httplive/webcli/api/endpoint', 
-	deletePath: '${ContextPath}/httplive/webcli/api/deleteendpoint', 
-	treePath: '${ContextPath}/httplive/webcli/api/tree', 
+define('httplive/config', {
+	defaultPort:'%s',
+	savePath: '${ContextPath}/httplive/webcli/api/save',
+	fetchPath: '${ContextPath}/httplive/webcli/api/endpoint',
+	deletePath: '${ContextPath}/httplive/webcli/api/deleteendpoint',
+	treePath: '${ContextPath}/httplive/webcli/api/tree',
 	componentId: ''
 });`, Environments.Ports))
 		c.Writer.Header().Set("Content-Length", fmt.Sprintf("%d", len(fileContent)))

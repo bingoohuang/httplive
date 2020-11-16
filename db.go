@@ -2,6 +2,7 @@ package httplive
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -173,7 +174,7 @@ func createDB(dao *Dao) error {
         "name":"xxx",
         "age":100,
         "xxx":3000
-      }, 
+      },
       "status": 202,
       "headers": {
         "xxx": "yyy",
@@ -238,6 +239,12 @@ func CreateAPIDataModel(ep *Endpoint) *APIDataModel {
 		Filename: ep.Filename,
 	}
 
+	dynamic := gjson.Get(ep.Body, "dynamic")
+	isDynamic := dynamic.Type == gjson.JSON && strings.HasPrefix(dynamic.Raw, "[")
+	if isDynamic {
+		m.dynamicValuers = createDynamics(ep.Body, []byte(dynamic.Raw))
+	}
+
 	if ep.Filename != "" {
 		m.FileContent = []byte(ep.Body)
 	} else {
@@ -245,6 +252,26 @@ func CreateAPIDataModel(ep *Endpoint) *APIDataModel {
 	}
 
 	return m
+}
+
+func createDynamics(epBody string, dynamicRaw []byte) (dynamicValues []DynamicValue) {
+	if err := json.Unmarshal(dynamicRaw, &dynamicValues); err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	for i, v := range dynamicValues {
+		expr, err := govaluate.NewEvaluableExpression(v.Condition)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		dynamicValues[i].expr = expr
+		dynamicValues[i].parametersEvaluator = makeParameters(epBody, expr)
+	}
+
+	return
 }
 
 // CreateEndpoint creates an endpoint from APIDataModel
@@ -308,10 +335,8 @@ func GetEndpoint(id ID) (*APIDataModel, error) {
 
 // nolint gochecknoglobals
 var (
-	endpointRouter       *httprouter.Router
-	endpointRouterLock   sync.Mutex
-	endpointRouterServed bool
-	endpointRouterBody   []byte
+	endpointRouter     *httprouter.Router
+	endpointRouterLock sync.Mutex
 
 	boradcastThrottler = MakeThrottle(1 * time.Second)
 )
@@ -373,17 +398,28 @@ func CompactJSON(data []byte) []byte {
 	return compactedBuffer.Bytes()
 }
 
+type RouterResult struct {
+	RouterServed bool
+	RouterBody   []byte
+	Filename     string
+}
+
+type ContextKey int
+
+const routerResultKey ContextKey = iota
+
 // EndpointServeHTTP ...
-func EndpointServeHTTP(w http.ResponseWriter, r *http.Request) (bool, []byte) {
+func EndpointServeHTTP(w http.ResponseWriter, r *http.Request) RouterResult {
 	endpointRouterLock.Lock()
-	defer endpointRouterLock.Unlock()
+	router := endpointRouter
+	endpointRouterLock.Unlock()
 
-	endpointRouterServed = false
-	endpointRouterBody = nil
+	v := RouterResult{}
 
-	endpointRouter.ServeHTTP(w, r)
+	ctx := context.WithValue(r.Context(), routerResultKey, &v)
+	router.ServeHTTP(w, r.WithContext(ctx))
 
-	return endpointRouterServed, endpointRouterBody
+	return v
 }
 
 func JoinContextPath(s string) string {
@@ -396,33 +432,34 @@ func JoinContextPath(s string) string {
 
 // SyncEndpointRouter ...
 func SyncEndpointRouter() {
-	endpointRouterLock.Lock()
-	defer endpointRouterLock.Unlock()
-
-	endpointRouter = httprouter.New()
+	router := httprouter.New()
 
 	for _, endpoint := range EndpointList() {
 		ep := endpoint
 		path := JoinContextPath(ep.Endpoint)
 		if ep.MimeType == "" {
 			b := []byte(ep.Body)
-			endpointRouter.Handle(ep.Method, path,
+			router.Handle(ep.Method, path,
 				func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-					endpointRouterServed = true
+					routerResult := r.Context().Value(routerResultKey).(*RouterResult)
+					routerResult.RouterServed = true
 
-					if !dynamic(ep.Body, r, w, p) {
+					if !dynamic(ep, r, w, p, routerResult) {
 						w.WriteHeader(http.StatusOK)
 						w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
-						endpointRouterBody = b
+						routerResult.RouterBody = b
 						_, _ = w.Write(b)
 					}
 
 				})
 		} else {
-			endpointRouter.Handle(ep.Method, path,
+			router.Handle(ep.Method, path,
 				func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-					endpointRouterServed = true
+					routerResult := r.Context().Value(routerResultKey).(*RouterResult)
+					routerResult.RouterServed = true
+					routerResult.Filename = ep.Filename
+
 					w.WriteHeader(http.StatusOK)
 					w.Header().Set("Content-Disposition", `attachment; filename="`+ep.Filename+`"`)
 					reader := bytes.NewReader(ep.FileContent)
@@ -430,6 +467,10 @@ func SyncEndpointRouter() {
 				})
 		}
 	}
+
+	endpointRouterLock.Lock()
+	endpointRouter = router
+	endpointRouterLock.Unlock()
 }
 
 type DynamicValue struct {
@@ -437,9 +478,12 @@ type DynamicValue struct {
 	Response  json.RawMessage   `json:"response"`
 	Status    int               `json:"status"`
 	Headers   map[string]string `json:"headers"`
+
+	expr                *govaluate.EvaluableExpression `json:"-"`
+	parametersEvaluator map[string]Valuer              `json:"-"`
 }
 
-func dynamic(respBody string, r *http.Request, w http.ResponseWriter, p httprouter.Params) bool {
+func dynamic(ep APIDataModel, r *http.Request, w http.ResponseWriter, p httprouter.Params, routerResult *RouterResult) bool {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		fmt.Println(err)
@@ -453,33 +497,24 @@ func dynamic(respBody string, r *http.Request, w http.ResponseWriter, p httprout
 	// And now set a new body, which will simulate the same data we read:
 	r.Body = ioutil.NopCloser(bytes.NewBuffer(reqBody))
 
-	dynamic := gjson.Get(respBody, "dynamic")
-	if !(dynamic.Type == gjson.JSON && strings.HasPrefix(dynamic.Raw, "[")) {
+	if len(ep.dynamicValuers) == 0 {
 		return false
 	}
 
-	var dynamicValues []DynamicValue
-	if err := json.Unmarshal([]byte(dynamic.Raw), &dynamicValues); err != nil {
-		fmt.Println(err)
-		return false
-	}
-
-	for _, v := range dynamicValues {
-		expr, err := govaluate.NewEvaluableExpression(v.Condition)
-		if err != nil {
-			fmt.Println(err)
-			return false
+	for _, v := range ep.dynamicValuers {
+		parameters := make(map[string]interface{}, len(v.parametersEvaluator))
+		for k, valuer := range v.parametersEvaluator {
+			parameters[k] = valuer(r, reqBody, p)
 		}
 
-		parameters := makeParameters(respBody, r, expr, reqBody, p)
-		evaluateResult, err := expr.Evaluate(parameters)
+		evaluateResult, err := v.expr.Evaluate(parameters)
 		if err != nil {
 			fmt.Println(err)
 			return false
 		}
 
 		if yes, ok := evaluateResult.(bool); ok && yes {
-			v.respsoneDynamic(w)
+			v.respsoneDynamic(w, routerResult)
 
 			return true
 		}
@@ -488,7 +523,7 @@ func dynamic(respBody string, r *http.Request, w http.ResponseWriter, p httprout
 	return false
 }
 
-func (v DynamicValue) respsoneDynamic(w http.ResponseWriter) {
+func (v DynamicValue) respsoneDynamic(w http.ResponseWriter, routerResult *RouterResult) {
 	if v.Status != 0 {
 		w.WriteHeader(v.Status)
 	} else {
@@ -512,41 +547,53 @@ func (v DynamicValue) respsoneDynamic(w http.ResponseWriter) {
 		}
 	}
 
-	endpointRouterBody = v.Response
+	routerResult.RouterBody = v.Response
 	_, _ = w.Write(v.Response)
 }
 
-func makeParameters(respBody string,
-	r *http.Request,
-	expr *govaluate.EvaluableExpression,
-	reqBody []byte, p httprouter.Params,
-) map[string]interface{} {
-	parameters := make(map[string]interface{})
+func makeParameters(respBody string, expr *govaluate.EvaluableExpression) map[string]Valuer {
+	parameters := make(map[string]Valuer)
 	for _, va := range expr.Vars() {
 		if strings.HasPrefix(va, "json_") {
-			parameters[va] = gjson.GetBytes(reqBody, va[5:]).Value()
-		} else if strings.HasPrefix(va, "query_") {
-			parameters[va] = r.URL.Query().Get(va[6:])
-		} else if strings.HasPrefix(va, "router_") {
-			// /user/:user
-			parameters[va] = p.ByName(va[7:])
-		} else if strings.HasPrefix(va, "header_") {
-			parameters[va] = r.Header.Get(va[7:])
-		} else {
-			indirectVa := gjson.Get(respBody, va).String()
-			var vaValue interface{} = nil
-			if strings.HasPrefix(indirectVa, "json:") {
-				vaValue = gjson.GetBytes(reqBody, indirectVa[5:]).Value()
-			} else if strings.HasPrefix(indirectVa, "query:") {
-				vaValue = r.URL.Query().Get(indirectVa[6:])
-			} else if strings.HasPrefix(indirectVa, "router:") {
-				// /user/:user
-				vaValue = p.ByName(indirectVa[7:])
-			} else if strings.HasPrefix(indirectVa, "header:") {
-				vaValue = r.Header.Get(indirectVa[7:])
+			k := va[5:]
+
+			parameters[va] = func(r *http.Request, reqBody []byte, p httprouter.Params) interface{} {
+				return gjson.GetBytes(reqBody, k).Value()
 			}
 
-			parameters[va] = vaValue
+		} else if strings.HasPrefix(va, "query_") {
+			k := va[6:]
+			parameters[va] = func(r *http.Request, reqBody []byte, p httprouter.Params) interface{} {
+				return r.URL.Query().Get(k)
+			}
+		} else if strings.HasPrefix(va, "router_") {
+			// /user/:user
+			k := va[7:]
+			parameters[va] = func(r *http.Request, reqBody []byte, p httprouter.Params) interface{} {
+				return p.ByName(k)
+			}
+		} else if strings.HasPrefix(va, "header_") {
+			k := va[7:]
+			parameters[va] = func(r *http.Request, reqBody []byte, p httprouter.Params) interface{} {
+				return r.Header.Get(k)
+			}
+		} else {
+			indirectVa := gjson.Get(respBody, va).String()
+
+			parameters[va] = func(r *http.Request, reqBody []byte, p httprouter.Params) interface{} {
+				if strings.HasPrefix(indirectVa, "json:") {
+					return gjson.GetBytes(reqBody, indirectVa[5:]).Value()
+				} else if strings.HasPrefix(indirectVa, "query:") {
+					return r.URL.Query().Get(indirectVa[6:])
+				} else if strings.HasPrefix(indirectVa, "router:") {
+					// /user/:user
+					return p.ByName(indirectVa[7:])
+				} else if strings.HasPrefix(indirectVa, "header:") {
+					return r.Header.Get(indirectVa[7:])
+				}
+
+				return nil
+			}
 		}
 	}
 

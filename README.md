@@ -73,3 +73,94 @@ Upload a database file from the web interface.
 
 - [endpoints.dev store the details of any HTTP request and display them](https://www.endpoints.dev/)
 - [Smocker is a simple and efficient HTTP mock server](https://github.com/Thiht/smocker)
+
+## Dynamic demo
+
+`POST /dynamic/demo`
+
+```json
+{
+  "name": "json:name",
+  "age": "json:age",
+  "dynamic": [
+    {
+      "condition":"name == 'bingoo'",
+      "response": {
+        "name":"bingoo"
+      }
+    },
+    {
+      "condition":"json_name == 'huang'",
+      "response": {
+        "name":"huangxxx",
+        "age":100
+      }
+    },
+    {
+      "condition":"name == 'ding' && age == 10",
+      "response": {
+        "name":"xxx",
+        "age":100,
+        "xxx":3000
+      }
+    }
+    ,
+    {
+      "condition":"json_name == 'ding' && json_age == 20",
+      "response": {
+        "name":"xxx",
+        "age":100,
+        "xxx":3000
+      },
+      "status": 202,
+      "headers": {
+        "xxx": "yyy",
+        "Content-Type": "text/plain; charset=utf-8"
+      }
+    }
+  ]
+}
+```
+
+httpie test
+
+```bash
+🕙[2020-11-16 23:42:36.476] ❯ http :5003/dynamic/demo name=bingoo
+HTTP/1.1 200 OK
+Content-Length: 33
+Content-Type: application/json; charset=utf-8
+Date: Mon, 16 Nov 2020 16:16:51 GMT
+
+{
+    "name": "bingoo"
+}
+
+
+🕙[2020-11-17 00:16:51.399] ❯ http :5003/dynamic/demo name=huang
+HTTP/1.1 200 OK
+Content-Length: 54
+Content-Type: application/json; charset=utf-8
+Date: Mon, 16 Nov 2020 16:17:15 GMT
+
+{
+    "age": 100,
+    "name": "huangxxx"
+}
+```
+
+gobench test
+
+```bash
+🕙[2020-11-17 00:19:47.157] ❯ gobench -u http://127.0.0.1:5003/dynamic/demo --method POST -postData '{"name":"huang"}' -p 0
+Dispatching 100 goroutines
+Waiting for results...
+[√] [200] { "name":"huangxxx", "age":100 }..........
+Total Requests:                 658917 hits
+Successful requests:            658917 hits
+Network failed:                 0 hits
+Bad requests(!2xx):             0 hits
+Successful requests rate:       65873 hits/sec
+Read throughput:                11 MiB/sec
+Write throughput:               11 MiB/sec
+Test time:                      10.002748474s
+```

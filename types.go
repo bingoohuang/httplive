@@ -2,9 +2,11 @@ package httplive
 
 import (
 	"encoding/json"
+	"net/http"
 	"strings"
 
 	"github.com/bingoohuang/gou/str"
+	"github.com/julienschmidt/httprouter"
 )
 
 // EnvVars ...
@@ -105,6 +107,8 @@ func (i ID) Int() int {
 	return str.ParseInt(string(i))
 }
 
+type Valuer func(r *http.Request, reqBody []byte, p httprouter.Params) interface{}
+
 // APIDataModel ...
 type APIDataModel struct {
 	ID          ID     `json:"id" form:"id"`
@@ -114,6 +118,8 @@ type APIDataModel struct {
 	Filename    string `json:"filename"`
 	FileContent []byte `json:"-"`
 	Body        string `json:"body"`
+
+	dynamicValuers []DynamicValue `json:"-"`
 }
 
 // Pair ...
