@@ -438,39 +438,40 @@ func SyncEndpointRouter() {
 		ep := endpoint
 		path := JoinContextPath(ep.Endpoint)
 		if ep.MimeType == "" {
-			b := []byte(ep.Body)
-			router.Handle(ep.Method, path,
-				func(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-					routerResult := r.Context().Value(routerResultKey).(*RouterResult)
-					routerResult.RouterServed = true
-
-					if !dynamic(ep, r, w, p, routerResult) {
-						w.WriteHeader(http.StatusOK)
-						w.Header().Set("Content-Type", "application/json; charset=utf-8")
-
-						routerResult.RouterBody = b
-						_, _ = w.Write(b)
-					}
-
-				})
+			router.Handle(ep.Method, path, ep.HandleJSON)
 		} else {
-			router.Handle(ep.Method, path,
-				func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-					routerResult := r.Context().Value(routerResultKey).(*RouterResult)
-					routerResult.RouterServed = true
-					routerResult.Filename = ep.Filename
-
-					w.WriteHeader(http.StatusOK)
-					w.Header().Set("Content-Disposition", `attachment; filename="`+ep.Filename+`"`)
-					reader := bytes.NewReader(ep.FileContent)
-					http.ServeContent(w, r, ep.Filename, time.Now(), reader)
-				})
+			router.Handle(ep.Method, path, ep.HandleFileDownload)
 		}
 	}
 
 	endpointRouterLock.Lock()
 	endpointRouter = router
 	endpointRouterLock.Unlock()
+}
+
+func (ep APIDataModel) HandleFileDownload(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	routerResult := r.Context().Value(routerResultKey).(*RouterResult)
+	routerResult.RouterServed = true
+	routerResult.Filename = ep.Filename
+
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Disposition", `attachment; filename="`+ep.Filename+`"`)
+	reader := bytes.NewReader(ep.FileContent)
+	http.ServeContent(w, r, ep.Filename, time.Now(), reader)
+}
+
+func (ep APIDataModel) HandleJSON(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	routerResult := r.Context().Value(routerResultKey).(*RouterResult)
+	routerResult.RouterServed = true
+
+	if !dynamic(ep, r, w, p, routerResult) {
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+		b := []byte(ep.Body)
+		routerResult.RouterBody = b
+		_, _ = w.Write(b)
+	}
 }
 
 type DynamicValue struct {
