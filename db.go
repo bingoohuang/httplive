@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"mime"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -455,9 +456,18 @@ func (ep APIDataModel) HandleFileDownload(w http.ResponseWriter, r *http.Request
 	routerResult.Filename = ep.Filename
 
 	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Disposition", `attachment; filename="`+ep.Filename+`"`)
-	reader := bytes.NewReader(ep.FileContent)
-	http.ServeContent(w, r, ep.Filename, time.Now(), reader)
+
+	h := w.Header().Set
+
+	h("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": ep.Filename}))
+	h("Content-Description", "File Transfer")
+	h("Content-Type", "application/octet-stream")
+	h("Content-Transfer-Encoding", "binary")
+	h("Expires", "0")
+	h("Cache-Control", "must-revalidate")
+	h("Pragma", "public")
+
+	http.ServeContent(w, r, ep.Filename, time.Now(), bytes.NewReader(ep.FileContent))
 }
 
 func (ep APIDataModel) HandleJSON(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
