@@ -454,18 +454,18 @@ func (ep APIDataModel) HandleFileDownload(w http.ResponseWriter, r *http.Request
 	routerResult := r.Context().Value(routerResultKey).(*RouterResult)
 	routerResult.RouterServed = true
 	routerResult.Filename = ep.Filename
-
 	w.WriteHeader(http.StatusOK)
 
-	h := w.Header().Set
-
-	h("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": ep.Filename}))
-	h("Content-Description", "File Transfer")
-	h("Content-Type", "application/octet-stream")
-	h("Content-Transfer-Encoding", "binary")
-	h("Expires", "0")
-	h("Cache-Control", "must-revalidate")
-	h("Pragma", "public")
+	if r.URL.Query().Get("_view") == "" {
+		h := w.Header().Set
+		h("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": ep.Filename}))
+		h("Content-Description", "File Transfer")
+		h("Content-Type", "application/octet-stream")
+		h("Content-Transfer-Encoding", "binary")
+		h("Expires", "0")
+		h("Cache-Control", "must-revalidate")
+		h("Pragma", "public")
+	}
 
 	http.ServeContent(w, r, ep.Filename, time.Now(), bytes.NewReader(ep.FileContent))
 }
