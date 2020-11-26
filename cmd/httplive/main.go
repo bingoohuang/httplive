@@ -30,7 +30,7 @@ func main() {
 
 	app.Name = "httplive"
 	app.Usage = "HTTP Request & Response Service, Mock HTTP"
-	app.Version = "0.0.1"
+	app.Version = "1.0.1 @ 2020-11-26 15:59:07"
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:        "ports, p",
