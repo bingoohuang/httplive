@@ -58,26 +58,37 @@ func main() {
 }
 
 func createDB(env *httplive.EnvVars) error {
-	fullPath := httplive.Environments.DBFullPath
-	createDbRequired := false
-	if fullPath == "" {
-		fullPath = path.Join(env.WorkingDir, "httplive.db")
-		createDbRequired = true
-	} else {
-		p := filepath.Dir(fullPath)
-		if _, err := os.Stat(p); os.IsNotExist(err) {
-			logrus.Fatalf("fullPath %s error %v", fullPath, err)
-		}
-
-		if s, err := os.Stat(fullPath); err != nil && s.IsDir() {
-			fullPath = path.Join(p, "httplive.db")
-			createDbRequired = true
-		}
-	}
+	fullPath, createDbRequired := fixDBPath(env)
 
 	env.DBFile = fullPath
 
 	return httplive.CreateDB(createDbRequired)
+}
+
+func fixDBPath(env *httplive.EnvVars) (string, bool) {
+	fullPath := env.DBFullPath
+	if fullPath == "" {
+		return path.Join(env.WorkingDir, "httplive.db"), true
+	}
+
+	if s, err := os.Stat(fullPath); err == nil && !s.IsDir() {
+		return fullPath, false
+	}
+
+	p := filepath.Dir(fullPath)
+	if _, err := os.Stat(p); os.IsNotExist(err) {
+		err := os.MkdirAll(p, 0644)
+		if err != nil {
+			logrus.Fatalf("create  dir %s error %v", fullPath, err)
+		}
+	}
+
+	fullPath = path.Join(p, "httplive.db")
+	if s, err := os.Stat(fullPath); err == nil && !s.IsDir() {
+		return fullPath, false
+	}
+
+	return fullPath, true
 }
 
 func host(env *httplive.EnvVars) error {
