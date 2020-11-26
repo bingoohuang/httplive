@@ -41,10 +41,8 @@ define(["knockout", "toastr", "httplive/app/utils", "httplive/app/main"], functi
         case "DELETE":
           return "label label-danger";
         default:
-          break;
+          return "label label-default";
       }
-
-      return "Http Live:" + this.port();
     }, this);
 
     this.submit = function() {

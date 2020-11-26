@@ -10,7 +10,6 @@ require (
 	github.com/gin-gonic/gin v1.5.0
 	github.com/gobuffalo/packr/v2 v2.8.0
 	github.com/gorilla/websocket v1.4.1
-	github.com/julienschmidt/httprouter v1.3.0
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 	github.com/sirupsen/logrus v1.4.2
 	github.com/skratchdot/open-golang v0.0.0-20190402232053-79abb63cd66e

@@ -2,11 +2,11 @@ package httplive
 
 import (
 	"encoding/json"
-	"net/http"
 	"strings"
 
+	"github.com/gin-gonic/gin"
+
 	"github.com/bingoohuang/gou/str"
-	"github.com/julienschmidt/httprouter"
 )
 
 // EnvVars ...
@@ -107,7 +107,7 @@ func (i ID) Int() int {
 	return str.ParseInt(string(i))
 }
 
-type Valuer func(r *http.Request, reqBody []byte, p httprouter.Params) interface{}
+type Valuer func(reqBody []byte, c *gin.Context) interface{}
 
 // APIDataModel ...
 type APIDataModel struct {

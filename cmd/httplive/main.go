@@ -86,8 +86,8 @@ func host(env *httplive.EnvVars) error {
 	}
 
 	r := gin.New()
-	r.Use(httplive.APIMiddleware(), httplive.StaticFileMiddleware(),
-		httplive.CORSMiddleware(), httplive.ConfigJsMiddleware())
+	r.Use(httplive.APIMiddleware, httplive.StaticFileMiddleware,
+		httplive.CORSMiddleware, httplive.ConfigJsMiddleware)
 
 	r.GET(httplive.JoinContextPath("/httplive/ws"), wshandler)
 

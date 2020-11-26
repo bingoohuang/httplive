@@ -2,7 +2,6 @@ package httplive
 
 import (
 	"bytes"
-	"io/ioutil"
 	"mime"
 	"net/http"
 	"os"
@@ -29,11 +28,7 @@ func TryGetLocalFile(c *gin.Context, filePath string) bool {
 	f := path.Join(Environments.WorkingDir, filePath)
 
 	if _, err := os.Stat(f); err == nil {
-		//c.File(f)
-		ext := path.Ext(filePath)
-		contentType := mime.TypeByExtension(ext)
-		fileData, _ := ioutil.ReadFile(f)
-		c.Data(http.StatusOK, contentType, ReplaceContextPath(fileData))
+		c.File(f)
 		return true
 	}
 
@@ -46,8 +41,7 @@ func TryGetAssetFile(c *gin.Context, filePath string) bool {
 	assetData, err := Asset(filePath)
 
 	if err == nil && assetData != nil {
-		ext := path.Ext(filePath)
-		contentType := mime.TypeByExtension(ext)
+		contentType := mime.TypeByExtension(path.Ext(filePath))
 		c.Data(http.StatusOK, contentType, ReplaceContextPath(assetData))
 		return true
 	}

@@ -21,22 +21,22 @@ func createJsTreeModel(a APIDataModel) JsTreeDataModel {
 		Children:  []JsTreeDataModel{},
 	}
 
-	m := a.Method
-	switch m {
-	case http.MethodPost, http.MethodPut, http.MethodDelete:
+	label := ""
+	switch a.Method {
+	case http.MethodGet:
+		label = "label label-primary label-small"
+	case http.MethodPost:
+		label = "label label-success label-small"
+	case http.MethodPut:
+		label = "label label-warning label-small"
+	case http.MethodDelete:
+		label = "label label-danger label-small"
 	default:
-		m = http.MethodGet
+		label = "label label-default label-small"
 	}
 
-	httpMethodLabelMap := map[string]string{
-		http.MethodGet:    "label label-primary label-small",
-		http.MethodPost:   "label label-success label-small",
-		http.MethodPut:    "label label-warning label-small",
-		http.MethodDelete: "label label-danger label-small",
-	}
-
-	model.Type = m
-	model.Text = fmt.Sprintf(`<span class="%v">%v</span> %v`, httpMethodLabelMap[m], m, a.Endpoint)
+	model.Type = a.Method
+	model.Text = fmt.Sprintf(`<span class="%v">%v</span> %v`, label, a.Method, a.Endpoint)
 
 	return model
 }

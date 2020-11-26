@@ -14,12 +14,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gin-gonic/gin"
+
 	"github.com/Knetic/govaluate"
 	"github.com/tidwall/gjson"
 
 	"github.com/bingoohuang/sqlx"
 	"github.com/gobuffalo/packr/v2"
-	"github.com/julienschmidt/httprouter"
 	_ "github.com/mattn/go-sqlite3" // import sqlite3
 )
 
@@ -226,7 +227,7 @@ func SaveEndpoint(model APIDataModel) (*Endpoint, error) {
 	return ep, err
 }
 
-// CreateAPIDataModel creates APIDataModel from Endpoint
+// CreateAPIDataModel creates APIDataModel from Endpoint.
 func CreateAPIDataModel(ep *Endpoint) *APIDataModel {
 	if ep == nil {
 		return nil
@@ -275,7 +276,7 @@ func createDynamics(epBody string, dynamicRaw []byte) (dynamicValues []DynamicVa
 	return
 }
 
-// CreateEndpoint creates an endpoint from APIDataModel
+// CreateEndpoint creates an endpoint from APIDataModel.
 func CreateEndpoint(model APIDataModel, old *Endpoint) Endpoint {
 	now := time.Now().Format("2006-01-02 15:04:05.000")
 	body := model.Body
@@ -336,10 +337,10 @@ func GetEndpoint(id ID) (*APIDataModel, error) {
 
 // nolint gochecknoglobals
 var (
-	endpointRouter     *httprouter.Router
+	endpointRouter     *gin.Engine
 	endpointRouterLock sync.Mutex
 
-	boradcastThrottler = MakeThrottle(1 * time.Second)
+	broadcastThrottler = MakeThrottle(1 * time.Second)
 )
 
 // Throttle ...
@@ -433,15 +434,24 @@ func JoinContextPath(s string) string {
 
 // SyncEndpointRouter ...
 func SyncEndpointRouter() {
-	router := httprouter.New()
+	router := gin.New()
 
 	for _, endpoint := range EndpointList() {
 		ep := endpoint
 		path := JoinContextPath(ep.Endpoint)
-		if ep.MimeType == "" {
-			router.Handle(ep.Method, path, ep.HandleJSON)
+
+		if strings.EqualFold(ep.Method, "ANY") {
+			if ep.MimeType == "" {
+				router.Any(path, ep.HandleJSON)
+			} else {
+				router.Any(path, ep.HandleFileDownload)
+			}
 		} else {
-			router.Handle(ep.Method, path, ep.HandleFileDownload)
+			if ep.MimeType == "" {
+				router.Handle(ep.Method, path, ep.HandleJSON)
+			} else {
+				router.Handle(ep.Method, path, ep.HandleFileDownload)
+			}
 		}
 	}
 
@@ -450,14 +460,14 @@ func SyncEndpointRouter() {
 	endpointRouterLock.Unlock()
 }
 
-func (ep APIDataModel) HandleFileDownload(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	routerResult := r.Context().Value(routerResultKey).(*RouterResult)
+func (ep APIDataModel) HandleFileDownload(c *gin.Context) {
+	routerResult := c.Request.Context().Value(routerResultKey).(*RouterResult)
 	routerResult.RouterServed = true
 	routerResult.Filename = ep.Filename
-	w.WriteHeader(http.StatusOK)
+	c.Status(http.StatusOK)
 
-	if r.URL.Query().Get("_view") == "" {
-		h := w.Header().Set
+	if c.Query("_view") == "" {
+		h := c.Header
 		h("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": ep.Filename}))
 		h("Content-Description", "File Transfer")
 		h("Content-Type", "application/octet-stream")
@@ -467,20 +477,17 @@ func (ep APIDataModel) HandleFileDownload(w http.ResponseWriter, r *http.Request
 		h("Pragma", "public")
 	}
 
-	http.ServeContent(w, r, ep.Filename, time.Now(), bytes.NewReader(ep.FileContent))
+	http.ServeContent(c.Writer, c.Request, ep.Filename, time.Now(), bytes.NewReader(ep.FileContent))
 }
 
-func (ep APIDataModel) HandleJSON(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-	routerResult := r.Context().Value(routerResultKey).(*RouterResult)
+func (ep APIDataModel) HandleJSON(c *gin.Context) {
+	routerResult := c.Request.Context().Value(routerResultKey).(*RouterResult)
 	routerResult.RouterServed = true
 
-	if !dynamic(ep, r, w, p, routerResult) {
-		w.WriteHeader(http.StatusOK)
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-
+	if !routerResult.dynamic(ep, c) {
 		b := []byte(ep.Body)
 		routerResult.RouterBody = b
-		_, _ = w.Write(b)
+		c.Data(http.StatusOK, "application/json; charset=utf-8", b)
 	}
 }
 
@@ -490,12 +497,12 @@ type DynamicValue struct {
 	Status    int               `json:"status"`
 	Headers   map[string]string `json:"headers"`
 
-	expr                *govaluate.EvaluableExpression `json:"-"`
-	parametersEvaluator map[string]Valuer              `json:"-"`
+	expr                *govaluate.EvaluableExpression
+	parametersEvaluator map[string]Valuer
 }
 
-func dynamic(ep APIDataModel, r *http.Request, w http.ResponseWriter, p httprouter.Params, routerResult *RouterResult) bool {
-	reqBody, err := ioutil.ReadAll(r.Body)
+func (rr *RouterResult) dynamic(ep APIDataModel, c *gin.Context) bool {
+	reqBody, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
 		fmt.Println(err)
 		//log.Printf("Error reading body: %v", err)
@@ -506,7 +513,7 @@ func dynamic(ep APIDataModel, r *http.Request, w http.ResponseWriter, p httprout
 	// Work / inspect body. You may even modify it!
 
 	// And now set a new body, which will simulate the same data we read:
-	r.Body = ioutil.NopCloser(bytes.NewBuffer(reqBody))
+	c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(reqBody))
 
 	if len(ep.dynamicValuers) == 0 {
 		return false
@@ -515,7 +522,7 @@ func dynamic(ep APIDataModel, r *http.Request, w http.ResponseWriter, p httprout
 	for _, v := range ep.dynamicValuers {
 		parameters := make(map[string]interface{}, len(v.parametersEvaluator))
 		for k, valuer := range v.parametersEvaluator {
-			parameters[k] = valuer(r, reqBody, p)
+			parameters[k] = valuer(reqBody, c)
 		}
 
 		evaluateResult, err := v.expr.Evaluate(parameters)
@@ -525,7 +532,7 @@ func dynamic(ep APIDataModel, r *http.Request, w http.ResponseWriter, p httprout
 		}
 
 		if yes, ok := evaluateResult.(bool); ok && yes {
-			v.respsoneDynamic(w, routerResult)
+			v.responseDynamic(c, rr)
 
 			return true
 		}
@@ -534,32 +541,32 @@ func dynamic(ep APIDataModel, r *http.Request, w http.ResponseWriter, p httprout
 	return false
 }
 
-func (v DynamicValue) respsoneDynamic(w http.ResponseWriter, routerResult *RouterResult) {
+func (v DynamicValue) responseDynamic(c *gin.Context, routerResult *RouterResult) {
 	if v.Status != 0 {
-		w.WriteHeader(v.Status)
+		c.Status(v.Status)
 	} else {
-		w.WriteHeader(http.StatusOK)
+		c.Status(http.StatusOK)
 	}
 
 	contentTypeSet := false
-	header := w.Header()
+
 	for k, v := range v.Headers {
 		if strings.EqualFold(k, "Content-Type") {
 			contentTypeSet = true
 		}
-		header.Set(k, v)
+		c.Header(k, v)
 	}
 
 	if !contentTypeSet {
 		if bytes.HasPrefix(v.Response, []byte("{")) || bytes.HasPrefix(v.Response, []byte("[")) {
-			header.Set("Content-Type", "application/json; charset=utf-8")
+			c.Header("Content-Type", "application/json; charset=utf-8")
 		} else {
-			header.Set("Content-Type", "text/plain; charset=utf-8")
+			c.Header("Content-Type", "text/plain; charset=utf-8")
 		}
 	}
 
 	routerResult.RouterBody = v.Response
-	_, _ = w.Write(v.Response)
+	_, _ = c.Writer.Write(v.Response)
 }
 
 func makeParameters(respBody string, expr *govaluate.EvaluableExpression) map[string]Valuer {
@@ -568,39 +575,38 @@ func makeParameters(respBody string, expr *govaluate.EvaluableExpression) map[st
 		if strings.HasPrefix(va, "json_") {
 			k := va[5:]
 
-			parameters[va] = func(r *http.Request, reqBody []byte, p httprouter.Params) interface{} {
+			parameters[va] = func(reqBody []byte, c *gin.Context) interface{} {
 				return gjson.GetBytes(reqBody, k).Value()
 			}
-
 		} else if strings.HasPrefix(va, "query_") {
 			k := va[6:]
-			parameters[va] = func(r *http.Request, reqBody []byte, p httprouter.Params) interface{} {
-				return r.URL.Query().Get(k)
+			parameters[va] = func(reqBody []byte, c *gin.Context) interface{} {
+				return c.Query(k)
 			}
 		} else if strings.HasPrefix(va, "router_") {
 			// /user/:user
 			k := va[7:]
-			parameters[va] = func(r *http.Request, reqBody []byte, p httprouter.Params) interface{} {
-				return p.ByName(k)
+			parameters[va] = func(reqBody []byte, c *gin.Context) interface{} {
+				return c.Param(k)
 			}
 		} else if strings.HasPrefix(va, "header_") {
 			k := va[7:]
-			parameters[va] = func(r *http.Request, reqBody []byte, p httprouter.Params) interface{} {
-				return r.Header.Get(k)
+			parameters[va] = func(reqBody []byte, c *gin.Context) interface{} {
+				return c.GetHeader(k)
 			}
 		} else {
 			indirectVa := gjson.Get(respBody, va).String()
 
-			parameters[va] = func(r *http.Request, reqBody []byte, p httprouter.Params) interface{} {
+			parameters[va] = func(reqBody []byte, c *gin.Context) interface{} {
 				if strings.HasPrefix(indirectVa, "json:") {
 					return gjson.GetBytes(reqBody, indirectVa[5:]).Value()
 				} else if strings.HasPrefix(indirectVa, "query:") {
-					return r.URL.Query().Get(indirectVa[6:])
+					return c.Query(indirectVa[6:])
 				} else if strings.HasPrefix(indirectVa, "router:") {
 					// /user/:user
-					return p.ByName(indirectVa[7:])
+					return c.Param(indirectVa[7:])
 				} else if strings.HasPrefix(indirectVa, "header:") {
-					return r.Header.Get(indirectVa[7:])
+					return c.GetHeader(indirectVa[7:])
 				}
 
 				return nil

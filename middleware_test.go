@@ -33,7 +33,7 @@ func TestCORSMiddleware(t *testing.T) {
 		{"Access-Control-Expose-Headers", "Content-Length"},
 		{"Access-Control-Allow-Credentials", "true"},
 	}
-	f := CORSMiddleware()
+	f := CORSMiddleware
 
 	for _, tt := range tests {
 		c, _ := gin.CreateTestContext(httptest.NewRecorder())
