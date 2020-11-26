@@ -41,6 +41,18 @@ func createJsTreeModel(a APIDataModel) JsTreeDataModel {
 	return model
 }
 
+type versionT struct {
+	giu.T `url:"GET /version"`
+}
+
+// Tree ...
+func (ctrl WebCliController) Version(_ versionT) gin.H {
+	return gin.H{
+		"version":    "1.0.1",
+		"updateTime": "2020-11-26 15:59:07",
+	}
+}
+
 type treeT struct {
 	giu.T `url:"GET /api/tree"`
 }
