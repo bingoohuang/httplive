@@ -5,7 +5,7 @@
 The **HttpLive** is a tool for **API designers, Proxy, mobile and web application developers**
 to develop and test their applications faster without being dependent on any server or backend applications.
 
-![](httplive-ui.png)
+![](doc/httplive-ui.png)
 
 HttpLive has a built-in user interface. Therefore, you can do all the configurations you need on this UI,
 and with dynamic URL (Routing) definitions you can specify your own JSON return types for your applications.
@@ -53,8 +53,6 @@ you cannot access the keys of 5003 port. You can use multi-port host to overcome
 
 ## Compiling the UI into the Go binary
 
-    go get github.com/jteeuwen/go-bindata/...
-    go-bindata -pkg "httplive" -o "bindata.go" public/...
     go install -ldflags="-s -w" ./...
 
 ## Todo

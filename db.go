@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"mime"
 	"net/http"
@@ -16,12 +17,12 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/markbates/pkger"
 
 	"github.com/Knetic/govaluate"
 	"github.com/tidwall/gjson"
 
 	"github.com/bingoohuang/sqlx"
-	"github.com/gobuffalo/packr/v2"
 	_ "github.com/mattn/go-sqlite3" // import sqlite3
 )
 
@@ -52,8 +53,6 @@ type Dao struct {
 	Logger          sqlx.DaoLogger
 }
 
-var box = packr.New("myBox", "assets")
-
 // CreateDao creates a dao.
 func CreateDao(db *sql.DB) (*Dao, error) {
 	dao := &Dao{Logger: &sqlx.DaoLogrus{}}
@@ -63,12 +62,19 @@ func CreateDao(db *sql.DB) (*Dao, error) {
 }
 
 func boxString(name string) string {
-	s, err := box.FindString(name)
+	pkger.Include("/assets")
+
+	f, err := pkger.Open(filepath.Join("/assets", name))
 	if err != nil {
 		panic(err)
 	}
 
-	return s
+	defer f.Close()
+
+	buf := new(bytes.Buffer)
+	io.Copy(buf, f)
+
+	return buf.String()
 }
 
 // nolint gochecknoglobals

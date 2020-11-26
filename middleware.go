@@ -3,6 +3,7 @@ package httplive
 import (
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -42,9 +43,9 @@ func StaticFileMiddleware(c *gin.Context) {
 	}
 
 	uriPath := strings.TrimPrefix(p, "/httplive")
-	assetPath := "public" + uriPath
+	assetPath := filepath.Join("/public", uriPath)
 	if c.Request.Method == http.MethodGet && uriPath == "/" {
-		assetPath = "public/index.html"
+		assetPath = "/public/index.html"
 	}
 
 	if TryGetFile(c, assetPath) {

@@ -16,15 +16,12 @@ proxy:
 init:
 	go get github.com/jteeuwen/go-bindata/...
 
-res:
-	go-bindata -pkg "$(APPNAME)" -o "bindata.go" public/...
-
 default: proxy
 	go fmt ./...&&revive -exclude bindata.go .&&goimports -w .&&golangci-lint run --skip-files=bindata.go --enable-all
 
-# go get -u github.com/gobuffalo/packr/v2/packr2
+# go get github.com/markbates/pkger/cmd/pkger
 install: proxy
-	packr2
+	pkger
 	go install -ldflags="-s -w" ./...
 	ls -lh ~/go/bin/$(APPNAME)
 	upx ~/go/bin/$(APPNAME)
