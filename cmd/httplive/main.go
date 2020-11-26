@@ -72,7 +72,7 @@ func createDB(env *httplive.EnvVars) error {
 
 	env.DBFile = fullPath
 
-	return httplive.CreateDB()
+	return httplive.CreateDB(env.DBFile)
 }
 
 func host(env *httplive.EnvVars) error {
