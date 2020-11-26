@@ -30,7 +30,7 @@ func main() {
 
 	app.Name = "httplive"
 	app.Usage = "HTTP Request & Response Service, Mock HTTP"
-	app.Version = "1.0.1 @ 2020-11-26 15:59:07"
+	app.Version = httplive.Version + " @ " + httplive.UpdateTime
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:        "ports, p",
@@ -71,21 +71,26 @@ func fixDBPath(env *httplive.EnvVars) (string, bool) {
 		return path.Join(env.WorkingDir, "httplive.db"), true
 	}
 
-	if s, err := os.Stat(fullPath); err == nil && !s.IsDir() {
+	if s, err := os.Stat(fullPath); err == nil {
+		if s.IsDir() {
+			return path.Join(fullPath, "httplive.db"), true
+		}
+
 		return fullPath, false
 	}
 
-	p := filepath.Dir(fullPath)
+	p := fullPath
+	if strings.HasSuffix(fullPath, ".db") {
+		p = filepath.Dir(p)
+	} else {
+		fullPath = path.Join(p, "httplive.db")
+	}
+
 	if _, err := os.Stat(p); os.IsNotExist(err) {
 		err := os.MkdirAll(p, 0644)
 		if err != nil {
 			logrus.Fatalf("create  dir %s error %v", fullPath, err)
 		}
-	}
-
-	fullPath = path.Join(p, "httplive.db")
-	if s, err := os.Stat(fullPath); err == nil && !s.IsDir() {
-		return fullPath, false
 	}
 
 	return fullPath, true

@@ -45,11 +45,14 @@ type versionT struct {
 	giu.T `url:"GET /version"`
 }
 
+const Version = "1.0.2"
+const UpdateTime = "2020-11-26 16:22:23"
+
 // Tree ...
 func (ctrl WebCliController) Version(_ versionT) gin.H {
 	return gin.H{
-		"version":    "1.0.1",
-		"updateTime": "2020-11-26 15:59:07",
+		"version":    Version,
+		"updateTime": UpdateTime,
 	}
 }
 
