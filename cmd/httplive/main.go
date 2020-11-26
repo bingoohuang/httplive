@@ -59,20 +59,25 @@ func main() {
 
 func createDB(env *httplive.EnvVars) error {
 	fullPath := httplive.Environments.DBFullPath
+	createDbRequired := false
 	if fullPath == "" {
 		fullPath = path.Join(env.WorkingDir, "httplive.db")
+		createDbRequired = true
 	} else {
 		p := filepath.Dir(fullPath)
 		if _, err := os.Stat(p); os.IsNotExist(err) {
 			logrus.Fatalf("fullPath %s error %v", fullPath, err)
 		}
 
-		fullPath = path.Join(p, "httplive.db")
+		if s, err := os.Stat(fullPath); err != nil && s.IsDir() {
+			fullPath = path.Join(p, "httplive.db")
+			createDbRequired = true
+		}
 	}
 
 	env.DBFile = fullPath
 
-	return httplive.CreateDB(env.DBFile)
+	return httplive.CreateDB(createDbRequired)
 }
 
 func host(env *httplive.EnvVars) error {

@@ -10,7 +10,6 @@ import (
 	"mime"
 	"net/http"
 	"net/url"
-	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -96,8 +95,8 @@ func DBDo(f func(dao *Dao) error) error {
 }
 
 // CreateDB ...
-func CreateDB(dbFile string) error {
-	if _, err := os.Stat(dbFile); os.IsNotExist(err) {
+func CreateDB(createDbRequired bool) error {
+	if createDbRequired {
 		if err := DBDo(createDB); err != nil {
 			return err
 		}
