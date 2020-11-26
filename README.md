@@ -74,53 +74,10 @@ Upload a database file from the web interface.
 - [endpoints.dev store the details of any HTTP request and display them](https://www.endpoints.dev/)
 - [Smocker is a simple and efficient HTTP mock server](https://github.com/Thiht/smocker)
 
-## Dynamic demo
-
-`POST /dynamic/demo`
-
-```json
-{
-  "name": "json:name",
-  "age": "json:age",
-  "dynamic": [
-    {
-      "condition":"name == 'bingoo'",
-      "response": {
-        "name":"bingoo"
-      }
-    },
-    {
-      "condition":"json_name == 'huang'",
-      "response": {
-        "name":"huangxxx",
-        "age":100
-      }
-    },
-    {
-      "condition":"name == 'ding' && age == 10",
-      "response": {
-        "name":"xxx",
-        "age":100,
-        "xxx":3000
-      }
-    }
-    ,
-    {
-      "condition":"json_name == 'ding' && json_age == 20",
-      "response": {
-        "name":"xxx",
-        "age":100,
-        "xxx":3000
-      },
-      "status": 202,
-      "headers": {
-        "xxx": "yyy",
-        "Content-Type": "text/plain; charset=utf-8"
-      }
-    }
-  ]
-}
-```
+## Extensions
+ 
+1. Dynamic demo [config demo](assets/dynamicdemo.json)
+1. Proxy demo [config demo](assets/proxydemo.json)
 
 httpie test
 

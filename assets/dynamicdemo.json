@@ -1,0 +1,41 @@
+{
+  "name": "json:name",
+  "age": "json:age",
+  "_dynamic": [
+    {
+      "condition":"name == 'bingoo'",
+      "response": {
+        "name":"bingoo"
+      }
+    },
+    {
+      "condition":"json_name == 'huang'",
+      "response": {
+        "name":"huang",
+        "age":100
+      }
+    },
+    {
+      "condition":"name == 'ding' && age == 10",
+      "response": {
+        "name":"xxx",
+        "age":100,
+        "xxx":3000
+      }
+    }
+  ,
+    {
+      "condition":"json_name == 'ding' && json_age == 20",
+      "response": {
+        "name":"xxx",
+        "age":100,
+        "xxx":3000
+      },
+      "status": 202,
+      "headers": {
+        "xxx": "yyy",
+        "Content-Type": "text/plain; charset=utf-8"
+      }
+    }
+  ]
+}

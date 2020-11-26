@@ -2,6 +2,7 @@ package httplive
 
 import (
 	"bytes"
+	"io/ioutil"
 	"mime"
 	"net/http"
 	"os"
@@ -28,7 +29,10 @@ func TryGetLocalFile(c *gin.Context, filePath string) bool {
 	f := path.Join(Environments.WorkingDir, filePath)
 
 	if _, err := os.Stat(f); err == nil {
-		c.File(f)
+		ext := path.Ext(filePath)
+		contentType := mime.TypeByExtension(ext)
+		fileData, _ := ioutil.ReadFile(f)
+		c.Data(http.StatusOK, contentType, ReplaceContextPath(fileData))
 		return true
 	}
 

@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"mime"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -51,20 +52,23 @@ type Dao struct {
 	Logger          sqlx.DaoLogger
 }
 
+var box = packr.New("myBox", "assets")
+
 // CreateDao creates a dao.
 func CreateDao(db *sql.DB) (*Dao, error) {
 	dao := &Dao{Logger: &sqlx.DaoLogrus{}}
-
-	box := packr.New("myBox", "assets")
-
-	s, err := box.FindString("httplive.sql")
-	if err != nil {
-		return nil, err
-	}
-
-	err = sqlx.CreateDao(dao, sqlx.WithDB(db), sqlx.WithSQLStr(s))
+	err := sqlx.CreateDao(dao, sqlx.WithDB(db), sqlx.WithSQLStr(boxString("httplive.sql")))
 
 	return dao, err
+}
+
+func boxString(name string) string {
+	s, err := box.FindString(name)
+	if err != nil {
+		panic(err)
+	}
+
+	return s
 }
 
 // nolint gochecknoglobals
@@ -109,23 +113,6 @@ func createDB(dao *Dao) error {
 		return nil
 	}
 
-	const body = `{
-	"array": [
-		1,
-		2,
-		3
-	],
-	"boolean": true,
-	"null": null,
-	"number": 123,
-	"object": {
-		"a": "b",
-		"c": "d",
-		"e": "f"
-	},
-	"string": "Hello World"
-}`
-
 	now := time.Now().Format("2006-01-02 15:04:05.000")
 	dao.AddEndpointID(Endpoint{
 		ID:         "0",
@@ -133,59 +120,30 @@ func createDB(dao *Dao) error {
 		Methods:    http.MethodGet,
 		MimeType:   "",
 		Filename:   "",
-		Body:       body,
+		Body:       boxString("apidemo.json"),
 		CreateTime: now,
 		UpdateTime: now,
 		DeletedAt:  "",
 	})
 	dao.AddEndpointID(Endpoint{
-		ID:       "1",
-		Endpoint: "/dynamic/demo",
-		Methods:  http.MethodPost,
-		MimeType: "",
-		Filename: "",
-		Body: `{
-  "name": "json:name",
-  "age": "json:age",
-  "dynamic": [
-    {
-      "condition":"name == 'bingoo'",
-      "response": {
-        "name":"bingoo"
-      }
-    },
-    {
-      "condition":"json_name == 'huang'",
-      "response": {
-        "name":"huang",
-        "age":100
-      }
-    },
-    {
-      "condition":"name == 'ding' && age == 10",
-      "response": {
-        "name":"xxx",
-        "age":100,
-        "xxx":3000
-      }
-    }
-    ,
-    {
-      "condition":"json_name == 'ding' && json_age == 20",
-      "response": {
-        "name":"xxx",
-        "age":100,
-        "xxx":3000
-      },
-      "status": 202,
-      "headers": {
-        "xxx": "yyy",
-        "Content-Type": "text/plain; charset=utf-8"
-      }
-    }
-  ]
-}
-`,
+		ID:         "1",
+		Endpoint:   "/dynamic/demo",
+		Methods:    http.MethodPost,
+		MimeType:   "",
+		Filename:   "",
+		Body:       boxString("dynamicdemo.json"),
+		CreateTime: now,
+		UpdateTime: now,
+		DeletedAt:  "",
+	})
+
+	dao.AddEndpointID(Endpoint{
+		ID:         "2",
+		Endpoint:   "/proxy/demo",
+		Methods:    http.MethodGet,
+		MimeType:   "",
+		Filename:   "",
+		Body:       boxString("proxydemo.json"),
 		CreateTime: now,
 		UpdateTime: now,
 		DeletedAt:  "",
@@ -228,7 +186,7 @@ func SaveEndpoint(model APIDataModel) (*Endpoint, error) {
 }
 
 // CreateAPIDataModel creates APIDataModel from Endpoint.
-func CreateAPIDataModel(ep *Endpoint) *APIDataModel {
+func CreateAPIDataModel(ep *Endpoint, query bool) *APIDataModel {
 	if ep == nil {
 		return nil
 	}
@@ -241,19 +199,65 @@ func CreateAPIDataModel(ep *Endpoint) *APIDataModel {
 		Filename: ep.Filename,
 	}
 
-	dynamic := gjson.Get(ep.Body, "dynamic")
-	isDynamic := dynamic.Type == gjson.JSON && strings.HasPrefix(dynamic.Raw, "[")
-	if isDynamic {
-		m.dynamicValuers = createDynamics(ep.Body, []byte(dynamic.Raw))
-	}
-
 	if ep.Filename != "" {
 		m.FileContent = []byte(ep.Body)
 	} else {
 		m.Body = ep.Body
 	}
 
+	if query {
+		return m
+	}
+
+	ep.createDirect(m)
+	ep.createDynamicValuers(m)
+	ep.createProxy(m)
+
 	return m
+}
+
+func (ep *Endpoint) createDirect(m *APIDataModel) {
+	direct := gjson.Get(ep.Body, "_direct")
+	isDirect := direct.Type != gjson.Null
+	if !isDirect {
+		return
+	}
+
+	m.serveFn = func(c *gin.Context) {
+		c.Status(http.StatusOK)
+		rsp := []byte(direct.String())
+		ServeContent(c, rsp)
+		c.Writer.Write(rsp)
+	}
+}
+func (ep *Endpoint) createDynamicValuers(m *APIDataModel) {
+	dynamic := gjson.Get(ep.Body, "_dynamic")
+	isDynamic := dynamic.Type == gjson.JSON && strings.HasPrefix(dynamic.Raw, "[")
+	if !isDynamic {
+		return
+	}
+
+	m.dynamicValuers = createDynamics(ep.Body, []byte(dynamic.Raw))
+}
+
+func (ep *Endpoint) createProxy(m *APIDataModel) {
+	proxy := gjson.Get(ep.Body, "_proxy")
+	isProxy := proxy.Type == gjson.String && strings.HasPrefix(proxy.String(), "http")
+	if !isProxy {
+		return
+	}
+
+	p, err := url.Parse(proxy.String())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	m.serveFn = func(c *gin.Context) {
+		originalPath := c.Request.URL.String()
+		rp := ReverseProxy(originalPath, p.Host, p.Path, 30*time.Second)
+		rp.ServeHTTP(c.Writer, c.Request)
+	}
 }
 
 func createDynamics(epBody string, dynamicRaw []byte) (dynamicValues []DynamicValue) {
@@ -327,7 +331,7 @@ func GetEndpoint(id ID) (*APIDataModel, error) {
 
 	err := DBDo(func(dao *Dao) error {
 		ep := dao.FindEndpoint(id)
-		model = CreateAPIDataModel(ep)
+		model = CreateAPIDataModel(ep, true)
 
 		return nil
 	})
@@ -436,7 +440,7 @@ func JoinContextPath(s string) string {
 func SyncEndpointRouter() {
 	router := gin.New()
 
-	for _, endpoint := range EndpointList() {
+	for _, endpoint := range EndpointList(false) {
 		ep := endpoint
 		path := JoinContextPath(ep.Endpoint)
 
@@ -484,6 +488,11 @@ func (ep APIDataModel) HandleJSON(c *gin.Context) {
 	routerResult := c.Request.Context().Value(routerResultKey).(*RouterResult)
 	routerResult.RouterServed = true
 
+	if ep.serveFn != nil {
+		ep.serveFn(c)
+		return
+	}
+
 	if !routerResult.dynamic(ep, c) {
 		b := []byte(ep.Body)
 		routerResult.RouterBody = b
@@ -502,22 +511,17 @@ type DynamicValue struct {
 }
 
 func (rr *RouterResult) dynamic(ep APIDataModel, c *gin.Context) bool {
-	reqBody, err := ioutil.ReadAll(c.Request.Body)
-	if err != nil {
-		fmt.Println(err)
-		//log.Printf("Error reading body: %v", err)
-		//http.Error(w, "can't read body", http.StatusBadRequest)
-		return false
-	}
-
-	// Work / inspect body. You may even modify it!
-
-	// And now set a new body, which will simulate the same data we read:
-	c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(reqBody))
-
 	if len(ep.dynamicValuers) == 0 {
 		return false
 	}
+
+	reqBody, err := ioutil.ReadAll(c.Request.Body)
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+
+	c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(reqBody))
 
 	for _, v := range ep.dynamicValuers {
 		parameters := make(map[string]interface{}, len(v.parametersEvaluator))
@@ -558,15 +562,19 @@ func (v DynamicValue) responseDynamic(c *gin.Context, routerResult *RouterResult
 	}
 
 	if !contentTypeSet {
-		if bytes.HasPrefix(v.Response, []byte("{")) || bytes.HasPrefix(v.Response, []byte("[")) {
-			c.Header("Content-Type", "application/json; charset=utf-8")
-		} else {
-			c.Header("Content-Type", "text/plain; charset=utf-8")
-		}
+		ServeContent(c, v.Response)
 	}
 
 	routerResult.RouterBody = v.Response
 	_, _ = c.Writer.Write(v.Response)
+}
+
+func ServeContent(c *gin.Context, rsp []byte) {
+	if bytes.HasPrefix(rsp, []byte("{")) || bytes.HasPrefix(rsp, []byte("[")) {
+		c.Header("Content-Type", "application/json; charset=utf-8")
+	} else {
+		c.Header("Content-Type", "text/plain; charset=utf-8")
+	}
 }
 
 func makeParameters(respBody string, expr *govaluate.EvaluableExpression) map[string]Valuer {
@@ -618,7 +626,7 @@ func makeParameters(respBody string, expr *govaluate.EvaluableExpression) map[st
 }
 
 // EndpointList ...
-func EndpointList() []APIDataModel {
+func EndpointList(query bool) []APIDataModel {
 	var endPoints []Endpoint
 
 	_ = DBDo(func(dao *Dao) error {
@@ -631,7 +639,7 @@ func EndpointList() []APIDataModel {
 
 	for i, v := range endPoints {
 		v := v
-		items[i] = *CreateAPIDataModel(&v)
+		items[i] = *CreateAPIDataModel(&v, query)
 	}
 
 	return items

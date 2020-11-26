@@ -119,7 +119,8 @@ type APIDataModel struct {
 	FileContent []byte `json:"-"`
 	Body        string `json:"body"`
 
-	dynamicValuers []DynamicValue `json:"-"`
+	dynamicValuers []DynamicValue
+	serveFn        gin.HandlerFunc
 }
 
 // Pair ...

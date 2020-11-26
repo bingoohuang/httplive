@@ -1,0 +1,7 @@
+{
+  "_proxy": "http://127.0.0.1:5003/api/demo",
+  "nonce": 0,
+  "_direct": {
+    "name": "bingoo"
+  }
+}

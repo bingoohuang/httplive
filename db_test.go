@@ -18,7 +18,7 @@ type DynamicValue struct {
 func TestGson(t *testing.T) {
 	j := []byte(`
 {
-  "dynamic": [
+  "_dynamic": [
     {
       "condition":"json_name == 'bingoo'",
       "response": {
@@ -36,7 +36,7 @@ func TestGson(t *testing.T) {
 }
 `)
 
-	result := gjson.GetBytes(j, "dynamic")
+	result := gjson.GetBytes(j, "_dynamic")
 	fmt.Println(result)
 
 	reqBody := []byte(`

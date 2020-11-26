@@ -97,7 +97,9 @@ func host(env *httplive.EnvVars) error {
 
 	for _, p := range portsArr {
 		go func(port string) {
-			_ = r.Run(":" + port)
+			if err := r.Run(":" + port); err != nil {
+				panic(err)
+			}
 		}(p)
 	}
 

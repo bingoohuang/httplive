@@ -47,7 +47,7 @@ type treeT struct {
 
 // Tree ...
 func (ctrl WebCliController) Tree(_ treeT) gin.H {
-	apis := EndpointList()
+	apis := EndpointList(true)
 	trees := make([]JsTreeDataModel, len(apis))
 
 	for i, api := range apis {
