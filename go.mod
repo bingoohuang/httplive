@@ -19,4 +19,5 @@ require (
 	github.com/tidwall/gjson v1.6.1
 	github.com/urfave/cli v1.22.3
 	golang.org/x/crypto v0.0.0-20191122220453-ac88ee75c92c // indirect
+	gopkg.in/yaml.v2 v2.2.8 // indirect
 )

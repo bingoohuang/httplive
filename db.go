@@ -62,7 +62,7 @@ func CreateDao(db *sql.DB) (*Dao, error) {
 }
 
 func boxString(name string) string {
-	pkger.Include("/assets")
+	pkger.Include("/assets") // nolint:staticcheck
 
 	f, err := pkger.Open(filepath.Join("/assets", name))
 	if err != nil {
@@ -72,7 +72,7 @@ func boxString(name string) string {
 	defer f.Close()
 
 	buf := new(bytes.Buffer)
-	io.Copy(buf, f)
+	_, _ = io.Copy(buf, f)
 
 	return buf.String()
 }
@@ -92,7 +92,6 @@ func DBDo(f func(dao *Dao) error) error {
 
 	defer db.Close()
 	dao, err := CreateDao(db)
-
 	if err != nil {
 		return err
 	}
@@ -232,12 +231,11 @@ func (ep *Endpoint) createDirect(m *APIDataModel) {
 	}
 
 	m.serveFn = func(c *gin.Context) {
-		c.Status(http.StatusOK)
 		rsp := []byte(direct.String())
-		ServeContent(c, rsp)
-		c.Writer.Write(rsp)
+		c.Data(http.StatusOK, detectContentType(c, rsp), rsp)
 	}
 }
+
 func (ep *Endpoint) createDynamicValuers(m *APIDataModel) {
 	dynamic := gjson.Get(ep.Body, "_dynamic")
 	isDynamic := dynamic.Type == gjson.JSON && strings.HasPrefix(dynamic.Raw, "[")
@@ -268,7 +266,7 @@ func (ep *Endpoint) createProxy(m *APIDataModel) {
 	}
 }
 
-func createDynamics(epBody string, dynamicRaw []byte) (dynamicValues []DynamicValue) {
+func createDynamics(epBody string, dynamicRaw []byte) (dynamicValues []dynamicValue) {
 	if err := json.Unmarshal(dynamicRaw, &dynamicValues); err != nil {
 		fmt.Println(err)
 		return
@@ -403,7 +401,7 @@ func (t *Throttle) Allow() bool {
 	}
 }
 
-func CompactJSON(data []byte) []byte {
+func compactJSON(data []byte) []byte {
 	compactedBuffer := new(bytes.Buffer)
 	if err := json.Compact(compactedBuffer, data); err != nil {
 		return data
@@ -412,23 +410,22 @@ func CompactJSON(data []byte) []byte {
 	return compactedBuffer.Bytes()
 }
 
-type RouterResult struct {
+type routerResult struct {
 	RouterServed bool
 	RouterBody   []byte
 	Filename     string
 }
 
-type ContextKey int
+type contextKey int
 
-const routerResultKey ContextKey = iota
+const routerResultKey contextKey = iota
 
-// EndpointServeHTTP ...
-func EndpointServeHTTP(w http.ResponseWriter, r *http.Request) RouterResult {
+func endpointServeHTTP(w http.ResponseWriter, r *http.Request) routerResult {
 	endpointRouterLock.Lock()
 	router := endpointRouter
 	endpointRouterLock.Unlock()
 
-	v := RouterResult{}
+	v := routerResult{}
 
 	ctx := context.WithValue(r.Context(), routerResultKey, &v)
 	router.ServeHTTP(w, r.WithContext(ctx))
@@ -436,12 +433,13 @@ func EndpointServeHTTP(w http.ResponseWriter, r *http.Request) RouterResult {
 	return v
 }
 
-func JoinContextPath(s string) string {
+// JoinContextPath joins the context path to elem.
+func JoinContextPath(elem string) string {
 	if Environments.ContextPath == "/" {
-		return s
+		return elem
 	}
 
-	return filepath.Join(Environments.ContextPath, s)
+	return filepath.Join(Environments.ContextPath, elem)
 }
 
 // SyncEndpointRouter ...
@@ -454,15 +452,15 @@ func SyncEndpointRouter() {
 
 		if strings.EqualFold(ep.Method, "ANY") {
 			if ep.MimeType == "" {
-				router.Any(path, ep.HandleJSON)
+				router.Any(path, ep.handleJSON)
 			} else {
-				router.Any(path, ep.HandleFileDownload)
+				router.Any(path, ep.handleFileDownload)
 			}
 		} else {
 			if ep.MimeType == "" {
-				router.Handle(ep.Method, path, ep.HandleJSON)
+				router.Handle(ep.Method, path, ep.handleJSON)
 			} else {
-				router.Handle(ep.Method, path, ep.HandleFileDownload)
+				router.Handle(ep.Method, path, ep.handleFileDownload)
 			}
 		}
 	}
@@ -472,8 +470,8 @@ func SyncEndpointRouter() {
 	endpointRouterLock.Unlock()
 }
 
-func (ep APIDataModel) HandleFileDownload(c *gin.Context) {
-	routerResult := c.Request.Context().Value(routerResultKey).(*RouterResult)
+func (ep APIDataModel) handleFileDownload(c *gin.Context) {
+	routerResult := c.Request.Context().Value(routerResultKey).(*routerResult)
 	routerResult.RouterServed = true
 	routerResult.Filename = ep.Filename
 	c.Status(http.StatusOK)
@@ -492,8 +490,8 @@ func (ep APIDataModel) HandleFileDownload(c *gin.Context) {
 	http.ServeContent(c.Writer, c.Request, ep.Filename, time.Now(), bytes.NewReader(ep.FileContent))
 }
 
-func (ep APIDataModel) HandleJSON(c *gin.Context) {
-	routerResult := c.Request.Context().Value(routerResultKey).(*RouterResult)
+func (ep APIDataModel) handleJSON(c *gin.Context) {
+	routerResult := c.Request.Context().Value(routerResultKey).(*routerResult)
 	routerResult.RouterServed = true
 
 	if ep.serveFn != nil {
@@ -508,17 +506,17 @@ func (ep APIDataModel) HandleJSON(c *gin.Context) {
 	}
 }
 
-type DynamicValue struct {
+type dynamicValue struct {
 	Condition string            `json:"condition"`
 	Response  json.RawMessage   `json:"response"`
 	Status    int               `json:"status"`
 	Headers   map[string]string `json:"headers"`
 
 	expr                *govaluate.EvaluableExpression
-	parametersEvaluator map[string]Valuer
+	parametersEvaluator map[string]valuer
 }
 
-func (rr *RouterResult) dynamic(ep APIDataModel, c *gin.Context) bool {
+func (rr *routerResult) dynamic(ep APIDataModel, c *gin.Context) bool {
 	if len(ep.dynamicValuers) == 0 {
 		return false
 	}
@@ -553,40 +551,39 @@ func (rr *RouterResult) dynamic(ep APIDataModel, c *gin.Context) bool {
 	return false
 }
 
-func (v DynamicValue) responseDynamic(c *gin.Context, routerResult *RouterResult) {
-	if v.Status != 0 {
-		c.Status(v.Status)
-	} else {
-		c.Status(http.StatusOK)
+func (v dynamicValue) responseDynamic(c *gin.Context, routerResult *routerResult) {
+	statusCode := v.Status
+	if statusCode == 0 {
+		statusCode = http.StatusOK
 	}
 
-	contentTypeSet := false
-
+	contentType := ""
 	for k, v := range v.Headers {
 		if strings.EqualFold(k, "Content-Type") {
-			contentTypeSet = true
+			contentType = v
+		} else {
+			c.Header(k, v)
 		}
-		c.Header(k, v)
 	}
 
-	if !contentTypeSet {
-		ServeContent(c, v.Response)
+	if contentType == "" {
+		contentType = detectContentType(c, v.Response)
 	}
 
 	routerResult.RouterBody = v.Response
-	_, _ = c.Writer.Write(v.Response)
+	c.Data(statusCode, contentType, v.Response)
 }
 
-func ServeContent(c *gin.Context, rsp []byte) {
+func detectContentType(c *gin.Context, rsp []byte) string {
 	if bytes.HasPrefix(rsp, []byte("{")) || bytes.HasPrefix(rsp, []byte("[")) {
-		c.Header("Content-Type", "application/json; charset=utf-8")
-	} else {
-		c.Header("Content-Type", "text/plain; charset=utf-8")
+		return "application/json; charset=utf-8"
 	}
+
+	return "text/plain; charset=utf-8"
 }
 
-func makeParameters(respBody string, expr *govaluate.EvaluableExpression) map[string]Valuer {
-	parameters := make(map[string]Valuer)
+func makeParameters(respBody string, expr *govaluate.EvaluableExpression) map[string]valuer {
+	parameters := make(map[string]valuer)
 	for _, va := range expr.Vars() {
 		if strings.HasPrefix(va, "json_") {
 			k := va[5:]

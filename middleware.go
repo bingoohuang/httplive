@@ -36,7 +36,7 @@ func CORSMiddleware(c *gin.Context) {
 
 // StaticFileMiddleware ...
 func StaticFileMiddleware(c *gin.Context) {
-	p := TrimContextPath(c)
+	p := trimContextPath(c)
 	if HasAnyPrefix(p, "/httplive/webcli", "/httplive/ws") {
 		c.Next()
 		return
@@ -69,13 +69,13 @@ func HasAnyPrefix(s string, prefixes ...string) bool {
 
 // APIMiddleware ...
 func APIMiddleware(c *gin.Context) {
-	p := TrimContextPath(c)
+	p := trimContextPath(c)
 	if p == "/" || p == "/favicon.ico" || strings.HasPrefix(p, "/httplive/") {
 		c.Next()
 		return
 	}
 
-	if result := EndpointServeHTTP(c.Writer, c.Request); result.RouterServed {
+	if result := endpointServeHTTP(c.Writer, c.Request); result.RouterServed {
 		if broadcastThrottler.Allow() {
 			Broadcast(c, result.RouterBody)
 		}
@@ -87,7 +87,7 @@ func APIMiddleware(c *gin.Context) {
 	c.Next()
 }
 
-func TrimContextPath(c *gin.Context) string {
+func trimContextPath(c *gin.Context) string {
 	p := c.Request.URL.Path
 	if Environments.ContextPath != "/" {
 		p = strings.TrimPrefix(p, Environments.ContextPath)
@@ -102,13 +102,13 @@ func TrimContextPath(c *gin.Context) string {
 
 // ConfigJsMiddleware ...
 func ConfigJsMiddleware(c *gin.Context) {
-	p := TrimContextPath(c)
+	p := trimContextPath(c)
 	if p != "/httplive/config.js" {
 		c.Next()
 		return
 	}
 
-	fileContent := ReplaceContextPathString(fmt.Sprintf(`
+	fileContent := replaceContextPath([]byte(fmt.Sprintf(`
 define('httplive/config', {
 	defaultPort:'%s',
 	savePath: '${ContextPath}/httplive/webcli/api/save',
@@ -116,9 +116,7 @@ define('httplive/config', {
 	deletePath: '${ContextPath}/httplive/webcli/api/deleteendpoint',
 	treePath: '${ContextPath}/httplive/webcli/api/tree',
 	componentId: ''
-});`, Environments.Ports))
-	c.Writer.Header().Set("Content-Length", fmt.Sprintf("%d", len(fileContent)))
-	c.Writer.Header().Set("Content-Type", "application/javascript")
-	c.String(http.StatusOK, fileContent)
+});`, Environments.Ports)))
+	c.Data(http.StatusOK, "application/javascript", fileContent)
 	c.Abort()
 }

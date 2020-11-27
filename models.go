@@ -28,6 +28,7 @@ var (
 	Clients = make(map[string]*websocket.Conn)
 )
 
+// Init initializes the environments.
 func (r *EnvVars) Init() {
 	if strings.HasSuffix(r.ContextPath, "/") {
 		r.ContextPath = r.ContextPath[:len(r.ContextPath)-1]
@@ -117,7 +118,7 @@ func (i ID) Int() int {
 	return str.ParseInt(string(i))
 }
 
-type Valuer func(reqBody []byte, c *gin.Context) interface{}
+type valuer func(reqBody []byte, c *gin.Context) interface{}
 
 // APIDataModel ...
 type APIDataModel struct {
@@ -129,7 +130,7 @@ type APIDataModel struct {
 	FileContent []byte `json:"-"`
 	Body        string `json:"body"`
 
-	dynamicValuers []DynamicValue
+	dynamicValuers []dynamicValue
 	serveFn        gin.HandlerFunc
 }
 

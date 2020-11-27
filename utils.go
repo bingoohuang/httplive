@@ -28,7 +28,7 @@ func Broadcast(c *gin.Context, response []byte) {
 		Path:     c.Request.URL.Path,
 		Query:    c.Request.URL.Query(),
 		Header:   GetHeaders(c),
-		Response: CompactJSON(response),
+		Response: compactJSON(response),
 	}
 
 	for id, conn := range Clients {
@@ -109,7 +109,6 @@ func GetFormBody(c *gin.Context) interface{} {
 func TryBind(c *gin.Context) interface{} {
 	var model interface{}
 	err := c.Bind(&model)
-
 	if err != nil {
 		return nil
 	}

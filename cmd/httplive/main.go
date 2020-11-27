@@ -87,7 +87,7 @@ func fixDBPath(env *httplive.EnvVars) (string, bool) {
 	}
 
 	if _, err := os.Stat(p); os.IsNotExist(err) {
-		err := os.MkdirAll(p, 0644)
+		err := os.MkdirAll(p, 0o644)
 		if err != nil {
 			logrus.Fatalf("create  dir %s error %v", fullPath, err)
 		}

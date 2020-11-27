@@ -45,10 +45,14 @@ type versionT struct {
 	giu.T `url:"GET /version"`
 }
 
-const Version = "1.0.2"
-const UpdateTime = "2020-11-26 16:22:23"
+const (
+	// Version is the version x.y.z.
+	Version = "1.0.3"
+	// UpdateTime is the update time.
+	UpdateTime = "2020-11-27 09:13:34"
+)
 
-// Tree ...
+// Version returns version information.
 func (ctrl WebCliController) Version(_ versionT) gin.H {
 	return gin.H{
 		"version":    Version,
@@ -60,7 +64,7 @@ type treeT struct {
 	giu.T `url:"GET /api/tree"`
 }
 
-// Tree ...
+// Tree return the api tree.
 func (ctrl WebCliController) Tree(_ treeT) gin.H {
 	apis := EndpointList(true)
 	trees := make([]JsTreeDataModel, len(apis))
@@ -98,7 +102,6 @@ type downloadFileT struct {
 func (ctrl WebCliController) DownloadFile(c *gin.Context, _ downloadFileT) error {
 	id, _ := c.GetQuery("id")
 	model, err := GetEndpoint(ID(id))
-
 	if err != nil {
 		return err
 	}
@@ -123,7 +126,6 @@ type endpointT struct {
 func (ctrl WebCliController) Endpoint(c *gin.Context, _ endpointT) (giu.HTTPStatus, interface{}, error) {
 	id := c.Query("id")
 	model, err := GetEndpoint(ID(id))
-
 	if err != nil {
 		return giu.HTTPStatus(http.StatusInternalServerError), gin.H{"error": err.Error()}, err
 	}
@@ -142,7 +144,6 @@ type saveT struct {
 // Save 保存body.
 func (ctrl WebCliController) Save(model APIDataModel, _ saveT) (giu.HTTPStatus, interface{}) {
 	dp, err := SaveEndpoint(model)
-
 	if err != nil {
 		return giu.HTTPStatus(http.StatusBadRequest), gin.H{"error": err.Error()}
 	}
