@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"path"
@@ -47,7 +48,15 @@ func main() {
 		},
 	}
 
-	app.Action = func(c *cli.Context) error { return host(env) }
+	app.Action = func(c *cli.Context) error {
+		if c.NArg() > 0 {
+			fmt.Println("Unknown args:", c.Args())
+			//cli.ShowAppHelp(c)
+			os.Exit(1)
+		}
+
+		return host(env)
+	}
 
 	_ = app.Run(os.Args)
 }
