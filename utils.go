@@ -4,8 +4,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"runtime"
 	"strings"
 	"time"
+
+	"github.com/bingoohuang/gou/ran"
+	"github.com/skratchdot/open-golang/open"
 
 	"github.com/sirupsen/logrus"
 
@@ -33,7 +37,7 @@ func Broadcast(c *gin.Context, response []byte) {
 
 	for id, conn := range Clients {
 		if err := conn.WriteJSON(msg); err != nil {
-			logrus.Warnf("error: %v", err)
+			logrus.Warnf("conn WriteJSON error: %v", err)
 
 			conn.Close()
 
@@ -148,4 +152,22 @@ func GetRequestBody(c *gin.Context) interface{} {
 	default:
 		return nil
 	}
+}
+
+// OpenExplorerWithContext ...
+func OpenExplorerWithContext(contextPath, port string) {
+	go func() {
+		time.Sleep(100 * time.Millisecond) // nolint gomnd
+
+		switch runtime.GOOS {
+		case "windows":
+			fallthrough
+		case "darwin":
+			if contextPath == "/" {
+				_ = open.Run("http://127.0.0.1:" + port + "?" + ran.String(10))
+			} else {
+				_ = open.Run("http://127.0.0.1:" + port + contextPath + "?" + ran.String(10))
+			}
+		}
+	}()
 }

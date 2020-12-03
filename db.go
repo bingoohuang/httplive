@@ -16,6 +16,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/gin-gonic/gin"
 	"github.com/markbates/pkger"
 
@@ -404,7 +406,12 @@ func (t *Throttle) Allow() bool {
 func compactJSON(data []byte) []byte {
 	compactedBuffer := new(bytes.Buffer)
 	if err := json.Compact(compactedBuffer, data); err != nil {
-		return data
+		logrus.Warnf("json.Compact error: %v", err)
+
+		v, _ := json.Marshal(map[string]string{
+			"raw": string(data),
+		})
+		return v
 	}
 
 	return compactedBuffer.Bytes()
