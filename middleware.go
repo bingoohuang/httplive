@@ -75,7 +75,7 @@ func APIMiddleware(c *gin.Context) {
 		return
 	}
 
-	if result := endpointServeHTTP(c.Writer, c.Request); result.RouterServed {
+	if result := serveAPI(c.Writer, c.Request); result.RouterServed {
 		if broadcastThrottler.Allow() {
 			Broadcast(c, result.RouterBody)
 		}

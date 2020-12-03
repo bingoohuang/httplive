@@ -107,7 +107,7 @@ func CreateDB(createDbRequired bool) error {
 		}
 	}
 
-	SyncEndpointRouter()
+	SyncAPIRouter()
 
 	return nil
 }
@@ -165,7 +165,7 @@ func SaveEndpoint(model APIDataModel) (*Endpoint, error) {
 		return nil, fmt.Errorf("model endpoint and method could not be empty")
 	}
 
-	defer SyncEndpointRouter()
+	defer SyncAPIRouter()
 
 	var ep *Endpoint
 
@@ -232,7 +232,7 @@ func (ep *Endpoint) createDirect(m *APIDataModel) {
 
 	m.serveFn = func(c *gin.Context) {
 		rsp := []byte(direct.String())
-		c.Data(http.StatusOK, detectContentType(c, rsp), rsp)
+		c.Data(http.StatusOK, detectContentType(rsp), rsp)
 	}
 }
 
@@ -322,7 +322,7 @@ func CreateEndpoint(model APIDataModel, old *Endpoint) Endpoint {
 
 // DeleteEndpoint ...
 func DeleteEndpoint(id string) error {
-	defer SyncEndpointRouter()
+	defer SyncAPIRouter()
 
 	return DBDo(func(dao *Dao) error {
 		dao.DeleteEndpoint(Endpoint{ID: ID(id), DeletedAt: time.Now().Format("2006-01-02 15:04:05.000")})
@@ -347,8 +347,8 @@ func GetEndpoint(id ID) (*APIDataModel, error) {
 
 // nolint gochecknoglobals
 var (
-	endpointRouter     *gin.Engine
-	endpointRouterLock sync.Mutex
+	apiRouter     *gin.Engine
+	apiRouterLock sync.Mutex
 
 	broadcastThrottler = MakeThrottle(1 * time.Second)
 )
@@ -420,10 +420,10 @@ type contextKey int
 
 const routerResultKey contextKey = iota
 
-func endpointServeHTTP(w http.ResponseWriter, r *http.Request) routerResult {
-	endpointRouterLock.Lock()
-	router := endpointRouter
-	endpointRouterLock.Unlock()
+func serveAPI(w http.ResponseWriter, r *http.Request) routerResult {
+	apiRouterLock.Lock()
+	router := apiRouter
+	apiRouterLock.Unlock()
 
 	v := routerResult{}
 
@@ -442,8 +442,8 @@ func JoinContextPath(elem string) string {
 	return filepath.Join(Environments.ContextPath, elem)
 }
 
-// SyncEndpointRouter ...
-func SyncEndpointRouter() {
+// SyncAPIRouter ...
+func SyncAPIRouter() {
 	router := gin.New()
 
 	for _, endpoint := range EndpointList(false) {
@@ -465,9 +465,9 @@ func SyncEndpointRouter() {
 		}
 	}
 
-	endpointRouterLock.Lock()
-	endpointRouter = router
-	endpointRouterLock.Unlock()
+	apiRouterLock.Lock()
+	apiRouter = router
+	apiRouterLock.Unlock()
 }
 
 func (ep APIDataModel) handleFileDownload(c *gin.Context) {
@@ -502,7 +502,7 @@ func (ep APIDataModel) handleJSON(c *gin.Context) {
 	if !routerResult.dynamic(ep, c) {
 		b := []byte(ep.Body)
 		routerResult.RouterBody = b
-		c.Data(http.StatusOK, "application/json; charset=utf-8", b)
+		c.Data(http.StatusOK, detectContentType(b), b)
 	}
 }
 
@@ -567,14 +567,14 @@ func (v dynamicValue) responseDynamic(c *gin.Context, routerResult *routerResult
 	}
 
 	if contentType == "" {
-		contentType = detectContentType(c, v.Response)
+		contentType = detectContentType(v.Response)
 	}
 
 	routerResult.RouterBody = v.Response
 	c.Data(statusCode, contentType, v.Response)
 }
 
-func detectContentType(c *gin.Context, rsp []byte) string {
+func detectContentType(rsp []byte) string {
 	if bytes.HasPrefix(rsp, []byte("{")) || bytes.HasPrefix(rsp, []byte("[")) {
 		return "application/json; charset=utf-8"
 	}

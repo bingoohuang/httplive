@@ -141,8 +141,7 @@
             try {
                 JSON.parse(self.content());
             } catch (e) {
-                var $toast = toastr["error"](e, {closeButton: true});
-                return false;
+                toastr["error"](e, {closeButton: true});
             }
 
             var jqXHR = ($.ajax({
