@@ -219,21 +219,17 @@
     ko.applyBindings(vm);
 
     var scheme = document.location.protocol === "https:" ? "wss" : "ws";
-
-    var currentWsUrl =
-        scheme +
-        "://" +
-        location.hostname +
-        ":" +
-        vm.port() +
-        "${ContextPath}/httplive/ws?connectionId=" +
-        new Date().getTime();
+    var currentWsUrl = scheme + "://" + location.hostname + ":" + vm.port()
+        + "${ContextPath}/httplive/ws?connectionId=" + new Date().getTime();
     var ws = new WebSocket(currentWsUrl);
     send = function (data) {
         ws.send(data);
     };
     ws.onmessage = function (msg) {
-        vm.requestConsole.push(msg.data);
+        vm.requestConsole.unshift(msg.data)
+        if (vm.requestConsole.length > 100) {
+            vm.requestConsole.pop()
+        }
     };
     ws.onopen = function (context) {
         console.log("Socket open:", context);
