@@ -16,8 +16,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/gin-gonic/gin"
 	"github.com/markbates/pkger"
 
@@ -352,7 +350,7 @@ var (
 	apiRouter     *gin.Engine
 	apiRouterLock sync.Mutex
 
-	broadcastThrottler = MakeThrottle(1 * time.Second)
+	broadcastThrottler = MakeThrottle(60, 60*time.Second)
 )
 
 // Throttle ...
@@ -362,30 +360,35 @@ type Throttle struct {
 }
 
 // MakeThrottle ...
-func MakeThrottle(duration time.Duration) *Throttle {
+func MakeThrottle(tokensNum int, duration time.Duration) *Throttle {
 	t := &Throttle{
-		tokenC: make(chan bool, 1),
+		tokenC: make(chan bool, tokensNum),
 		stopC:  make(chan bool, 1),
 	}
 
 	go func() {
-		ticker := time.NewTicker(duration)
-		defer ticker.Stop()
-
 		for {
 			select {
 			case <-t.stopC:
 				return
-			case <-ticker.C:
-				select {
-				case t.tokenC <- true:
-				default:
-				}
+			default:
+				t.putTokens(tokensNum)
+				time.Sleep(duration)
 			}
 		}
 	}()
 
 	return t
+}
+
+func (t *Throttle) putTokens(tokensNum int) {
+	for i := 0; i < tokensNum; i++ {
+		select {
+		case t.tokenC <- true:
+		default:
+			return
+		}
+	}
 }
 
 // Stop ...
@@ -406,11 +409,7 @@ func (t *Throttle) Allow() bool {
 func compactJSON(data []byte) []byte {
 	compactedBuffer := new(bytes.Buffer)
 	if err := json.Compact(compactedBuffer, data); err != nil {
-		logrus.Warnf("json.Compact error: %v", err)
-
-		v, _ := json.Marshal(map[string]string{
-			"raw": string(data),
-		})
+		v, _ := json.Marshal(map[string]string{"raw": string(data)})
 		return v
 	}
 

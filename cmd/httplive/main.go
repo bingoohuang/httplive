@@ -51,7 +51,7 @@ func main() {
 	app.Action = func(c *cli.Context) error {
 		if c.NArg() > 0 {
 			fmt.Println("Unknown args:", c.Args())
-			//cli.ShowAppHelp(c)
+			// cli.ShowAppHelp(c)
 			os.Exit(1)
 		}
 

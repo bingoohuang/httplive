@@ -122,6 +122,10 @@ func TryBind(c *gin.Context) interface{} {
 
 // GetRequestBody ...
 func GetRequestBody(c *gin.Context) interface{} {
+	if c.Request.Method == http.MethodGet {
+		return nil
+	}
+
 	multiPartFormValue := GetMultiPartFormValue(c)
 	if multiPartFormValue != nil {
 		return multiPartFormValue
@@ -132,25 +136,12 @@ func GetRequestBody(c *gin.Context) interface{} {
 		return formBody
 	}
 
-	contentType := c.ContentType()
-	method := c.Request.Method
-
-	if method == http.MethodGet {
-		return nil
-	}
-
-	switch contentType {
+	switch c.ContentType() {
 	case binding.MIMEJSON:
 		return TryBind(c)
-	case binding.MIMEXML, binding.MIMEXML2:
-		body, err := ioutil.ReadAll(c.Request.Body)
-		if err == nil {
-			return string(body)
-		}
-
-		return nil
 	default:
-		return nil
+		body, _ := ioutil.ReadAll(c.Request.Body)
+		return string(body)
 	}
 }
 
