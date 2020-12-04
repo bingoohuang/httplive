@@ -128,7 +128,7 @@ func host(env *httplive.EnvVars) error {
 		}(p)
 	}
 
-	httplive.OpenExplorerWithContext(env.ContextPath, portsArr[0])
+	go httplive.OpenExplorerWithContext(env.ContextPath, portsArr[0])
 
 	select {}
 }

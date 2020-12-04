@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/Knetic/govaluate"
+	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
 )
 
@@ -57,7 +58,7 @@ func TestGson(t *testing.T) {
 				fmt.Println(err)
 			}
 
-			parameters := make(map[string]interface{})
+			parameters := make(gin.H)
 			for _, va := range expr.Vars() {
 				if strings.HasPrefix(va, "json_") {
 					parameters[va] = gjson.GetBytes(reqBody, va[5:]).Value()

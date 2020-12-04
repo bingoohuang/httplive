@@ -62,7 +62,7 @@ func CreateDao(db *sql.DB) (*Dao, error) {
 }
 
 func boxString(name string) string {
-	pkger.Include("/assets") // nolint:staticcheck
+	pkger.Include("/assets")
 
 	f, err := pkger.Open(filepath.Join("/assets", name))
 	if err != nil {
@@ -91,6 +91,7 @@ func DBDo(f func(dao *Dao) error) error {
 	}
 
 	defer db.Close()
+
 	dao, err := CreateDao(db)
 	if err != nil {
 		return err
@@ -232,7 +233,7 @@ func (ep *Endpoint) createDirect(m *APIDataModel) {
 
 	m.serveFn = func(c *gin.Context) {
 		rsp := []byte(direct.String())
-		c.Data(http.StatusOK, detectContentType(rsp), rsp)
+		c.Data(http.StatusOK, DetectContentType(rsp), rsp)
 	}
 }
 
@@ -353,59 +354,6 @@ var (
 	broadcastThrottler = MakeThrottle(60, 60*time.Second)
 )
 
-// Throttle ...
-type Throttle struct {
-	tokenC chan bool
-	stopC  chan bool
-}
-
-// MakeThrottle ...
-func MakeThrottle(tokensNum int, duration time.Duration) *Throttle {
-	t := &Throttle{
-		tokenC: make(chan bool, tokensNum),
-		stopC:  make(chan bool, 1),
-	}
-
-	go func() {
-		for {
-			select {
-			case <-t.stopC:
-				return
-			default:
-				t.putTokens(tokensNum)
-				time.Sleep(duration)
-			}
-		}
-	}()
-
-	return t
-}
-
-func (t *Throttle) putTokens(tokensNum int) {
-	for i := 0; i < tokensNum; i++ {
-		select {
-		case t.tokenC <- true:
-		default:
-			return
-		}
-	}
-}
-
-// Stop ...
-func (t *Throttle) Stop() {
-	t.stopC <- true
-}
-
-// Allow ...
-func (t *Throttle) Allow() bool {
-	select {
-	case <-t.tokenC:
-		return true
-	default:
-		return false
-	}
-}
-
 func compactJSON(data []byte) []byte {
 	compactedBuffer := new(bytes.Buffer)
 	if err := json.Compact(compactedBuffer, data); err != nil {
@@ -432,7 +380,6 @@ func serveAPI(w http.ResponseWriter, r *http.Request) routerResult {
 	apiRouterLock.Unlock()
 
 	v := routerResult{}
-
 	ctx := context.WithValue(r.Context(), routerResultKey, &v)
 	router.ServeHTTP(w, r.WithContext(ctx))
 
@@ -452,8 +399,7 @@ func JoinContextPath(elem string) string {
 func SyncAPIRouter() {
 	router := gin.New()
 
-	for _, endpoint := range EndpointList(false) {
-		ep := endpoint
+	for _, ep := range EndpointList(false) {
 		path := JoinContextPath(ep.Endpoint)
 
 		if strings.EqualFold(ep.Method, "ANY") {
@@ -484,7 +430,8 @@ func (ep APIDataModel) handleFileDownload(c *gin.Context) {
 
 	if c.Query("_view") == "" {
 		h := c.Header
-		h("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": ep.Filename}))
+		h("Content-Disposition", mime.FormatMediaType("attachment",
+			map[string]string{"filename": ep.Filename}))
 		h("Content-Description", "File Transfer")
 		h("Content-Type", "application/octet-stream")
 		h("Content-Transfer-Encoding", "binary")
@@ -493,7 +440,8 @@ func (ep APIDataModel) handleFileDownload(c *gin.Context) {
 		h("Pragma", "public")
 	}
 
-	http.ServeContent(c.Writer, c.Request, ep.Filename, time.Now(), bytes.NewReader(ep.FileContent))
+	http.ServeContent(c.Writer, c.Request, ep.Filename, time.Now(),
+		bytes.NewReader(ep.FileContent))
 }
 
 func (ep APIDataModel) handleJSON(c *gin.Context) {
@@ -505,10 +453,10 @@ func (ep APIDataModel) handleJSON(c *gin.Context) {
 		return
 	}
 
-	if !routerResult.dynamic(ep, c) {
+	if !routerResult.dynamic(c, ep) {
 		b := []byte(ep.Body)
 		routerResult.RouterBody = b
-		c.Data(http.StatusOK, detectContentType(b), b)
+		c.Data(http.StatusOK, DetectContentType(b), b)
 	}
 }
 
@@ -522,7 +470,7 @@ type dynamicValue struct {
 	parametersEvaluator map[string]valuer
 }
 
-func (rr *routerResult) dynamic(ep APIDataModel, c *gin.Context) bool {
+func (rr *routerResult) dynamic(c *gin.Context, ep APIDataModel) bool {
 	if len(ep.dynamicValuers) == 0 {
 		return false
 	}
@@ -536,7 +484,7 @@ func (rr *routerResult) dynamic(ep APIDataModel, c *gin.Context) bool {
 	c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(reqBody))
 
 	for _, v := range ep.dynamicValuers {
-		parameters := make(map[string]interface{}, len(v.parametersEvaluator))
+		parameters := make(gin.H, len(v.parametersEvaluator))
 		for k, valuer := range v.parametersEvaluator {
 			parameters[k] = valuer(reqBody, c)
 		}
@@ -557,7 +505,7 @@ func (rr *routerResult) dynamic(ep APIDataModel, c *gin.Context) bool {
 	return false
 }
 
-func (v dynamicValue) responseDynamic(c *gin.Context, routerResult *routerResult) {
+func (v dynamicValue) responseDynamic(c *gin.Context, rr *routerResult) {
 	statusCode := v.Status
 	if statusCode == 0 {
 		statusCode = http.StatusOK
@@ -573,19 +521,11 @@ func (v dynamicValue) responseDynamic(c *gin.Context, routerResult *routerResult
 	}
 
 	if contentType == "" {
-		contentType = detectContentType(v.Response)
+		contentType = DetectContentType(v.Response)
 	}
 
-	routerResult.RouterBody = v.Response
+	rr.RouterBody = v.Response
 	c.Data(statusCode, contentType, v.Response)
-}
-
-func detectContentType(rsp []byte) string {
-	if bytes.HasPrefix(rsp, []byte("{")) || bytes.HasPrefix(rsp, []byte("[")) {
-		return "application/json; charset=utf-8"
-	}
-
-	return "text/plain; charset=utf-8"
 }
 
 func makeParameters(respBody string, expr *govaluate.EvaluableExpression) map[string]valuer {
@@ -615,20 +555,19 @@ func makeParameters(respBody string, expr *govaluate.EvaluableExpression) map[st
 			}
 		} else {
 			indirectVa := gjson.Get(respBody, va).String()
-
 			parameters[va] = func(reqBody []byte, c *gin.Context) interface{} {
-				if strings.HasPrefix(indirectVa, "json:") {
+				switch {
+				case strings.HasPrefix(indirectVa, "json:"):
 					return gjson.GetBytes(reqBody, indirectVa[5:]).Value()
-				} else if strings.HasPrefix(indirectVa, "query:") {
+				case strings.HasPrefix(indirectVa, "query:"):
 					return c.Query(indirectVa[6:])
-				} else if strings.HasPrefix(indirectVa, "router:") {
-					// /user/:user
-					return c.Param(indirectVa[7:])
-				} else if strings.HasPrefix(indirectVa, "header:") {
+				case strings.HasPrefix(indirectVa, "router:"):
+					return c.Param(indirectVa[7:]) // /user/:user
+				case strings.HasPrefix(indirectVa, "header:"):
 					return c.GetHeader(indirectVa[7:])
+				default:
+					return nil
 				}
-
-				return nil
 			}
 		}
 	}

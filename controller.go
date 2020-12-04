@@ -77,7 +77,7 @@ func (ctrl WebCliController) Tree(_ treeT) gin.H {
 		"id":       "0",
 		"key":      "APIs",
 		"text":     "APIs",
-		"state":    map[string]interface{}{"opened": true},
+		"state":    gin.H{"opened": true},
 		"children": trees,
 		"type":     "root",
 	}

@@ -1,6 +1,7 @@
 package httplive
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -64,49 +65,37 @@ func GetIP(c *gin.Context) string {
 
 // GetMultiPartFormValue ...
 func GetMultiPartFormValue(c *gin.Context) interface{} {
-	var requestBody interface{}
-
-	multipartForm := make(map[string]interface{})
-
 	_ = c.Request.ParseMultipartForm(32 * 1024 * 1024) // nolint gomnd 32M
 
 	if c.Request.MultipartForm != nil {
+		form := make(gin.H)
 		for key, values := range c.Request.MultipartForm.Value {
-			multipartForm[key] = strings.Join(values, "")
+			form[key] = strings.Join(values, "")
 		}
 
 		for key, file := range c.Request.MultipartForm.File {
 			for k, f := range file {
 				formKey := fmt.Sprintf("%s%d", key, k)
-				multipartForm[formKey] = map[string]interface{}{"filename": f.Filename, "size": f.Size}
+				form[formKey] = gin.H{"filename": f.Filename, "size": f.Size}
 			}
 		}
 
-		if len(multipartForm) > 0 {
-			requestBody = multipartForm
-		}
+		return form
 	}
 
-	return requestBody
+	return nil
 }
 
 // GetFormBody ...
 func GetFormBody(c *gin.Context) interface{} {
-	var requestBody interface{}
-
-	form := make(map[string]string)
-
 	_ = c.Request.ParseForm()
 
+	form := make(map[string]string)
 	for key, values := range c.Request.PostForm {
 		form[key] = strings.Join(values, "")
 	}
 
-	if len(form) > 0 {
-		requestBody = form
-	}
-
-	return requestBody
+	return form
 }
 
 // TryBind ...
@@ -145,20 +134,91 @@ func GetRequestBody(c *gin.Context) interface{} {
 	}
 }
 
+// IsJSONStr tests string s is in JSON format.
+func IsJSONStr(s string) bool {
+	return IsJSONBytes([]byte(s))
+}
+
+// IsJSONBytes tests bytes b is in JSON format.
+func IsJSONBytes(b []byte) bool {
+	if len(b) == 0 {
+		return false
+	}
+
+	var m interface{}
+	return json.Unmarshal(b, &m) == nil
+}
+
+// DetectContentType detects the contentType of b.
+func DetectContentType(b []byte) string {
+	if IsJSONBytes(b) {
+		return "application/json; charset=utf-8"
+	}
+
+	return "text/plain; charset=utf-8"
+}
+
 // OpenExplorerWithContext ...
 func OpenExplorerWithContext(contextPath, port string) {
-	go func() {
-		time.Sleep(100 * time.Millisecond) // nolint gomnd
+	switch runtime.GOOS {
+	case "windows", "darwin":
+		if contextPath == "/" {
+			contextPath = ""
+		}
 
-		switch runtime.GOOS {
-		case "windows":
-			fallthrough
-		case "darwin":
-			if contextPath == "/" {
-				_ = open.Run("http://127.0.0.1:" + port + "?" + ran.String(10))
-			} else {
-				_ = open.Run("http://127.0.0.1:" + port + contextPath + "?" + ran.String(10))
+		_ = open.Run("http://127.0.0.1:" + port + contextPath + "?" + ran.String(10))
+	}
+}
+
+// Throttle ...
+type Throttle struct {
+	tokenC chan bool
+	stopC  chan bool
+}
+
+// MakeThrottle ...
+func MakeThrottle(tokensNum int, duration time.Duration) *Throttle {
+	t := &Throttle{
+		tokenC: make(chan bool, tokensNum),
+		stopC:  make(chan bool, 1),
+	}
+
+	go func() {
+		for {
+			select {
+			case <-t.stopC:
+				return
+			default:
+				t.putTokens(tokensNum)
+				time.Sleep(duration)
 			}
 		}
 	}()
+
+	return t
+}
+
+func (t *Throttle) putTokens(tokensNum int) {
+	for i := 0; i < tokensNum; i++ {
+		select {
+		case t.tokenC <- true:
+		default:
+			return
+		}
+	}
+}
+
+// Stop ...
+func (t *Throttle) Stop() {
+	t.stopC <- true
+}
+
+// Allow ...
+func (t *Throttle) Allow() bool {
+	select {
+	case <-t.tokenC:
+		return true
+	default:
+		return false
+	}
 }
