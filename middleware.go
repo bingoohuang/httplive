@@ -37,7 +37,7 @@ func CORSMiddleware(c *gin.Context) {
 // StaticFileMiddleware ...
 func StaticFileMiddleware(c *gin.Context) {
 	p := trimContextPath(c)
-	if HasAnyPrefix(p, "/httplive/webcli", "/httplive/ws") {
+	if HasPrefix(p, "/httplive/webcli", "/httplive/ws") {
 		c.Next()
 		return
 	}
@@ -56,21 +56,10 @@ func StaticFileMiddleware(c *gin.Context) {
 	c.Next()
 }
 
-// HasAnyPrefix tells that s has prefix of any prefixes.
-func HasAnyPrefix(s string, prefixes ...string) bool {
-	for _, p := range prefixes {
-		if strings.HasPrefix(s, p) {
-			return true
-		}
-	}
-
-	return false
-}
-
 // APIMiddleware ...
 func APIMiddleware(c *gin.Context) {
 	p := trimContextPath(c)
-	if p == "/" || p == "/favicon.ico" || strings.HasPrefix(p, "/httplive/") {
+	if AnyOf(p, "/", "/favicon.ico") || HasPrefix(p, "/httplive/") {
 		c.Next()
 		return
 	}

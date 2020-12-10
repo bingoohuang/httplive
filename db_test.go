@@ -3,10 +3,10 @@ package httplive_test
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/Knetic/govaluate"
+	"github.com/bingoohuang/httplive"
 	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
 )
@@ -60,7 +60,7 @@ func TestGson(t *testing.T) {
 
 			parameters := make(gin.H)
 			for _, va := range expr.Vars() {
-				if strings.HasPrefix(va, "json_") {
+				if httplive.HasPrefix(va, "json_") {
 					parameters[va] = gjson.GetBytes(reqBody, va[5:]).Value()
 				}
 			}

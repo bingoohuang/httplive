@@ -69,15 +69,17 @@ func createDB(env *httplive.EnvVars) error {
 	return httplive.CreateDB(createDbRequired)
 }
 
+const defaultDb = "httplive.db"
+
 func fixDBPath(env *httplive.EnvVars) (string, bool) {
 	fullPath := env.DBFullPath
 	if fullPath == "" {
-		return path.Join(env.WorkingDir, "httplive.db"), true
+		return path.Join(env.WorkingDir, defaultDb), true
 	}
 
 	if s, err := os.Stat(fullPath); err == nil {
 		if s.IsDir() {
-			return path.Join(fullPath, "httplive.db"), true
+			return path.Join(fullPath, defaultDb), true
 		}
 
 		return fullPath, false
@@ -87,12 +89,11 @@ func fixDBPath(env *httplive.EnvVars) (string, bool) {
 	if strings.HasSuffix(fullPath, ".db") {
 		p = filepath.Dir(p)
 	} else {
-		fullPath = path.Join(p, "httplive.db")
+		fullPath = path.Join(p, defaultDb)
 	}
 
 	if _, err := os.Stat(p); os.IsNotExist(err) {
-		err := os.MkdirAll(p, 0o644)
-		if err != nil {
+		if err := os.MkdirAll(p, 0644); err != nil {
 			logrus.Fatalf("create  dir %s error %v", fullPath, err)
 		}
 	}
@@ -141,11 +142,9 @@ var wsupgrader = websocket.Upgrader{
 }
 
 func wshandler(c *gin.Context) {
-	connID := c.Request.URL.Query().Get("connectionId")
-	if connID != "" {
-		if conn := httplive.Clients[connID]; conn != nil {
-			return
-		}
+	connID := c.Query("connectionId")
+	if httplive.Clients[connID] != nil {
+		return
 	}
 
 	conn, err := wsupgrader.Upgrade(c.Writer, c.Request, nil)
@@ -157,12 +156,11 @@ func wshandler(c *gin.Context) {
 	httplive.Clients[connID] = conn
 
 	for {
-		t, msg, err := conn.ReadMessage()
-		if err != nil {
+		if t, msg, err := conn.ReadMessage(); err != nil {
 			delete(httplive.Clients, connID)
 			break
+		} else {
+			_ = conn.WriteMessage(t, msg)
 		}
-
-		_ = conn.WriteMessage(t, msg)
 	}
 }

@@ -12,7 +12,22 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func createJsTreeModel(a APIDataModel) JsTreeDataModel {
+func (a APIDataModel) getLabelByMethod() string {
+	switch a.Method {
+	case http.MethodGet:
+		return "label label-primary label-small"
+	case http.MethodPost:
+		return "label label-success label-small"
+	case http.MethodPut:
+		return "label label-warning label-small"
+	case http.MethodDelete:
+		return "label label-danger label-small"
+	default:
+		return "label label-default label-small"
+	}
+}
+
+func (a APIDataModel) createJsTreeModel() JsTreeDataModel {
 	model := JsTreeDataModel{
 		ID:        a.ID.Int(),
 		OriginKey: CreateEndpointKey(a.Method, a.Endpoint),
@@ -21,28 +36,10 @@ func createJsTreeModel(a APIDataModel) JsTreeDataModel {
 		Children:  []JsTreeDataModel{},
 	}
 
-	label := ""
-	switch a.Method {
-	case http.MethodGet:
-		label = "label label-primary label-small"
-	case http.MethodPost:
-		label = "label label-success label-small"
-	case http.MethodPut:
-		label = "label label-warning label-small"
-	case http.MethodDelete:
-		label = "label label-danger label-small"
-	default:
-		label = "label label-default label-small"
-	}
-
 	model.Type = a.Method
-	model.Text = fmt.Sprintf(`<span class="%v">%v</span> %v`, label, a.Method, a.Endpoint)
+	model.Text = fmt.Sprintf(`<span class="%v">%v</span> %v`, a.getLabelByMethod(), a.Method, a.Endpoint)
 
 	return model
-}
-
-type versionT struct {
-	giu.T `url:"GET /version"`
 }
 
 const (
@@ -52,12 +49,13 @@ const (
 	UpdateTime = "2020-12-10 20:20:57"
 )
 
+type versionT struct {
+	giu.T `url:"GET /version"`
+}
+
 // Version returns version information.
 func (ctrl WebCliController) Version(_ versionT) gin.H {
-	return gin.H{
-		"version":    Version,
-		"updateTime": UpdateTime,
-	}
+	return gin.H{"version": Version, "updateTime": UpdateTime}
 }
 
 type treeT struct {
@@ -70,17 +68,10 @@ func (ctrl WebCliController) Tree(_ treeT) gin.H {
 	trees := make([]JsTreeDataModel, len(apis))
 
 	for i, api := range apis {
-		trees[i] = createJsTreeModel(api)
+		trees[i] = api.createJsTreeModel()
 	}
 
-	return gin.H{
-		"id":       "0",
-		"key":      "APIs",
-		"text":     "APIs",
-		"state":    gin.H{"opened": true},
-		"children": trees,
-		"type":     "root",
-	}
+	return gin.H{"id": "0", "key": "APIs", "text": "APIs", "state": gin.H{"opened": true}, "children": trees, "type": "root"}
 }
 
 type backupT struct {
@@ -100,8 +91,7 @@ type downloadFileT struct {
 
 // DownloadFile ...
 func (ctrl WebCliController) DownloadFile(c *gin.Context, _ downloadFileT) error {
-	id, _ := c.GetQuery("id")
-	model, err := GetEndpoint(ID(id))
+	model, err := GetEndpoint(ID(c.Query("id")))
 	if err != nil {
 		return err
 	}
@@ -109,11 +99,9 @@ func (ctrl WebCliController) DownloadFile(c *gin.Context, _ downloadFileT) error
 	if model != nil {
 		c.Header("Content-Disposition", `attachment; filename="`+model.Filename+`"`)
 		c.Data(http.StatusOK, model.MimeType, model.FileContent)
-
-		return nil
+	} else {
+		c.Status(http.StatusNotFound)
 	}
-
-	c.Status(http.StatusNotFound)
 
 	return nil
 }
@@ -177,10 +165,10 @@ func parseFileContent(c *gin.Context) (mimeType, filename string, fileContent []
 		return mimeType, filename, fileContent
 	}
 
-	f, _ := file.Open()
-	fileContent, _ = ioutil.ReadAll(f)
 	mimeType = mime.TypeByExtension(path.Ext(file.Filename))
 	filename = file.Filename
+	f, _ := file.Open()
+	fileContent, _ = ioutil.ReadAll(f)
 
 	return mimeType, filename, fileContent
 }
@@ -191,8 +179,7 @@ type deleteEndpointT struct {
 
 // DeleteEndpoint ...
 func (ctrl WebCliController) DeleteEndpoint(c *gin.Context, _ deleteEndpointT) {
-	id := c.Query("id")
-	_ = DeleteEndpoint(id)
+	_ = DeleteEndpoint(c.Query("id"))
 
 	c.JSON(http.StatusOK, gin.H{"success": "ok"})
 }

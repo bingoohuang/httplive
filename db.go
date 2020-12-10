@@ -217,8 +217,7 @@ func CreateAPIDataModel(ep *Endpoint, query bool) *APIDataModel {
 
 func (ep *Endpoint) createDirect(m *APIDataModel) {
 	direct := gjson.Get(ep.Body, "_direct")
-	isDirect := direct.Type != gjson.Null
-	if !isDirect {
+	if direct.Type == gjson.Null {
 		return
 	}
 
@@ -230,17 +229,18 @@ func (ep *Endpoint) createDirect(m *APIDataModel) {
 
 func (ep *Endpoint) createDefault(m *APIDataModel) {
 	dynamic := gjson.Get(ep.Body, "_dynamic")
-	isDynamic := dynamic.Type == gjson.JSON && strings.HasPrefix(dynamic.Raw, "[")
-	if isDynamic {
+	if dynamic.Type == gjson.JSON && HasPrefix(dynamic.Raw, "[") {
 		m.dynamicValuers = createDynamics(ep.Body, []byte(dynamic.Raw))
 	}
 
 	model := *m
 	m.serveFn = func(c *gin.Context) {
-		if !dynamicProcess(c, model) {
-			b := []byte(ep.Body)
-			c.Data(http.StatusOK, DetectContentType(b), b)
+		if dynamicProcess(c, model) {
+			return
 		}
+
+		b := []byte(ep.Body)
+		c.Data(http.StatusOK, DetectContentType(b), b)
 	}
 }
 
@@ -271,14 +271,14 @@ func (ep *Endpoint) createEcho(m *APIDataModel) {
 func createRequestMap(c *gin.Context, model APIDataModel) map[string]interface{} {
 	r := c.Request
 	m := map[string]interface{}{
-		"TimeGo":     timeFmt(time.Now()),
-		"Proto":      r.Proto,
-		"Host":       r.Host,
-		"RequestURI": r.RequestURI,
-		"RemoteAddr": r.RemoteAddr,
-		"Method":     r.Method,
-		"URL":        r.URL.String(),
-		"Header":     convertHeader(r.Header),
+		"timeGo":     timeFmt(time.Now()),
+		"proto":      r.Proto,
+		"host":       r.Host,
+		"requestUri": r.RequestURI,
+		"remoteAddr": r.RemoteAddr,
+		"method":     r.Method,
+		"url":        r.URL.String(),
+		"headers":    convertHeader(r.Header),
 	}
 
 	fulfilRouter(c, model, m)
@@ -286,47 +286,43 @@ func createRequestMap(c *gin.Context, model APIDataModel) map[string]interface{}
 	fulfilOther(r, m)
 	fulfilPayload(r, m)
 
-	m["TimeTo"] = timeFmt(time.Now())
+	m["timeTo"] = timeFmt(time.Now())
 	return m
 }
 
 func fulfilOther(r *http.Request, m map[string]interface{}) {
 	if len(r.TransferEncoding) > 0 {
-		m["Transfer-Encoding"] = strings.Join(r.TransferEncoding, ",")
+		m["transferEncoding"] = strings.Join(r.TransferEncoding, ",")
 	}
 
 	if r.Close {
-		m["Connection"] = "close"
+		m["connection"] = "close"
 	}
 }
 
 func fulfilRouter(c *gin.Context, model APIDataModel, m map[string]interface{}) {
-	m["Router"] = model.Endpoint
+	m["router"] = model.Endpoint
 	if len(c.Params) > 0 {
 		p := make(map[string]string)
 		for _, pa := range c.Params {
 			p[pa.Key] = pa.Value
 		}
 
-		m["RouterParams"] = p
+		m["routerParams"] = p
 	}
 }
 
 func fulfilQuery(r *http.Request, m map[string]interface{}) {
 	query := r.URL.Query()
 	if len(query) > 0 {
-		m["Query"] = convertHeader(query)
+		m["query"] = convertHeader(query)
 	}
 }
 
 func convertHeader(query map[string][]string) map[string]string {
 	q := make(map[string]string)
 	for k, v := range query {
-		if len(v) == 1 {
-			q[k] = v[0]
-		} else {
-			q[k] = strings.Join(v, ", ")
-		}
+		q[k] = strings.Join(v, ", ")
 	}
 
 	return q
@@ -336,9 +332,9 @@ func fulfilPayload(r *http.Request, m map[string]interface{}) {
 	payload, _ := ioutil.ReadAll(r.Body)
 	if len(payload) > 0 {
 		if HasContentType(r, "application/json") {
-			m["Body"] = json.RawMessage(payload)
+			m["payload"] = json.RawMessage(payload)
 		} else {
-			m["Body"] = string(payload)
+			m["payload"] = string(payload)
 		}
 	}
 }
@@ -365,7 +361,7 @@ func HasContentType(r *http.Request, mimetype string) bool {
 
 func (ep *Endpoint) createProxy(m *APIDataModel) {
 	proxy := gjson.Get(ep.Body, "_proxy")
-	isProxy := proxy.Type == gjson.String && strings.HasPrefix(proxy.String(), "http")
+	isProxy := proxy.Type == gjson.String && HasPrefix(proxy.String(), "http")
 	if !isProxy {
 		return
 	}
@@ -520,19 +516,15 @@ func SyncAPIRouter() {
 
 	for _, ep := range EndpointList(false) {
 		path := JoinContextPath(ep.Endpoint)
+		h := ep.handleJSON
+		if ep.MimeType != "" {
+			h = ep.handleFileDownload
+		}
 
 		if strings.EqualFold(ep.Method, "ANY") {
-			if ep.MimeType == "" {
-				router.Any(path, ep.handleJSON)
-			} else {
-				router.Any(path, ep.handleFileDownload)
-			}
+			router.Any(path, h)
 		} else {
-			if ep.MimeType == "" {
-				router.Handle(ep.Method, path, ep.handleJSON)
-			} else {
-				router.Handle(ep.Method, path, ep.handleFileDownload)
-			}
+			router.Handle(ep.Method, path, h)
 		}
 	}
 
@@ -676,24 +668,24 @@ func (v dynamicValue) responseDynamic(c *gin.Context) {
 func makeParameters(respBody string, expr *govaluate.EvaluableExpression) map[string]valuer {
 	parameters := make(map[string]valuer)
 	for _, va := range expr.Vars() {
-		if strings.HasPrefix(va, "json_") {
+		if HasPrefix(va, "json_") {
 			k := va[5:]
 
 			parameters[va] = func(reqBody []byte, c *gin.Context) interface{} {
 				return gjson.GetBytes(reqBody, k).Value()
 			}
-		} else if strings.HasPrefix(va, "query_") {
+		} else if HasPrefix(va, "query_") {
 			k := va[6:]
 			parameters[va] = func(reqBody []byte, c *gin.Context) interface{} {
 				return c.Query(k)
 			}
-		} else if strings.HasPrefix(va, "router_") {
+		} else if HasPrefix(va, "router_") {
 			// /user/:user
 			k := va[7:]
 			parameters[va] = func(reqBody []byte, c *gin.Context) interface{} {
 				return c.Param(k)
 			}
-		} else if strings.HasPrefix(va, "header_") {
+		} else if HasPrefix(va, "header_") {
 			k := va[7:]
 			parameters[va] = func(reqBody []byte, c *gin.Context) interface{} {
 				return c.GetHeader(k)
@@ -702,13 +694,13 @@ func makeParameters(respBody string, expr *govaluate.EvaluableExpression) map[st
 			indirectVa := gjson.Get(respBody, va).String()
 			parameters[va] = func(reqBody []byte, c *gin.Context) interface{} {
 				switch {
-				case strings.HasPrefix(indirectVa, "json:"):
+				case HasPrefix(indirectVa, "json:"):
 					return gjson.GetBytes(reqBody, indirectVa[5:]).Value()
-				case strings.HasPrefix(indirectVa, "query:"):
+				case HasPrefix(indirectVa, "query:"):
 					return c.Query(indirectVa[6:])
-				case strings.HasPrefix(indirectVa, "router:"):
+				case HasPrefix(indirectVa, "router:"):
 					return c.Param(indirectVa[7:]) // /user/:user
-				case strings.HasPrefix(indirectVa, "header:"):
+				case HasPrefix(indirectVa, "header:"):
 					return c.GetHeader(indirectVa[7:])
 				default:
 					return nil

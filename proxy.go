@@ -71,6 +71,17 @@ func IsRelativeForward(statusCode int, locationHeader string) bool {
 	return !HasPrefix(locationHeader, "http://", "https://")
 }
 
+// AnyOf tells s equals any element of p...
+func AnyOf(s string, p ...string) bool {
+	for _, i := range p {
+		if s == i {
+			return true
+		}
+	}
+
+	return false
+}
+
 // HasPrefix tells s has any prefix of p...
 func HasPrefix(s string, p ...string) bool {
 	for _, i := range p {
