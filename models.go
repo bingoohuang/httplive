@@ -94,4 +94,5 @@ type WsMessage struct {
 	Method         string            `json:"method"`
 	Path           string            `json:"path"`
 	Query          map[string]string `json:"query"`
+	RemoteAddr     string            `json:"remoteAddr"`
 }

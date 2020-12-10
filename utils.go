@@ -37,6 +37,7 @@ func Broadcast(c *gin.Context, rr routerResult) {
 		ResponseSize:   rr.ResponseSize,
 		ResponseStatus: rr.ResponseStatus,
 		ResponseHeader: rr.ResponseHeader,
+		RemoteAddr:     rr.RemoteAddr,
 	}
 
 	for id, conn := range Clients {

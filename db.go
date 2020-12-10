@@ -139,7 +139,41 @@ func createDB(dao *Dao) error {
 		ID: "3", Endpoint: "/echo/:id", Methods: "ANY", MimeType: "", Filename: "",
 		Body: `{"_echo": "JSON"}`, CreateTime: now, UpdateTime: now, DeletedAt: "",
 	})
+
+	dao.AddEndpointID(Endpoint{
+		ID: "4", Endpoint: "/mockbin", Methods: "ANY", MimeType: "", Filename: "",
+		Body: `{"status":200,"method":"GET",
+	"headers":{"name":"bingoo"},"cookies":[{"name":"bingoo","value":"huang","maxAge":0, "path":"/","domain":"127.0.0.1","secure":false,"httpOnly":false}], "close": true,
+	"contentType":"application/json; charset=utf-8", "payload":{"name":"bingoo"}} `, CreateTime: now, UpdateTime: now, DeletedAt: "",
+	})
 	return nil
+}
+
+// MockbinCookie defines the cookie format.
+type MockbinCookie struct {
+	Name     string `json:"name"`
+	Value    string `json:"value"`
+	MaxAge   int    `json:"maxAge"`
+	Path     string `json:"path"`
+	Domain   string `json:"domain"`
+	Secure   bool   `json:"secure"`
+	HTTPOnly bool   `json:"httpOnly"`
+}
+
+// Mockbin defines the mockbin struct.
+type Mockbin struct {
+	Status      int               `json:"status"`
+	Method      string            `json:"method"`
+	Headers     map[string]string `json:"headers"`
+	Cookies     []MockbinCookie   `json:"cookies"`
+	Close       bool              `json:"close"`
+	ContentType string            `json:"contentType"`
+	Payload     json.RawMessage   `json:"payload"`
+}
+
+// IsValid tellsthe mockbin is valid or not.
+func (m Mockbin) IsValid() bool {
+	return m.Status > 0
 }
 
 // SaveEndpoint ...
@@ -200,6 +234,9 @@ func CreateAPIDataModel(ep *Endpoint, query bool) *APIDataModel {
 	}
 
 	if m.serveFn == nil {
+		ep.createMockbin(m)
+	}
+	if m.serveFn == nil {
 		ep.createEcho(m)
 	}
 	if m.serveFn == nil {
@@ -246,6 +283,41 @@ func (ep *Endpoint) createDefault(m *APIDataModel) {
 
 func timeFmt(t time.Time) string {
 	return t.Format("2006-01-02 15:04:05.0000")
+}
+
+func (ep *Endpoint) createMockbin(m *APIDataModel) {
+	var mockbin Mockbin
+	if err := json.Unmarshal([]byte(ep.Body), &mockbin); err != nil || !mockbin.IsValid() {
+		return
+	}
+
+	m.serveFn = func(c *gin.Context) {
+		if mockbin.Method != "" && mockbin.Method != c.Request.Method {
+			c.Status(http.StatusMethodNotAllowed)
+			return
+		}
+
+		for k, v := range mockbin.Headers {
+			c.Header(k, v)
+		}
+
+		for _, v := range mockbin.Cookies {
+			if v.Path == "" {
+				v.Path = "/"
+			}
+			c.SetCookie(v.Name, v.Value, v.MaxAge, v.Path, v.Domain, v.Secure, v.HTTPOnly)
+		}
+
+		if mockbin.Close {
+			c.Header("Connection", "close")
+		}
+
+		if mockbin.ContentType == "" {
+			mockbin.ContentType = DetectContentType(mockbin.Payload)
+		}
+
+		c.Data(mockbin.Status, mockbin.ContentType, mockbin.Payload)
+	}
 }
 
 func (ep *Endpoint) createEcho(m *APIDataModel) {
@@ -483,6 +555,7 @@ type routerResult struct {
 	ResponseHeader map[string]string
 	ResponseStatus int
 	ResponseSize   int
+	RemoteAddr     string
 }
 
 type contextKey int
@@ -592,6 +665,7 @@ func (ep APIDataModel) handleJSON(c *gin.Context) {
 			routerResult.RouterBody = copyWriter.buf.Bytes()
 		}
 
+		routerResult.RemoteAddr = c.Request.RemoteAddr
 		routerResult.ResponseSize = copyWriter.Size()
 		routerResult.ResponseStatus = copyWriter.Status()
 		routerResult.ResponseHeader = convertHeader(copyWriter.Header())
