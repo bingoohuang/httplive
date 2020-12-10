@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"mime"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"path/filepath"
 	"strings"
@@ -56,12 +57,12 @@ type Dao struct {
 // CreateDao creates a dao.
 func CreateDao(db *sql.DB) (*Dao, error) {
 	dao := &Dao{Logger: &sqlx.DaoLogrus{}}
-	err := sqlx.CreateDao(dao, sqlx.WithDB(db), sqlx.WithSQLStr(boxString("httplive.sql")))
+	err := sqlx.CreateDao(dao, sqlx.WithDB(db), sqlx.WithSQLStr(boxStr("httplive.sql")))
 
 	return dao, err
 }
 
-func boxString(name string) string {
+func boxStr(name string) string {
 	pkger.Include("/assets")
 
 	f, err := pkger.Open(filepath.Join("/assets", name))
@@ -123,40 +124,21 @@ func createDB(dao *Dao) error {
 
 	now := time.Now().Format("2006-01-02 15:04:05.000")
 	dao.AddEndpointID(Endpoint{
-		ID:         "0",
-		Endpoint:   "/api/demo",
-		Methods:    http.MethodGet,
-		MimeType:   "",
-		Filename:   "",
-		Body:       boxString("apidemo.json"),
-		CreateTime: now,
-		UpdateTime: now,
-		DeletedAt:  "",
+		ID: "0", Endpoint: "/api/demo", Methods: http.MethodGet, MimeType: "", Filename: "",
+		Body: boxStr("apidemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
 	})
 	dao.AddEndpointID(Endpoint{
-		ID:         "1",
-		Endpoint:   "/dynamic/demo",
-		Methods:    http.MethodPost,
-		MimeType:   "",
-		Filename:   "",
-		Body:       boxString("dynamicdemo.json"),
-		CreateTime: now,
-		UpdateTime: now,
-		DeletedAt:  "",
+		ID: "1", Endpoint: "/dynamic/demo", Methods: http.MethodPost, MimeType: "", Filename: "",
+		Body: boxStr("dynamicdemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
 	})
-
 	dao.AddEndpointID(Endpoint{
-		ID:         "2",
-		Endpoint:   "/proxy/demo",
-		Methods:    http.MethodGet,
-		MimeType:   "",
-		Filename:   "",
-		Body:       boxString("proxydemo.json"),
-		CreateTime: now,
-		UpdateTime: now,
-		DeletedAt:  "",
+		ID: "2", Endpoint: "/proxy/demo", Methods: http.MethodGet, MimeType: "", Filename: "",
+		Body: boxStr("proxydemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
 	})
-
+	dao.AddEndpointID(Endpoint{
+		ID: "3", Endpoint: "/echo/:id", Methods: "ANY", MimeType: "", Filename: "",
+		Body: `{"_echo": "JSON"}`, CreateTime: now, UpdateTime: now, DeletedAt: "",
+	})
 	return nil
 }
 
@@ -217,9 +199,18 @@ func CreateAPIDataModel(ep *Endpoint, query bool) *APIDataModel {
 		return m
 	}
 
-	ep.createDirect(m)
-	ep.createDynamicValuers(m)
-	ep.createProxy(m)
+	if m.serveFn == nil {
+		ep.createEcho(m)
+	}
+	if m.serveFn == nil {
+		ep.createProxy(m)
+	}
+	if m.serveFn == nil {
+		ep.createDirect(m)
+	}
+	if m.serveFn == nil {
+		ep.createDefault(m)
+	}
 
 	return m
 }
@@ -237,14 +228,139 @@ func (ep *Endpoint) createDirect(m *APIDataModel) {
 	}
 }
 
-func (ep *Endpoint) createDynamicValuers(m *APIDataModel) {
+func (ep *Endpoint) createDefault(m *APIDataModel) {
 	dynamic := gjson.Get(ep.Body, "_dynamic")
 	isDynamic := dynamic.Type == gjson.JSON && strings.HasPrefix(dynamic.Raw, "[")
-	if !isDynamic {
+	if isDynamic {
+		m.dynamicValuers = createDynamics(ep.Body, []byte(dynamic.Raw))
+	}
+
+	model := *m
+	m.serveFn = func(c *gin.Context) {
+		if !dynamicProcess(c, model) {
+			b := []byte(ep.Body)
+			c.Data(http.StatusOK, DetectContentType(b), b)
+		}
+	}
+}
+
+func timeFmt(t time.Time) string {
+	return t.Format("2006-01-02 15:04:05.0000")
+}
+
+func (ep *Endpoint) createEcho(m *APIDataModel) {
+	echoType := gjson.Get(ep.Body, "_echo")
+	if echoType.Type != gjson.String {
 		return
 	}
 
-	m.dynamicValuers = createDynamics(ep.Body, []byte(dynamic.Raw))
+	echoMode := echoType.String()
+	model := *m
+
+	m.serveFn = func(c *gin.Context) {
+		switch strings.ToLower(echoMode) {
+		case "json":
+			c.JSON(http.StatusOK, createRequestMap(c, model))
+		default:
+			dumpRequest, _ := httputil.DumpRequest(c.Request, true)
+			c.Data(http.StatusOK, "text/plain; charset=utf-8", dumpRequest)
+		}
+	}
+}
+
+func createRequestMap(c *gin.Context, model APIDataModel) map[string]interface{} {
+	r := c.Request
+	m := map[string]interface{}{
+		"TimeGo":     timeFmt(time.Now()),
+		"Proto":      r.Proto,
+		"Host":       r.Host,
+		"RequestURI": r.RequestURI,
+		"RemoteAddr": r.RemoteAddr,
+		"Method":     r.Method,
+		"URL":        r.URL.String(),
+		"Header":     convertHeader(r.Header),
+	}
+
+	fulfilRouter(c, model, m)
+	fulfilQuery(r, m)
+	fulfilOther(r, m)
+	fulfilPayload(r, m)
+
+	m["TimeTo"] = timeFmt(time.Now())
+	return m
+}
+
+func fulfilOther(r *http.Request, m map[string]interface{}) {
+	if len(r.TransferEncoding) > 0 {
+		m["Transfer-Encoding"] = strings.Join(r.TransferEncoding, ",")
+	}
+
+	if r.Close {
+		m["Connection"] = "close"
+	}
+}
+
+func fulfilRouter(c *gin.Context, model APIDataModel, m map[string]interface{}) {
+	m["Router"] = model.Endpoint
+	if len(c.Params) > 0 {
+		p := make(map[string]string)
+		for _, pa := range c.Params {
+			p[pa.Key] = pa.Value
+		}
+
+		m["RouterParams"] = p
+	}
+}
+
+func fulfilQuery(r *http.Request, m map[string]interface{}) {
+	query := r.URL.Query()
+	if len(query) > 0 {
+		m["Query"] = convertHeader(query)
+	}
+}
+
+func convertHeader(query map[string][]string) map[string]string {
+	q := make(map[string]string)
+	for k, v := range query {
+		if len(v) == 1 {
+			q[k] = v[0]
+		} else {
+			q[k] = strings.Join(v, ", ")
+		}
+	}
+
+	return q
+}
+
+func fulfilPayload(r *http.Request, m map[string]interface{}) {
+	payload, _ := ioutil.ReadAll(r.Body)
+	if len(payload) > 0 {
+		if HasContentType(r, "application/json") {
+			m["Body"] = json.RawMessage(payload)
+		} else {
+			m["Body"] = string(payload)
+		}
+	}
+}
+
+// HasContentType determine whether the request `content-type` includes a
+// server-acceptable mime-type
+// Failure should yield an HTTP 415 (`http.StatusUnsupportedMediaType`)
+func HasContentType(r *http.Request, mimetype string) bool {
+	contentType := r.Header.Get("Content-type")
+	if contentType == "" {
+		return mimetype == "application/octet-stream"
+	}
+
+	for _, v := range strings.Split(contentType, ",") {
+		if t, _, err := mime.ParseMediaType(v); err != nil {
+			break
+		} else if t == mimetype {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (ep *Endpoint) createProxy(m *APIDataModel) {
@@ -365,9 +481,12 @@ func compactJSON(data []byte) []byte {
 }
 
 type routerResult struct {
-	RouterServed bool
-	RouterBody   []byte
-	Filename     string
+	RouterServed   bool
+	RouterBody     []byte
+	Filename       string
+	ResponseHeader map[string]string
+	ResponseStatus int
+	ResponseSize   int
 }
 
 type contextKey int
@@ -444,19 +563,46 @@ func (ep APIDataModel) handleFileDownload(c *gin.Context) {
 		bytes.NewReader(ep.FileContent))
 }
 
-func (ep APIDataModel) handleJSON(c *gin.Context) {
-	routerResult := c.Request.Context().Value(routerResultKey).(*routerResult)
-	routerResult.RouterServed = true
+type writer struct {
+	gin.ResponseWriter
+	buf bytes.Buffer
+}
 
-	if ep.serveFn != nil {
-		ep.serveFn(c)
-		return
+func (w *writer) Write(data []byte) (n int, err error) {
+	w.buf.Write(data)
+	return w.ResponseWriter.Write(data)
+}
+
+func (w *writer) WriteString(s string) (n int, err error) {
+	w.buf.WriteString(s)
+	return w.ResponseWriter.WriteString(s)
+}
+
+func (w *writer) Body(maxSize int) string {
+	if w.ResponseWriter.Size() <= maxSize {
+		return w.buf.String()
 	}
 
-	if !routerResult.dynamic(c, ep) {
-		b := []byte(ep.Body)
-		routerResult.RouterBody = b
-		c.Data(http.StatusOK, DetectContentType(b), b)
+	return string(w.buf.Bytes()[:maxSize-3]) + "..."
+}
+
+func (ep APIDataModel) handleJSON(c *gin.Context) {
+	if ep.serveFn != nil {
+		copyWriter := &writer{
+			ResponseWriter: c.Writer,
+		}
+		c.Writer = copyWriter
+		ep.serveFn(c)
+
+		routerResult := c.Request.Context().Value(routerResultKey).(*routerResult)
+		if !routerResult.RouterServed {
+			routerResult.RouterServed = true
+			routerResult.RouterBody = copyWriter.buf.Bytes()
+		}
+
+		routerResult.ResponseSize = copyWriter.Size()
+		routerResult.ResponseStatus = copyWriter.Status()
+		routerResult.ResponseHeader = convertHeader(copyWriter.Header())
 	}
 }
 
@@ -470,7 +616,7 @@ type dynamicValue struct {
 	parametersEvaluator map[string]valuer
 }
 
-func (rr *routerResult) dynamic(c *gin.Context, ep APIDataModel) bool {
+func dynamicProcess(c *gin.Context, ep APIDataModel) bool {
 	if len(ep.dynamicValuers) == 0 {
 		return false
 	}
@@ -496,7 +642,7 @@ func (rr *routerResult) dynamic(c *gin.Context, ep APIDataModel) bool {
 		}
 
 		if yes, ok := evaluateResult.(bool); ok && yes {
-			v.responseDynamic(c, rr)
+			v.responseDynamic(c)
 
 			return true
 		}
@@ -505,7 +651,7 @@ func (rr *routerResult) dynamic(c *gin.Context, ep APIDataModel) bool {
 	return false
 }
 
-func (v dynamicValue) responseDynamic(c *gin.Context, rr *routerResult) {
+func (v dynamicValue) responseDynamic(c *gin.Context) {
 	statusCode := v.Status
 	if statusCode == 0 {
 		statusCode = http.StatusOK
@@ -524,7 +670,6 @@ func (v dynamicValue) responseDynamic(c *gin.Context, rr *routerResult) {
 		contentType = DetectContentType(v.Response)
 	}
 
-	rr.RouterBody = v.Response
 	c.Data(statusCode, contentType, v.Response)
 }
 

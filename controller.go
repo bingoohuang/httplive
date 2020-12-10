@@ -47,9 +47,9 @@ type versionT struct {
 
 const (
 	// Version is the version x.y.z.
-	Version = "1.0.4"
+	Version = "1.0.5"
 	// UpdateTime is the update time.
-	UpdateTime = "2020-12-04 09:32:07"
+	UpdateTime = "2020-12-10 20:20:57"
 )
 
 // Version returns version information.
