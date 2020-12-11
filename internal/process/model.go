@@ -4,11 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/bingoohuang/httplive/pkg/http2curl"
 	"io/ioutil"
 	"mime"
 	"net/http"
+	"net/http/httputil"
+	"strings"
 	"time"
+
+	"github.com/bingoohuang/httplive/pkg/http2curl"
 
 	"github.com/bingoohuang/gou/str"
 	"github.com/bingoohuang/httplive/pkg/util"
@@ -161,7 +164,7 @@ func (ep APIDataModel) HandleJSON(c *gin.Context) {
 }
 
 func viewProcess(c *gin.Context, ep APIDataModel) bool {
-	switch c.Query("_view") {
+	switch strings.ToLower(c.Query("_view")) {
 	case "curl":
 		values := c.Request.URL.Query()
 		delete(values, "_view")
@@ -171,6 +174,11 @@ func viewProcess(c *gin.Context, ep APIDataModel) bool {
 	case "conf":
 		body := []byte(ep.Body)
 		c.Data(http.StatusOK, util.DetectContentType(body), body)
+	case "echo":
+		c.JSON(http.StatusOK, createRequestMap(c, ep))
+	case "echoText":
+		dumpRequest, _ := httputil.DumpRequest(c.Request, true)
+		c.Data(http.StatusOK, "text/plain; charset=utf-8", dumpRequest)
 	default:
 		return false
 	}
