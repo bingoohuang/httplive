@@ -228,10 +228,10 @@
 .requestConsole div.jsoneditor-tree {
   height: 95%;
 }
-
+/*
 .requestConsole .jsoneditor-menu {
   display: none;
-}
+}*/
 
 .table-container {
   position: relative;

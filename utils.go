@@ -26,14 +26,15 @@ func CreateEndpointKey(method string, endpoint string) string {
 // Broadcast ...
 func Broadcast(c *gin.Context, rr routerResult) {
 	msg := WsMessage{
-		Time:           time.Now().Format("2006-01-02 15:04:05.000"),
-		Host:           c.Request.Host,
-		Body:           GetRequestBody(c),
-		Method:         c.Request.Method,
-		Path:           c.Request.URL.Path,
-		Query:          convertHeader(c.Request.URL.Query()),
-		Header:         GetHeaders(c),
-		Response:       compactJSON(rr.RouterBody),
+		Time:   time.Now().Format("2006-01-02 15:04:05.000"),
+		Host:   c.Request.Host,
+		Body:   GetRequestBody(c),
+		Method: c.Request.Method,
+		Path:   c.Request.URL.Path,
+		Query:  convertHeader(c.Request.URL.Query()),
+		Header: GetHeaders(c),
+
+		Response:       compatibleJSON(rr.RouterBody),
 		ResponseSize:   rr.ResponseSize,
 		ResponseStatus: rr.ResponseStatus,
 		ResponseHeader: rr.ResponseHeader,
@@ -59,12 +60,6 @@ func GetHeaders(c *gin.Context) map[string]string {
 	}
 
 	return hdr
-}
-
-// GetIP ...
-func GetIP(c *gin.Context) string {
-	ip := c.ClientIP()
-	return ip
 }
 
 // GetMultiPartFormValue ...
@@ -136,11 +131,6 @@ func GetRequestBody(c *gin.Context) interface{} {
 		body, _ := ioutil.ReadAll(c.Request.Body)
 		return string(body)
 	}
-}
-
-// IsJSONStr tests string s is in JSON format.
-func IsJSONStr(s string) bool {
-	return IsJSONBytes([]byte(s))
 }
 
 // IsJSONBytes tests bytes b is in JSON format.

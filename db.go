@@ -27,19 +27,6 @@ import (
 	_ "github.com/mattn/go-sqlite3" // import sqlite3
 )
 
-// Endpoint is the structure for table httplive_endpoint.
-type Endpoint struct {
-	ID         ID     `name:"id"`
-	Endpoint   string `name:"endpoint"`
-	Methods    string `name:"methods"`
-	MimeType   string `name:"mime_type"`
-	Filename   string `name:"filename"`
-	Body       string `name:"body"`
-	CreateTime string `name:"create_time"`
-	UpdateTime string `name:"update_time"`
-	DeletedAt  string `name:"deleted_at"`
-}
-
 // Dao defines the api to access the database.
 type Dao struct {
 	CreateTable     func()
@@ -57,12 +44,12 @@ type Dao struct {
 // CreateDao creates a dao.
 func CreateDao(db *sql.DB) (*Dao, error) {
 	dao := &Dao{Logger: &sqlx.DaoLogrus{}}
-	err := sqlx.CreateDao(dao, sqlx.WithDB(db), sqlx.WithSQLStr(boxStr("httplive.sql")))
+	err := sqlx.CreateDao(dao, sqlx.WithDB(db), sqlx.WithSQLStr(asset("httplive.sql")))
 
 	return dao, err
 }
 
-func boxStr(name string) string {
+func asset(name string) string {
 	pkger.Include("/assets")
 
 	f, err := pkger.Open(filepath.Join("/assets", name))
@@ -125,55 +112,45 @@ func createDB(dao *Dao) error {
 	now := time.Now().Format("2006-01-02 15:04:05.000")
 	dao.AddEndpointID(Endpoint{
 		ID: "0", Endpoint: "/api/demo", Methods: http.MethodGet, MimeType: "", Filename: "",
-		Body: boxStr("apidemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
+		Body: asset("apidemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
 	})
 	dao.AddEndpointID(Endpoint{
 		ID: "1", Endpoint: "/dynamic/demo", Methods: http.MethodPost, MimeType: "", Filename: "",
-		Body: boxStr("dynamicdemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
+		Body: asset("dynamicdemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
 	})
 	dao.AddEndpointID(Endpoint{
 		ID: "2", Endpoint: "/proxy/demo", Methods: http.MethodGet, MimeType: "", Filename: "",
-		Body: boxStr("proxydemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
+		Body: asset("proxydemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
 	})
 	dao.AddEndpointID(Endpoint{
 		ID: "3", Endpoint: "/echo/:id", Methods: "ANY", MimeType: "", Filename: "",
-		Body: `{"_echo": "JSON"}`, CreateTime: now, UpdateTime: now, DeletedAt: "",
+		Body: asset("echo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
 	})
-
 	dao.AddEndpointID(Endpoint{
 		ID: "4", Endpoint: "/mockbin", Methods: "ANY", MimeType: "", Filename: "",
-		Body: `{"status":200,"method":"GET",
-	"headers":{"name":"bingoo"},"cookies":[{"name":"bingoo","value":"huang","maxAge":0, "path":"/","domain":"127.0.0.1","secure":false,"httpOnly":false}], "close": true,
-	"contentType":"application/json; charset=utf-8", "payload":{"name":"bingoo"}} `, CreateTime: now, UpdateTime: now, DeletedAt: "",
+		Body: asset("mockbin.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
 	})
+
 	return nil
 }
 
-// MockbinCookie defines the cookie format.
-type MockbinCookie struct {
-	Name     string `json:"name"`
-	Value    string `json:"value"`
-	MaxAge   int    `json:"maxAge"`
-	Path     string `json:"path"`
-	Domain   string `json:"domain"`
-	Secure   bool   `json:"secure"`
-	HTTPOnly bool   `json:"httpOnly"`
-}
+func countIf(cond bool) int {
+	if cond {
+		return 1
+	}
 
-// Mockbin defines the mockbin struct.
-type Mockbin struct {
-	Status      int               `json:"status"`
-	Method      string            `json:"method"`
-	Headers     map[string]string `json:"headers"`
-	Cookies     []MockbinCookie   `json:"cookies"`
-	Close       bool              `json:"close"`
-	ContentType string            `json:"contentType"`
-	Payload     json.RawMessage   `json:"payload"`
+	return 0
 }
 
 // IsValid tellsthe mockbin is valid or not.
 func (m Mockbin) IsValid() bool {
-	return m.Status > 0
+	return countIf(m.Status >= 100)+
+		countIf(m.Method != "")+
+		countIf(m.RedirectURL != "")+
+		countIf(m.ContentType != "")+
+		countIf(len(m.Payload) > 0)+
+		countIf(len(m.Headers) > 0)+
+		countIf(len(m.Cookies) > 0) >= 3
 }
 
 // SaveEndpoint ...
@@ -286,37 +263,61 @@ func timeFmt(t time.Time) string {
 }
 
 func (ep *Endpoint) createMockbin(m *APIDataModel) {
-	var mockbin Mockbin
-	if err := json.Unmarshal([]byte(ep.Body), &mockbin); err != nil || !mockbin.IsValid() {
+	var b Mockbin
+	if err := json.Unmarshal([]byte(ep.Body), &b); err != nil || !b.IsValid() {
 		return
 	}
 
 	m.serveFn = func(c *gin.Context) {
-		if mockbin.Method != "" && mockbin.Method != c.Request.Method {
+		if b.Method != "" && b.Method != c.Request.Method {
 			c.Status(http.StatusMethodNotAllowed)
 			return
 		}
 
-		for k, v := range mockbin.Headers {
+		for k, v := range b.Headers {
 			c.Header(k, v)
 		}
 
-		for _, v := range mockbin.Cookies {
+		for _, v := range b.Cookies {
 			if v.Path == "" {
 				v.Path = "/"
 			}
 			c.SetCookie(v.Name, v.Value, v.MaxAge, v.Path, v.Domain, v.Secure, v.HTTPOnly)
 		}
 
-		if mockbin.Close {
+		if b.Close {
 			c.Header("Connection", "close")
 		}
 
-		if mockbin.ContentType == "" {
-			mockbin.ContentType = DetectContentType(mockbin.Payload)
+		if b.RedirectURL != "" {
+			processRedirect(c, b)
+			return
 		}
 
-		c.Data(mockbin.Status, mockbin.ContentType, mockbin.Payload)
+		if b.ContentType == "" {
+			b.ContentType = DetectContentType(b.Payload)
+		}
+
+		c.Data(b.Status, b.ContentType, b.Payload)
+	}
+}
+
+func processRedirect(c *gin.Context, b Mockbin) {
+	switch b.Status {
+	// 301 Moved Permanently: 请求的资源已永久移动到新位置，并且将来任何对此资源的引用都应该使用本响应返回的若干个URI之一
+	// 302 Found: 请求的资源现在临时从不同的URI响应请求。由于这样的重定向是临时的，客户端应当继续向原有地址发送以后的请求,
+	// HTTP 1.0中的意义是Moved Temporarily,但是很多浏览器的实现是按照303的处实现的，
+	// 所以HTTP 1.1中增加了 303和307的状态码来区分不同的行为
+	// 303 See Other (since HTTP/1.1): 对应当前请求的响应可以在另一个URI上被找到，而且客户端应当采用GET的方式访问那个资源
+	// 304 Not Modified (RFC 7232): 请求的资源没有改变
+	// 305 Use Proxy (since HTTP/1.1): 被请求的资源必须通过指定的代理才能被访问
+	// 306 Switch Proxy: 在最新版的规范中，306状态码已经不再被使用
+	// 307 Temporary Redirect (since HTTP/1.1): 请求的资源现在临时从不同的URI响应请求,和303不同，它还是使用原先的Method
+	// 308 Permanent Redirect (RFC 7538): 请求的资源已永久移动到新位置,并且新请求的Method不能改变
+	case 301, 302, 303, 307, 308:
+		c.Redirect(b.Status, b.RedirectURL)
+	default:
+		c.Redirect(302, b.RedirectURL)
 	}
 }
 
@@ -538,14 +539,14 @@ var (
 	broadcastThrottler = MakeThrottle(60, 60*time.Second)
 )
 
-func compactJSON(data []byte) []byte {
-	compactedBuffer := new(bytes.Buffer)
-	if err := json.Compact(compactedBuffer, data); err != nil {
-		v, _ := json.Marshal(map[string]string{"raw": string(data)})
+func compatibleJSON(b []byte) []byte {
+	var out bytes.Buffer
+	if err := json.Indent(&out, b, "", "  "); err != nil {
+		v, _ := json.Marshal(map[string]string{"raw": string(b)})
 		return v
 	}
 
-	return compactedBuffer.Bytes()
+	return out.Bytes()
 }
 
 type routerResult struct {

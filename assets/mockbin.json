@@ -1,0 +1,24 @@
+{
+  "status": 200,
+  "method": "GET",
+  "redirectURL": "",
+  "headers": {
+    "name": "bingoo"
+  },
+  "cookies": [
+    {
+      "name": "bingoo",
+      "value": "huang",
+      "maxAge": 0,
+      "path": "/",
+      "domain": "127.0.0.1",
+      "secure": false,
+      "httpOnly": false
+    }
+  ],
+  "close": true,
+  "contentType": "application/json; charset=utf-8",
+  "payload": {
+    "name": "bingoo"
+  }
+}

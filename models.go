@@ -96,3 +96,39 @@ type WsMessage struct {
 	Query          map[string]string `json:"query"`
 	RemoteAddr     string            `json:"remoteAddr"`
 }
+
+// Endpoint is the structure for table httplive_endpoint.
+type Endpoint struct {
+	ID         ID     `name:"id"`
+	Endpoint   string `name:"endpoint"`
+	Methods    string `name:"methods"`
+	MimeType   string `name:"mime_type"`
+	Filename   string `name:"filename"`
+	Body       string `name:"body"`
+	CreateTime string `name:"create_time"`
+	UpdateTime string `name:"update_time"`
+	DeletedAt  string `name:"deleted_at"`
+}
+
+// MockbinCookie defines the cookie format.
+type MockbinCookie struct {
+	Name     string `json:"name"`
+	Value    string `json:"value"`
+	MaxAge   int    `json:"maxAge"`
+	Path     string `json:"path"`
+	Domain   string `json:"domain"`
+	Secure   bool   `json:"secure"`
+	HTTPOnly bool   `json:"httpOnly"`
+}
+
+// Mockbin defines the mockbin struct.
+type Mockbin struct {
+	Status      int               `json:"status"`
+	Method      string            `json:"method"`
+	RedirectURL string            `json:"redirectURL"`
+	Headers     map[string]string `json:"headers"`
+	Cookies     []MockbinCookie   `json:"cookies"`
+	Close       bool              `json:"close"`
+	ContentType string            `json:"contentType"`
+	Payload     json.RawMessage   `json:"payload"`
+}
