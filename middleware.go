@@ -5,39 +5,22 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
+	"time"
+
+	"github.com/bingoohuang/httplive/internal/process"
+
+	"github.com/bingoohuang/httplive/internal/res"
+	"github.com/bingoohuang/httplive/pkg/util"
 
 	"github.com/sirupsen/logrus"
 
 	"github.com/gin-gonic/gin"
 )
 
-// CORSMiddleware ...
-func CORSMiddleware(c *gin.Context) {
-	h := c.Header
-	h("Access-Control-Allow-Origin", "*")
-	h("Access-Control-Max-Age", "86400")
-	h("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, UPDATE")
-	h("Access-Control-Allow-Headers", "X-Requested-With, Content-Type, "+
-		"Origin, Authorization, Accept, Client-Security-Token, Accept-Encoding, x-access-token")
-	h("Access-Control-Expose-Headers", "Content-Length")
-	h("Access-Control-Allow-Credentials", "true")
-	h("Cache-Control", "no-cache, no-store, must-revalidate")
-	h("Pragma", "no-cache")
-	h("Expires", "0")
-
-	if c.Request.Method == http.MethodOptions {
-		logrus.Infof(http.MethodOptions)
-		c.AbortWithStatus(http.StatusOK)
-		return
-	}
-
-	c.Next()
-}
-
 // StaticFileMiddleware ...
 func StaticFileMiddleware(c *gin.Context) {
 	p := trimContextPath(c)
-	if HasPrefix(p, "/httplive/webcli", "/httplive/ws") {
+	if util.HasPrefix(p, "/httplive/webcli", "/httplive/ws") {
 		c.Next()
 		return
 	}
@@ -48,7 +31,7 @@ func StaticFileMiddleware(c *gin.Context) {
 		assetPath = "/public/index.html"
 	}
 
-	if TryGetFile(c, assetPath) {
+	if res.TryGetFile(c, assetPath, Environments.ContextPath) {
 		c.Abort()
 		return
 	}
@@ -59,14 +42,14 @@ func StaticFileMiddleware(c *gin.Context) {
 // APIMiddleware ...
 func APIMiddleware(c *gin.Context) {
 	p := trimContextPath(c)
-	if AnyOf(p, "/", "/favicon.ico") || HasPrefix(p, "/httplive/") {
+	if util.AnyOf(p, "/", "/favicon.ico") || util.HasPrefix(p, "/httplive/") {
 		c.Next()
 		return
 	}
 
 	if result := serveAPI(c.Writer, c.Request); result.RouterServed {
 		if broadcastThrottler.Allow() {
-			Broadcast(c, result)
+			broadcast(c, result)
 		}
 
 		c.Abort()
@@ -74,6 +57,34 @@ func APIMiddleware(c *gin.Context) {
 	}
 
 	c.Next()
+}
+
+func broadcast(c *gin.Context, rr process.RouterResult) {
+	msg := process.WsMessage{
+		Time:   time.Now().Format("2006-01-02 15:04:05.000"),
+		Host:   c.Request.Host,
+		Body:   util.GetRequestBody(c),
+		Method: c.Request.Method,
+		Path:   c.Request.URL.Path,
+		Query:  util.ConvertHeader(c.Request.URL.Query()),
+		Header: util.GetHeaders(c),
+
+		Response:       util.CompactJSON(rr.RouterBody),
+		ResponseSize:   rr.ResponseSize,
+		ResponseStatus: rr.ResponseStatus,
+		ResponseHeader: rr.ResponseHeader,
+		RemoteAddr:     rr.RemoteAddr,
+	}
+
+	for id, conn := range Clients {
+		if err := conn.WriteJSON(msg); err != nil {
+			logrus.Warnf("conn WriteJSON error: %v", err)
+
+			conn.Close()
+
+			delete(Clients, id)
+		}
+	}
 }
 
 func trimContextPath(c *gin.Context) string {
@@ -97,7 +108,7 @@ func ConfigJsMiddleware(c *gin.Context) {
 		return
 	}
 
-	fileContent := replaceContextPath([]byte(fmt.Sprintf(`
+	fileContent := res.ReplaceContextPath([]byte(fmt.Sprintf(`
 define('httplive/config', {
 	defaultPort:'%s',
 	savePath: '${ContextPath}/httplive/webcli/api/save',
@@ -105,7 +116,7 @@ define('httplive/config', {
 	deletePath: '${ContextPath}/httplive/webcli/api/deleteendpoint',
 	treePath: '${ContextPath}/httplive/webcli/api/tree',
 	componentId: ''
-});`, Environments.Ports)))
+});`, Environments.Ports)), Environments.ContextPath)
 	c.Data(http.StatusOK, "application/javascript", fileContent)
 	c.Abort()
 }

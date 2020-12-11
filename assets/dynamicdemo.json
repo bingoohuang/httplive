@@ -1,6 +1,6 @@
 {
-  "name": "json:name",
-  "age": "json:age",
+  "name": "json_name",
+  "age": "json_age",
   "_dynamic": [
     {
       "condition":"name == 'bingoo'",

@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/bingoohuang/httplive/pkg/util"
+
 	"github.com/sirupsen/logrus"
 
 	"github.com/bingoohuang/gor/giu"
@@ -73,8 +75,9 @@ const defaultDb = "httplive.db"
 
 func fixDBPath(env *httplive.EnvVars) (string, bool) {
 	fullPath := env.DBFullPath
+	workingDir, _ := os.Getwd()
 	if fullPath == "" {
-		return path.Join(env.WorkingDir, defaultDb), true
+		return path.Join(workingDir, defaultDb), true
 	}
 
 	if s, err := os.Stat(fullPath); err == nil {
@@ -93,7 +96,7 @@ func fixDBPath(env *httplive.EnvVars) (string, bool) {
 	}
 
 	if _, err := os.Stat(p); os.IsNotExist(err) {
-		if err := os.MkdirAll(p, 0644); err != nil {
+		if err := os.MkdirAll(p, 0o644); err != nil {
 			logrus.Fatalf("create  dir %s error %v", fullPath, err)
 		}
 	}
@@ -105,7 +108,6 @@ func host(env *httplive.EnvVars) error {
 	env.Init()
 	portsArr := strings.Split(env.Ports, ",")
 
-	env.WorkingDir, _ = os.Getwd()
 	if err := createDB(env); err != nil {
 		logrus.Warnf("failed to create DB %v", err)
 		return err
@@ -113,7 +115,7 @@ func host(env *httplive.EnvVars) error {
 
 	r := gin.New()
 	r.Use(httplive.APIMiddleware, httplive.StaticFileMiddleware,
-		httplive.CORSMiddleware, httplive.ConfigJsMiddleware)
+		util.CORSMiddleware, httplive.ConfigJsMiddleware)
 
 	r.GET(httplive.JoinContextPath("/httplive/ws"), wshandler)
 
@@ -129,7 +131,7 @@ func host(env *httplive.EnvVars) error {
 		}(p)
 	}
 
-	go httplive.OpenExplorerWithContext(env.ContextPath, portsArr[0])
+	go util.OpenExplorerWithContext(env.ContextPath, portsArr[0])
 
 	select {}
 }

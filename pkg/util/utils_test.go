@@ -1,15 +1,36 @@
-package httplive_test
+package util
 
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/Knetic/govaluate"
-	"github.com/bingoohuang/httplive"
 	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
+
+	"github.com/stretchr/testify/assert"
 )
+
+func TestCreateEndpointKey(t *testing.T) {
+	tests := []struct {
+		method   string
+		endpoint string
+		out      string
+	}{
+		{"", "", ""},
+		{http.MethodPost, "foo", "postfoo"},
+		{http.MethodPost, "FOO", "postfoo"},
+		{http.MethodPost, "foo", "postfoo"},
+		{http.MethodPost, "FOO", "postfoo"},
+		{"ÄËÏ", "ÖÜ", "äëïöü"},
+		{http.MethodPost, "///", "post///"},
+	}
+	for _, tt := range tests {
+		assert.Equal(t, tt.out, JoinLowerKeys(tt.method, tt.endpoint))
+	}
+}
 
 type DynamicValue struct {
 	Condition string          `json:"condition"`
@@ -60,7 +81,7 @@ func TestGson(t *testing.T) {
 
 			parameters := make(gin.H)
 			for _, va := range expr.Vars() {
-				if httplive.HasPrefix(va, "json_") {
+				if HasPrefix(va, "json_") {
 					parameters[va] = gjson.GetBytes(reqBody, va[5:]).Value()
 				}
 			}

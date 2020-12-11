@@ -1,46 +1,17 @@
 package httplive
 
 import (
-	"fmt"
 	"io/ioutil"
 	"mime"
 	"net/http"
 	"path"
 	"path/filepath"
 
+	"github.com/bingoohuang/httplive/internal/process"
+
 	"github.com/bingoohuang/gor/giu"
 	"github.com/gin-gonic/gin"
 )
-
-func (a APIDataModel) getLabelByMethod() string {
-	switch a.Method {
-	case http.MethodGet:
-		return "label label-primary label-small"
-	case http.MethodPost:
-		return "label label-success label-small"
-	case http.MethodPut:
-		return "label label-warning label-small"
-	case http.MethodDelete:
-		return "label label-danger label-small"
-	default:
-		return "label label-default label-small"
-	}
-}
-
-func (a APIDataModel) createJsTreeModel() JsTreeDataModel {
-	model := JsTreeDataModel{
-		ID:        a.ID.Int(),
-		OriginKey: CreateEndpointKey(a.Method, a.Endpoint),
-		Key:       a.Endpoint,
-		Text:      a.Endpoint,
-		Children:  []JsTreeDataModel{},
-	}
-
-	model.Type = a.Method
-	model.Text = fmt.Sprintf(`<span class="%v">%v</span> %v`, a.getLabelByMethod(), a.Method, a.Endpoint)
-
-	return model
-}
 
 const (
 	// Version is the version x.y.z.
@@ -65,10 +36,10 @@ type treeT struct {
 // Tree return the api tree.
 func (ctrl WebCliController) Tree(_ treeT) gin.H {
 	apis := EndpointList(true)
-	trees := make([]JsTreeDataModel, len(apis))
+	trees := make([]process.JsTreeDataModel, len(apis))
 
 	for i, api := range apis {
-		trees[i] = api.createJsTreeModel()
+		trees[i] = api.CreateJsTreeModel()
 	}
 
 	return gin.H{"id": "0", "key": "APIs", "text": "APIs", "state": gin.H{"opened": true}, "children": trees, "type": "root"}
@@ -91,7 +62,7 @@ type downloadFileT struct {
 
 // DownloadFile ...
 func (ctrl WebCliController) DownloadFile(c *gin.Context, _ downloadFileT) error {
-	model, err := GetEndpoint(ID(c.Query("id")))
+	model, err := GetEndpoint(process.ID(c.Query("id")))
 	if err != nil {
 		return err
 	}
@@ -113,7 +84,7 @@ type endpointT struct {
 // Endpoint ...
 func (ctrl WebCliController) Endpoint(c *gin.Context, _ endpointT) (giu.HTTPStatus, interface{}, error) {
 	id := c.Query("id")
-	model, err := GetEndpoint(ID(id))
+	model, err := GetEndpoint(process.ID(id))
 	if err != nil {
 		return giu.HTTPStatus(http.StatusInternalServerError), gin.H{"error": err.Error()}, err
 	}
@@ -130,7 +101,7 @@ type saveT struct {
 }
 
 // Save 保存body.
-func (ctrl WebCliController) Save(model APIDataModel, _ saveT) (giu.HTTPStatus, interface{}) {
+func (ctrl WebCliController) Save(model process.APIDataModel, _ saveT) (giu.HTTPStatus, interface{}) {
 	dp, err := SaveEndpoint(model)
 	if err != nil {
 		return giu.HTTPStatus(http.StatusBadRequest), gin.H{"error": err.Error()}
@@ -144,7 +115,7 @@ type saveEndpointT struct {
 }
 
 // SaveEndpoint 保存路径、方法等变更.
-func (ctrl WebCliController) SaveEndpoint(model APIDataModel, c *gin.Context, _ saveEndpointT) {
+func (ctrl WebCliController) SaveEndpoint(model process.APIDataModel, c *gin.Context, _ saveEndpointT) {
 	mimeType, filename, fileContent := parseFileContent(c)
 	if filename != "" {
 		model.MimeType = mimeType

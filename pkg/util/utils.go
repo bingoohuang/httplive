@@ -1,9 +1,11 @@
-package httplive
+package util
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"mime"
 	"net/http"
 	"runtime"
 	"strings"
@@ -12,44 +14,54 @@ import (
 	"github.com/bingoohuang/gou/ran"
 	"github.com/skratchdot/open-golang/open"
 
-	"github.com/sirupsen/logrus"
-
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 )
 
-// CreateEndpointKey ...
-func CreateEndpointKey(method string, endpoint string) string {
-	return strings.ToLower(method + endpoint)
-}
-
-// Broadcast ...
-func Broadcast(c *gin.Context, rr routerResult) {
-	msg := WsMessage{
-		Time:   time.Now().Format("2006-01-02 15:04:05.000"),
-		Host:   c.Request.Host,
-		Body:   GetRequestBody(c),
-		Method: c.Request.Method,
-		Path:   c.Request.URL.Path,
-		Query:  convertHeader(c.Request.URL.Query()),
-		Header: GetHeaders(c),
-
-		Response:       compatibleJSON(rr.RouterBody),
-		ResponseSize:   rr.ResponseSize,
-		ResponseStatus: rr.ResponseStatus,
-		ResponseHeader: rr.ResponseHeader,
-		RemoteAddr:     rr.RemoteAddr,
+// HasContentType determine whether the request `content-type` includes a
+// server-acceptable mime-type
+// Failure should yield an HTTP 415 (`http.StatusUnsupportedMediaType`)
+func HasContentType(r *http.Request, mimetype string) bool {
+	contentType := r.Header.Get("Content-type")
+	if contentType == "" {
+		return mimetype == "application/octet-stream"
 	}
 
-	for id, conn := range Clients {
-		if err := conn.WriteJSON(msg); err != nil {
-			logrus.Warnf("conn WriteJSON error: %v", err)
-
-			conn.Close()
-
-			delete(Clients, id)
+	for _, v := range strings.Split(contentType, ",") {
+		if t, _, err := mime.ParseMediaType(v); err != nil {
+			break
+		} else if t == mimetype {
+			return true
 		}
 	}
+
+	return false
+}
+
+// CompactJSON compact a json byte slice or wrap it to raw value.
+func CompactJSON(b []byte) []byte {
+	var out bytes.Buffer
+	if err := json.Compact(&out, b); err != nil {
+		v, _ := json.Marshal(map[string]string{"raw": string(b)})
+		return v
+	}
+
+	return out.Bytes()
+}
+
+// ConvertHeader convert s head map[string][]string to map[string]string.
+func ConvertHeader(query map[string][]string) map[string]string {
+	q := make(map[string]string)
+	for k, v := range query {
+		q[k] = strings.Join(v, " ")
+	}
+
+	return q
+}
+
+// JoinLowerKeys ...
+func JoinLowerKeys(s ...string) string {
+	return strings.ToLower(strings.Join(s, ""))
 }
 
 // GetHeaders ...
