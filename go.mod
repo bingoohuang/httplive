@@ -7,6 +7,7 @@ require (
 	github.com/bingoohuang/gor v0.0.0-20200319063139-1085d3628b07
 	github.com/bingoohuang/gou v0.0.0-20200225004418-9b3655665c46
 	github.com/bingoohuang/sqlx v0.0.0-20200327050032-f36e67f412f6
+	github.com/bingoohuang/sysinfo v1.0.1-0.20201211083624-a04a55b2d1e6
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/gin-gonic/gin v1.5.0
 	github.com/gorilla/websocket v1.4.1

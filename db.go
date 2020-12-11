@@ -104,7 +104,7 @@ func createDB(dao *Dao) error {
 		return nil
 	}
 
-	now := time.Now().Format("2006-01-02 15:04:05.000")
+	now := util.TimeFmt(time.Now())
 	dao.AddEndpointID(process.Endpoint{
 		ID: "0", Endpoint: "/api/demo", Methods: http.MethodGet, MimeType: "", Filename: "",
 		Body: asset("apidemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
@@ -207,7 +207,7 @@ func CreateAPIDataModel(ep *process.Endpoint, query bool) *process.APIDataModel 
 
 // CreateEndpoint creates an endpoint from APIDataModel.
 func CreateEndpoint(model process.APIDataModel, old *process.Endpoint) process.Endpoint {
-	now := time.Now().Format("2006-01-02 15:04:05.000")
+	now := util.TimeFmt(time.Now())
 	body := model.Body
 
 	if body == "" {
@@ -246,7 +246,7 @@ func DeleteEndpoint(id string) error {
 	return DBDo(func(dao *Dao) error {
 		dao.DeleteEndpoint(process.Endpoint{
 			ID:        process.ID(id),
-			DeletedAt: time.Now().Format("2006-01-02 15:04:05.000"),
+			DeletedAt: util.TimeFmt(time.Now()),
 		})
 
 		return nil

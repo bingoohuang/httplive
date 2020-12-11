@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bingoohuang/sysinfo"
+
 	"github.com/bingoohuang/httplive/pkg/http2curl"
 
 	"github.com/bingoohuang/gou/str"
@@ -164,21 +166,37 @@ func (ep APIDataModel) HandleJSON(c *gin.Context) {
 }
 
 func viewProcess(c *gin.Context, ep APIDataModel) bool {
-	switch strings.ToLower(c.Query("_view")) {
+	switch hl := strings.ToLower(c.Query("_hl")); hl {
 	case "curl":
 		values := c.Request.URL.Query()
-		delete(values, "_view")
+		delete(values, "_hl")
 		c.Request.URL.RawQuery = values.Encode()
 		cmd, _ := http2curl.GetCurlCmd(c.Request)
-		c.Data(http.StatusOK, "text/plain; charset=utf-8", []byte(cmd.String()))
+		c.Data(http.StatusOK, util.ContentTypeText, []byte(cmd.String()))
 	case "conf":
 		body := []byte(ep.Body)
 		c.Data(http.StatusOK, util.DetectContentType(body), body)
 	case "echo":
 		c.JSON(http.StatusOK, createRequestMap(c, ep))
-	case "echoText":
-		dumpRequest, _ := httputil.DumpRequest(c.Request, true)
-		c.Data(http.StatusOK, "text/plain; charset=utf-8", dumpRequest)
+	case "echotext":
+		d, _ := httputil.DumpRequest(c.Request, true)
+		c.Data(http.StatusOK, util.ContentTypeText, d)
+	case "time":
+		c.JSON(http.StatusOK, util.JSON(gin.H{"time": util.TimeFmt(time.Now())}))
+	case "timetext":
+		c.Data(http.StatusOK, util.ContentTypeText, []byte(util.TimeFmt(time.Now())))
+	case "sysinfo", "sysinfotext":
+		showsMap := make(map[string]bool)
+		for _, p := range strings.Split("host,mem,cpu,disk,interf,ps", ",") {
+			showsMap[p] = true
+		}
+		if hl == "sysinfo" {
+			c.JSON(http.StatusOK, sysinfo.GetSysInfo(showsMap))
+		} else {
+			c.Status(http.StatusOK)
+			c.Header("Content-Type", util.ContentTypeText)
+			sysinfo.PrintTable(showsMap, "~", c.Writer)
+		}
 	default:
 		return false
 	}

@@ -61,7 +61,7 @@ func APIMiddleware(c *gin.Context) {
 
 func broadcast(c *gin.Context, rr process.RouterResult) {
 	msg := process.WsMessage{
-		Time:   time.Now().Format("2006-01-02 15:04:05.000"),
+		Time:   util.TimeFmt(time.Now()),
 		Host:   c.Request.Host,
 		Body:   util.GetRequestBody(c),
 		Method: c.Request.Method,

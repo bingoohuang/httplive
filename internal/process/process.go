@@ -76,10 +76,6 @@ func (ep *Endpoint) CreateDefault(m *APIDataModel) {
 	}
 }
 
-func timeFmt(t time.Time) string {
-	return t.Format("2006-01-02 15:04:05.0000")
-}
-
 func (ep *Endpoint) CreateMockbin(m *APIDataModel) {
 	var b Mockbin
 	if err := json.Unmarshal([]byte(ep.Body), &b); err != nil || !b.IsValid() {
@@ -104,7 +100,7 @@ func (ep *Endpoint) CreateEcho(m *APIDataModel) {
 			c.JSON(http.StatusOK, createRequestMap(c, model))
 		default:
 			dumpRequest, _ := httputil.DumpRequest(c.Request, true)
-			c.Data(http.StatusOK, "text/plain; charset=utf-8", dumpRequest)
+			c.Data(http.StatusOK, util.ContentTypeText, dumpRequest)
 		}
 	}
 }
@@ -112,7 +108,7 @@ func (ep *Endpoint) CreateEcho(m *APIDataModel) {
 func createRequestMap(c *gin.Context, model APIDataModel) map[string]interface{} {
 	r := c.Request
 	m := map[string]interface{}{
-		"timeGo":     timeFmt(time.Now()),
+		"timeGo":     util.TimeFmt(time.Now()),
 		"proto":      r.Proto,
 		"host":       r.Host,
 		"requestUri": r.RequestURI,
@@ -127,7 +123,7 @@ func createRequestMap(c *gin.Context, model APIDataModel) map[string]interface{}
 	fulfilOther(r, m)
 	fulfilPayload(r, m)
 
-	m["timeTo"] = timeFmt(time.Now())
+	m["timeTo"] = util.TimeFmt(time.Now())
 	return m
 }
 

@@ -38,6 +38,12 @@ func HasContentType(r *http.Request, mimetype string) bool {
 	return false
 }
 
+// JSON jsonifies the value.
+func JSON(v interface{}) []byte {
+	vv, _ := json.Marshal(v)
+	return vv
+}
+
 // CompactJSON compact a json byte slice or wrap it to raw value.
 func CompactJSON(b []byte) []byte {
 	var out bytes.Buffer
@@ -155,13 +161,23 @@ func IsJSONBytes(b []byte) bool {
 	return json.Unmarshal(b, &m) == nil
 }
 
+const (
+	ContentTypeText = "text/plain; charset=utf-8"
+	ContentTypeJSON = "application/json; charset=utf-8"
+)
+
+// TimeFmt format time.
+func TimeFmt(t time.Time) string {
+	return t.Format("2006-01-02 15:04:05.0000")
+}
+
 // DetectContentType detects the contentType of b.
 func DetectContentType(b []byte) string {
 	if IsJSONBytes(b) {
-		return "application/json; charset=utf-8"
+		return ContentTypeJSON
 	}
 
-	return "text/plain; charset=utf-8"
+	return ContentTypeText
 }
 
 // OpenExplorerWithContext ...
