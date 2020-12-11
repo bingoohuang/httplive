@@ -244,8 +244,10 @@ func DeleteEndpoint(id string) error {
 	defer SyncAPIRouter()
 
 	return DBDo(func(dao *Dao) error {
-		dao.DeleteEndpoint(process.Endpoint{ID: process.ID(id),
-			DeletedAt: time.Now().Format("2006-01-02 15:04:05.000")})
+		dao.DeleteEndpoint(process.Endpoint{
+			ID:        process.ID(id),
+			DeletedAt: time.Now().Format("2006-01-02 15:04:05.000"),
+		})
 
 		return nil
 	})
