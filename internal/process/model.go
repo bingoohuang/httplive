@@ -145,13 +145,22 @@ func (a APIDataModel) CreateJsTreeModel() JsTreeDataModel {
 }
 
 func (ep APIDataModel) HandleJSON(c *gin.Context) {
-	if viewProcess(c, ep) || ep.ServeFn == nil {
+	yes, fn := dealHl(c, ep)
+	if yes || ep.ServeFn == nil {
 		return
 	}
 
 	cw := util.NewGinCopyWriter(c.Writer)
 	c.Writer = cw
-	ep.ServeFn(c)
+
+	if fn == nil {
+		ep.ServeFn(c)
+	} else {
+		func(c *gin.Context) {
+			ep.ServeFn(c)
+			fn(c)
+		}(c)
+	}
 
 	rr := c.Request.Context().Value(RouterResultKey).(*RouterResult)
 	if !rr.RouterServed {
@@ -165,7 +174,7 @@ func (ep APIDataModel) HandleJSON(c *gin.Context) {
 	rr.ResponseHeader = util.ConvertHeader(cw.Header())
 }
 
-func viewProcess(c *gin.Context, ep APIDataModel) bool {
+func dealHl(c *gin.Context, ep APIDataModel) (bool, gin.HandlerFunc) {
 	switch hl := strings.ToLower(c.Query("_hl")); hl {
 	case "curl":
 		values := c.Request.URL.Query()
@@ -198,10 +207,28 @@ func viewProcess(c *gin.Context, ep APIDataModel) bool {
 			sysinfo.PrintTable(showsMap, "~", c.Writer)
 		}
 	default:
-		return false
+		return dealMore(hl)
 	}
 
-	return true
+	return true, nil
+}
+
+func dealMore(hl string) (bool, gin.HandlerFunc) {
+	if strings.HasPrefix(hl, "sleep") {
+		v := hl[len("sleep"):]
+		if v == "" {
+			v = "1s"
+		}
+
+		du, err := time.ParseDuration(v)
+		if err != nil {
+			du = 1 * time.Second
+		}
+
+		return false, func(c *gin.Context) { time.Sleep(du) }
+	}
+
+	return false, nil
 }
 
 func dynamicProcess(c *gin.Context, ep APIDataModel) bool {

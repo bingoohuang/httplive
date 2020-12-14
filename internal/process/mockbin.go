@@ -3,7 +3,9 @@ package process
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
+	"github.com/bingoohuang/httplive/pkg/timex"
 	"github.com/bingoohuang/httplive/pkg/util"
 	"github.com/gin-gonic/gin"
 )
@@ -33,6 +35,7 @@ type Mockbin struct {
 	Close       bool              `json:"close"`
 	ContentType string            `json:"contentType"`
 	Payload     json.RawMessage   `json:"payload"`
+	Sleep       timex.Duration    `json:"sleep"`
 }
 
 func countIf(cond bool) int {
@@ -51,7 +54,8 @@ func (m Mockbin) IsValid() bool {
 		countIf(m.ContentType != "")+
 		countIf(len(m.Payload) > 0)+
 		countIf(len(m.Headers) > 0)+
-		countIf(len(m.Cookies) > 0) >= 3
+		countIf(len(m.Cookies) > 0)+
+		countIf(m.Sleep > 0) >= 3
 }
 
 func (m Mockbin) Redirect(c *gin.Context) {
@@ -101,6 +105,10 @@ func (m Mockbin) Handle(c *gin.Context) {
 
 	if m.ContentType == "" {
 		m.ContentType = util.DetectContentType(m.Payload)
+	}
+
+	if m.Sleep > 0 {
+		time.Sleep(time.Duration(m.Sleep))
 	}
 
 	c.Data(m.Status, m.ContentType, m.Payload)

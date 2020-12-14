@@ -80,7 +80,7 @@ Upload a database file from the web interface.
 httpie test
 
 ```bash
-🕙[2020-11-16 23:42:36.476] ❯ http :5003/dynamic/demo name=bingoo
+[2020-11-16 23:42:36.476] ❯ http :5003/dynamic/demo name=bingoo
 HTTP/1.1 200 OK
 Content-Length: 33
 Content-Type: application/json; charset=utf-8
@@ -91,7 +91,7 @@ Date: Mon, 16 Nov 2020 16:16:51 GMT
 }
 
 
-🕙[2020-11-17 00:16:51.399] ❯ http :5003/dynamic/demo name=huang
+[2020-11-17 00:16:51.399] ❯ http :5003/dynamic/demo name=huang
 HTTP/1.1 200 OK
 Content-Length: 54
 Content-Type: application/json; charset=utf-8
@@ -106,7 +106,7 @@ Date: Mon, 16 Nov 2020 16:17:15 GMT
 gobench test
 
 ```bash
-🕙[2020-11-17 00:19:47.157] ❯ gobench -u http://127.0.0.1:5003/dynamic/demo --method POST -postData '{"name":"huang"}' -p 0
+[2020-11-17 00:19:47.157] ❯ gobench -u http://127.0.0.1:5003/dynamic/demo --method POST -postData '{"name":"huang"}' -p 0
 Dispatching 100 goroutines
 Waiting for results...
 [√] [200] { "name":"huangxxx", "age":100 }..........
@@ -118,4 +118,42 @@ Successful requests rate:       65873 hits/sec
 Read throughput:                11 MiB/sec
 Write throughput:               11 MiB/sec
 Test time:                      10.002748474s
+```
+
+
+sleep in mockbin format demo:
+
+1. [httpstat go version](go get github.com/davecheney/httpstat)
+
+```bash
+[ 22:17:49 ] ❯ http  "http://127.0.0.1:5003/mockbin?_hl=conf"
+HTTP/1.1 200 OK
+Content-Length: 55
+Content-Type: application/json; charset=utf-8
+Date: Mon, 14 Dec 2020 03:18:37 GMT
+
+{
+    "method": "GET",
+    "sleep": "1s",
+    "status": 200
+}
+
+[ 22:17:44 ] ❯ httpstat  "http://127.0.0.1:5003/mockbin?_hl=sleep100ms"
+
+Connected to 127.0.0.1:5003
+
+HTTP/1.1 200 OK
+Content-Length: 0
+Content-Type: text/plain; charset=utf-8
+Date: Mon, 14 Dec 2020 03:17:49 GMT
+
+Body discarded
+
+   DNS Lookup   TCP Connection   Server Processing   Content Transfer
+[       0ms  |           0ms  |           1102ms  |             0ms  ]
+             |                |                   |                  |
+    namelookup:0ms            |                   |                  |
+                        connect:0ms               |                  |
+                                      starttransfer:1102ms           |
+                                                                 total:1103ms
 ```

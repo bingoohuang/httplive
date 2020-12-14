@@ -20,5 +20,6 @@
   "contentType": "application/json; charset=utf-8",
   "payload": {
     "name": "bingoo"
-  }
+  },
+  "sleep": "1s"
 }
