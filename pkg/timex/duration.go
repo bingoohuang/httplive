@@ -18,7 +18,8 @@ func (d *Duration) UnmarshalJSON(b []byte) (err error) {
 
 	var id int64
 	id, err = json.Number(b).Int64()
-	*d = Duration(id)
+	// default unit to Milliseconds.
+	*d = Duration(time.Duration(id) * time.Millisecond)
 
 	return
 }
