@@ -1,7 +1,7 @@
 .PHONY: default test install
 all: default test install
 
-app=httplive
+app=app=$(notdir $(shell pwd))
 
 tool:
 	go get github.com/securego/gosec/cmd/gosec
