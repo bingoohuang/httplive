@@ -1,63 +1,80 @@
 package acl
 
 import (
+	"errors"
 	"strings"
 )
 
-// each node represent a path in the router trie.
+// node represent a router in the routers trie.
 type node struct {
-	path     string
+	router   string
 	children map[string]*node
 	param    string
 	tag      interface{}
 	star     bool
 }
 
-// add method adds a new path to the trie.
-func (n *node) add(path string, tag interface{}) {
+var (
+	ErrDuplicateRouter = errors.New("duplicate router")
+	ErrRouterSyntax    = errors.New("router syntax error")
+)
+
+// add method adds a new router to the trie.
+func (n *node) add(router string, tag interface{}) error {
 	cur := n
-	trimmed := strings.TrimPrefix(path, "/")
+	trimmed := strings.TrimPrefix(router, "/")
 	subs := strings.Split(trimmed, "/")
+	duplicate := true
+	star := false
 
 	for _, p := range subs {
-		// replace keys with pattern ":*" with "*" for matching params.
+		// replace keys with pattern ":abc" with "abc" for matching params.
+		// replace keys with pattern "*abc" with "abc" for matching params.
 		param := ""
 
-		star := false
 		if len(p) > 1 && (p[0] == ':' || p[0] == '*') {
-			star = p[0] == '*'
+			if p[0] == '*' {
+				if star {
+					return ErrRouterSyntax
+				}
+
+				star = true
+			}
 			param = p[1:]
 			p = "*"
 		}
 
 		next, ok := cur.children[p]
 		if !ok {
+			duplicate = false
 			next = &node{
-				path:     path,
+				router: router, param: param, star: star,
 				children: make(map[string]*node),
-				param:    param,
-				star:     star,
 			}
 			cur.children[p] = next
 		}
 		cur = next
 	}
 
+	if duplicate {
+		return ErrDuplicateRouter
+	}
+
 	cur.tag = tag
+	return nil
 }
 
-// find method match the request url path with a node in trie.
+// find method match the request url router with a node in trie.
 func (n *node) find(path string) (*node, Params) {
-	params := make(Params)
 	cur := n
-	trimmed := strings.TrimPrefix(path, "/")
-	slice := strings.Split(trimmed, "/")
+	params := make(Params)
+	slice := strings.Split(strings.TrimPrefix(path, "/"), "/")
 
 	for i, k := range slice {
 		next, ok := cur.children[k]
 		if !ok {
 			if next, ok = cur.children["*"]; !ok {
-				// return nil if no node match the given path.
+				// return nil if no node match the given router.
 				return nil, params
 			}
 		}
@@ -83,7 +100,7 @@ func (n *node) find(path string) (*node, Params) {
 type Params map[string]string
 
 // Router is an HTTP request multiplexer. It matches the URL of each
-// incoming request against a list of registered path with their associated
+// incoming request against a list of registered router with their associated
 // methods and calls the handler for the given URL.
 type Router struct {
 	trees map[string]*node
@@ -91,9 +108,7 @@ type Router struct {
 
 // NewRouter returns a new Router.
 func NewRouter() *Router {
-	return &Router{
-		trees: make(map[string]*node),
-	}
+	return &Router{trees: make(map[string]*node)}
 }
 
 // MethodAny means any http method.
@@ -103,34 +118,38 @@ const MethodAny = "ANY"
 func (r *Router) Search(method, path string) (bool, Params, interface{}) {
 	// check if there is a trie for the request method.
 	t, ok := r.trees[method]
+	if !ok && method != MethodAny { // try any
+		t, ok = r.trees[MethodAny]
+	}
+
 	if !ok {
 		return false, nil, nil
 	}
 
-	// find the node with request url path in the trie.
+	// find the node with request url router in the trie.
 	node, params := t.find(path)
-	if node == nil {
-		if t, ok = r.trees[MethodAny]; ok {
-			node, params = t.find(path)
-		}
+	if node != nil {
+		return true, params, node.tag
 	}
 
-	if node == nil {
+	// try any
+	if t, ok = r.trees[MethodAny]; !ok {
+		return false, nil, nil
+	}
+
+	if node, params = t.find(path); node == nil {
 		return false, nil, nil
 	}
 
 	return true, params, node.tag
 }
 
-// Handle registers a new path with the given path and method.
-func (r *Router) Handle(method string, path string, tag interface{}) {
+// Handle registers a new router with the given router and method.
+func (r *Router) Handle(method string, router string, tag interface{}) error {
 	// check if for given method there is not any tie create a new one.
 	if _, ok := r.trees[method]; !ok {
-		r.trees[method] = &node{
-			path:     "/",
-			children: make(map[string]*node),
-		}
+		r.trees[method] = &node{router: "/", children: make(map[string]*node)}
 	}
 
-	r.trees[method].add(path, tag)
+	return r.trees[method].add(router, tag)
 }
