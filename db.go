@@ -125,7 +125,10 @@ func createDB(dao *Dao) error {
 		ID: "4", Endpoint: "/mockbin", Methods: "ANY", MimeType: "", Filename: "",
 		Body: asset("mockbin.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
 	})
-
+	dao.AddEndpointID(process.Endpoint{
+		ID: "5", Endpoint: "/_internal/acl", Methods: "ANY", MimeType: "", Filename: "",
+		Body: asset("acl.casbin"), CreateTime: now, UpdateTime: now, DeletedAt: "",
+	})
 	return nil
 }
 
