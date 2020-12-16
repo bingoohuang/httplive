@@ -1,10 +1,11 @@
 package fastrouter_test
 
 import (
-	"github.com/bingoohuang/httplive/pkg/fastrouter"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
+
+	"github.com/bingoohuang/httplive/pkg/fastrouter"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRouter(t *testing.T) {

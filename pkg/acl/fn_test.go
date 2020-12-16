@@ -1,9 +1,10 @@
 package acl_test
 
 import (
-	"github.com/bingoohuang/httplive/pkg/acl"
 	"testing"
 	"time"
+
+	"github.com/bingoohuang/httplive/pkg/acl"
 
 	"github.com/stretchr/testify/assert"
 )
