@@ -17,6 +17,7 @@ func TestRouter(t *testing.T) {
 	router.Handle(http.MethodPut, "/posts/:id", nil)
 	router.Handle(http.MethodDelete, "/posts/:id", nil)
 	router.Handle(http.MethodGet, "/error", nil)
+	router.Handle(acl.MethodAny, "/any", nil)
 
 	yes, params, tag := router.Search(http.MethodGet, "/")
 	assert.True(t, yes)
@@ -42,4 +43,10 @@ func TestRouter(t *testing.T) {
 	assert.False(t, yes)
 	assert.Nil(t, params)
 	assert.Nil(t, tag)
+
+	yes, params, tag = router.Search(http.MethodGet, "/any")
+	assert.True(t, yes)
+
+	yes, params, tag = router.Search(http.MethodPost, "/any")
+	assert.True(t, yes)
 }

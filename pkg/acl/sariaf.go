@@ -96,7 +96,10 @@ func NewRouter() *Router {
 	}
 }
 
-// ServeHTTP matches r.URL.Path with a stored route and calls handler for found node.
+// MethodAny means any http method.
+const MethodAny = "ANY"
+
+// Search matches r.URL.Path with a stored route and calls handler for found node.
 func (r *Router) Search(method, path string) (bool, Params, interface{}) {
 	// check if there is a trie for the request method.
 	t, ok := r.trees[method]
@@ -106,6 +109,12 @@ func (r *Router) Search(method, path string) (bool, Params, interface{}) {
 
 	// find the node with request url path in the trie.
 	node, params := t.find(path)
+	if node == nil {
+		if t, ok = r.trees[MethodAny]; ok {
+			node, params = t.find(path)
+		}
+	}
+
 	if node == nil {
 		return false, nil, nil
 	}
