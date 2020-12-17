@@ -13,6 +13,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestUnquoteCover(t *testing.T) {
+	assert.Equal(t, "abc",
+		UnquoteCover("=start=abc=end=", "=start=", "=end="))
+}
+
 func TestCreateEndpointKey(t *testing.T) {
 	tests := []struct {
 		method   string

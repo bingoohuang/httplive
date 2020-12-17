@@ -2,14 +2,21 @@ package process
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"mime"
 	"net/http"
 	"net/http/httputil"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/bingoohuang/httplive/pkg/acl"
+	"github.com/bingoohuang/sariaf"
+	"github.com/casbin/casbin/v2"
+	"github.com/sirupsen/logrus"
 
 	"github.com/bingoohuang/sysinfo"
 
@@ -174,7 +181,157 @@ func (ep APIDataModel) HandleJSON(c *gin.Context) {
 	rr.ResponseHeader = util.ConvertHeader(cw.Header())
 }
 
+func (ep *APIDataModel) InternalProcess(subRouter string) {
+	acl.CasbinEpoch = time.Now()
+	apiCasbinEnforcer = nil
+	apiAuthHandler = nil
+	adminAuthHandler = nil
+
+	switch subRouter {
+	case "/apiacl":
+		ep.apiacl()
+	case "/adminacl":
+		ep.adminacl()
+	}
+}
+
+var (
+	apiCasbinEnforcer   *casbin.Enforcer
+	adminCasbinEnforcer *casbin.Enforcer
+	apiAuthHandler      func(c *gin.Context) (AuthResultType, string)
+	adminAuthHandler    func(c *gin.Context) (AuthResultType, string)
+)
+
+type AuthResultType int
+
+const (
+	AuthResultIgnore AuthResultType = iota
+	AuthResultOK
+	AuthResultFailed
+)
+
+func (ep *APIDataModel) adminacl() {
+	e, _, authMap := ep.createCasbin()
+	if e == nil {
+		return
+	}
+
+	adminCasbinEnforcer = e
+	adminAuthHandler = func(c *gin.Context) (AuthResultType, string) {
+		authHead := c.GetHeader("Authorization")
+		if authHead == "" {
+			return AuthResultOK, "anonymous"
+		}
+
+		user, ok := authMap[authHead]
+		if !ok {
+			realm := "Authorization Required"
+			c.Header("WWW-Authenticate", "Basic realm="+strconv.Quote(realm))
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return AuthResultFailed, ""
+		}
+
+		return AuthResultOK, user[:strings.Index(user, ":")]
+	}
+}
+
+func (ep *APIDataModel) apiacl() {
+	e, sariafRouter, authMap := ep.createCasbin()
+	if e == nil {
+		return
+	}
+
+	apiCasbinEnforcer = e
+
+	apiAuthHandler = func(c *gin.Context) (AuthResultType, string) {
+		node, _ := sariafRouter.Search(c.Request.Method, c.Request.URL.Path)
+		if node == nil {
+			return AuthResultIgnore, ""
+		}
+
+		authHead := c.GetHeader("Authorization")
+		user, ok := authMap[authHead]
+		if !ok {
+			realm := "Authorization Required"
+			c.Header("WWW-Authenticate", "Basic realm="+strconv.Quote(realm))
+			c.AbortWithStatus(http.StatusUnauthorized)
+			return AuthResultFailed, ""
+		}
+
+		return AuthResultOK, user[:strings.Index(user, ":")]
+	}
+}
+
+func (ep *APIDataModel) createCasbin() (*casbin.Enforcer, *sariaf.Router, map[string]string) {
+	modelConf := util.UnquoteCover(ep.Body, "###START_MODEL###", "###END_MODEL###")
+	policyConf := util.UnquoteCover(ep.Body, "###START_POLICY###", "###END_POLICY###")
+	authConf := util.UnquoteCover(ep.Body, "###START_AUTH###", "###END_AUTH###")
+
+	e, err := acl.NewCasbin(modelConf, policyConf)
+	if err != nil {
+		logrus.Warnf("failed to create casbin: %v", err)
+		return nil, nil, nil
+	}
+
+	policyRows := e.GetNamedPolicy("p")
+	sariafRouter := sariaf.New()
+	for _, row := range policyRows {
+		sariafRouter.Handle(sariaf.MethodAny, row[1], nil)
+	}
+
+	authMap := make(map[string]string)
+	for _, row := range acl.SplitLines(authConf) {
+		authHead := "Basic " + base64.StdEncoding.EncodeToString([]byte(row))
+		authMap[authHead] = row
+	}
+
+	return e, sariafRouter, authMap
+}
+
+func AdminAuth(c *gin.Context) {
+	if adminAuthHandler == nil {
+		return
+	}
+
+	authResultType, user := adminAuthHandler(c)
+	if authResultType != AuthResultOK {
+		return
+	}
+
+	ok, err := adminCasbinEnforcer.Enforce(user, c.Request.URL.Path, c.Request.Method, time.Now().Format(acl.CasbinTimeLayout))
+	if err != nil {
+		logrus.Warnf("failed to casbin %v", err)
+	} else if !ok {
+		authHead := c.GetHeader("Authorization")
+		if authHead == "" {
+			realm := "Authorization Required"
+			c.Header("WWW-Authenticate", "Basic realm="+strconv.Quote(realm))
+			c.AbortWithStatus(http.StatusUnauthorized)
+		} else {
+			c.Status(http.StatusForbidden)
+			c.Abort()
+		}
+	}
+}
+
 func dealHl(c *gin.Context, ep APIDataModel) (bool, gin.HandlerFunc) {
+	if apiAuthHandler != nil {
+		switch authResultType, user := apiAuthHandler(c); authResultType {
+		case AuthResultIgnore:
+		case AuthResultFailed:
+			return true, nil
+		case AuthResultOK:
+			ok, err := apiCasbinEnforcer.Enforce(user, c.Request.URL.Path, c.Request.Method, time.Now().Format(acl.CasbinTimeLayout))
+			if err != nil {
+				logrus.Warnf("failed to casbin %v", err)
+			} else if !ok {
+				c.Status(http.StatusForbidden)
+				return true, nil
+			}
+
+		}
+	}
+
 	switch hl := strings.ToLower(c.Query("_hl")); hl {
 	case "curl":
 		values := c.Request.URL.Query()

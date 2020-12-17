@@ -1,0 +1,27 @@
+###START_MODEL###
+[request_definition]
+r = user, router, method, time
+
+[policy_definition]
+p = user, router, method, time
+
+[role_definition]
+g = _, _
+
+[policy_effect]
+e = some(where (p.eft == allow))
+
+[matchers]
+m = r.user == "root" || g(r.user, p.user) && r.user == p.user && routerMatch(r.router, p.router) && wildMatch(r.method, p.method) && timeAllow(r.time, p.time)
+###END_MODEL###
+
+###START_POLICY###
+p, anonymous, /*action, GET, -
+p, admin, /*action, -, -
+###END_POLICY###
+
+###START_AUTH###
+#format user:pass
+#bingoo:huang
+admin:admin
+###END_AUTH###

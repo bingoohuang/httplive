@@ -35,13 +35,11 @@ m = r.user == "root" || g(r.user, p.user) && match(r.db, p.db) && match(r.tables
 		panic(err)
 	}
 
-	if err := acl.ResetPolicyString(m, `
+	acl.ResetPolicyString(m, `
 p,bingoo,*,*,*
 p,dingoo,db1/db2,*,read
 g,b1,bingoo
-`); err != nil {
-		panic(err)
-	}
+`)
 
 	e.AddFunction("match", func(args ...interface{}) (interface{}, error) {
 		return acl.WildcardMatch(args[0].(string), args[1].(string)), nil
@@ -53,12 +51,10 @@ g,b1,bingoo
 	fmt.Println(e.Enforce("dingoo", "db2", "table1", "read"))
 	fmt.Println(e.Enforce("dingoo", "db2", "table1", "write"))
 
-	if err := acl.ResetPolicyString(m, `
+	acl.ResetPolicyString(m, `
 p,bingoo,*,*,*
 p,dingoo,db1/db2,*,read/write
-`); err != nil {
-		panic(err)
-	}
+`)
 	fmt.Println(e.Enforce("dingoo", "db2", "table1", "write"))
 	fmt.Println(e.Enforce("root", "xx", "xx", "xx"))
 
@@ -73,29 +69,10 @@ p,dingoo,db1/db2,*,read/write
 }
 
 func ExampleCasbindemo2() {
-	m, err := model.NewModelFromString(m1)
+	e, err := acl.NewCasbin(m1, p1)
 	if err != nil {
 		panic(err)
 	}
-
-	e, err := casbin.NewEnforcer(m)
-	if err != nil {
-		panic(err)
-	}
-
-	if err := acl.ResetPolicyString(m, p1); err != nil {
-		panic(err)
-	}
-
-	e.AddFunction("timeAllow", func(args ...interface{}) (interface{}, error) {
-		return acl.TimeAllow(args[0].(string), args[1].(string)), nil
-	})
-	e.AddFunction("routerMatch", func(args ...interface{}) (interface{}, error) {
-		return acl.RouterMatch(args[0].(string), args[1].(string)), nil
-	})
-	e.AddFunction("wildMatch", func(args ...interface{}) (interface{}, error) {
-		return acl.WildcardMatch(args[0].(string), args[1].(string)), nil
-	})
 
 	for _, r := range acl.SplitLines(r1) {
 		t, _ := acl.CsvTokens(r)

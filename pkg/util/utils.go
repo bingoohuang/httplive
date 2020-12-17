@@ -18,6 +18,21 @@ import (
 	"github.com/gin-gonic/gin/binding"
 )
 
+//  UnquoteCover unquotes string from s.
+func UnquoteCover(s, start, end string) string {
+	startIndex := strings.Index(s, start)
+	if startIndex == -1 {
+		return ""
+	}
+
+	endIndex := strings.Index(s[startIndex:], end)
+	if endIndex == -1 {
+		return ""
+	}
+
+	return strings.TrimSpace(s[startIndex+len(start) : startIndex+endIndex])
+}
+
 // HasContentType determine whether the request `content-type` includes a
 // server-acceptable mime-type
 // Failure should yield an HTTP 415 (`http.StatusUnsupportedMediaType`)

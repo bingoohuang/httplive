@@ -10,8 +10,8 @@ import (
 	"path"
 	"strings"
 
+	"github.com/bingoohuang/pkger"
 	"github.com/gin-gonic/gin"
-	"github.com/markbates/pkger"
 )
 
 // TryGetFile ...

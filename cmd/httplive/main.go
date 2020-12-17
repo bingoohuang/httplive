@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/bingoohuang/httplive/internal/process"
+
 	"github.com/bingoohuang/httplive/pkg/util"
 
 	"github.com/sirupsen/logrus"
@@ -96,7 +98,7 @@ func fixDBPath(env *httplive.EnvVars) (string, bool) {
 	}
 
 	if _, err := os.Stat(p); os.IsNotExist(err) {
-		if err := os.MkdirAll(p, 0644); err != nil {
+		if err := os.MkdirAll(p, 0o644); err != nil {
 			logrus.Fatalf("create  dir %s error %v", fullPath, err)
 		}
 	}
@@ -120,8 +122,9 @@ func host(env *httplive.EnvVars) error {
 	r.GET(httplive.JoinContextPath("/httplive/ws"), wshandler)
 
 	ga := giu.NewAdaptor()
-	gw := ga.Route(r.Group(httplive.JoinContextPath("/httplive/webcli")))
-	gw.HandleFn(new(httplive.WebCliController))
+	group := r.Group(httplive.JoinContextPath("/httplive/webcli"))
+	group.Use(process.AdminAuth)
+	ga.Route(group).HandleFn(new(httplive.WebCliController))
 
 	for _, p := range portsArr {
 		go func(port string) {

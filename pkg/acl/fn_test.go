@@ -28,7 +28,7 @@ func TestTimeAllow(t *testing.T) {
 	assert.True(t, acl.TimeAllow("2020-12-16 18:00:25", "2020-12-16 18:00:26"))
 
 	// until duration
-	acl.CasbinStartTime, _ = time.Parse(acl.CasbinTimeLayout, "2020-12-16 18:00:00")
+	acl.CasbinEpoch, _ = time.Parse(acl.CasbinTimeLayout, "2020-12-16 18:00:00")
 	assert.False(t, acl.TimeAllow("2020-12-16 18:00:25", "10s"))
 	assert.False(t, acl.TimeAllow("2020-12-16 18:00:25", "25s"))
 	assert.True(t, acl.TimeAllow("2020-12-16 18:00:25", "26s"))

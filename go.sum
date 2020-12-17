@@ -36,6 +36,8 @@ github.com/bingoohuang/goreflect v0.0.0-20200307035238-25f6dd474d12 h1:CkprQz54b
 github.com/bingoohuang/goreflect v0.0.0-20200307035238-25f6dd474d12/go.mod h1:LACi2aBN6L9LfGrf3UsZzjPNTmm4wP21onKhgOBqZWs=
 github.com/bingoohuang/gou v0.0.0-20200225004418-9b3655665c46 h1:18kysBxDTlkUYNhzPgJ7o4T8OnZws9WzVPprRgZRcj4=
 github.com/bingoohuang/gou v0.0.0-20200225004418-9b3655665c46/go.mod h1:lfM/iBkZzlmnl23C+mpqiXAgC6npikzZkKVfNAdC+o4=
+github.com/bingoohuang/pkger v0.0.0-20201203120856-f480b68feae4 h1:VqYnheswBp8s1gh4UHoRnHpMuGct2vWjJAIFC3XY/YI=
+github.com/bingoohuang/pkger v0.0.0-20201203120856-f480b68feae4/go.mod h1:GJXGVR/nVdNNo7wNQm/FFh0uznqYCVxsL3TL6sk+LKU=
 github.com/bingoohuang/sariaf v0.0.0-20201217050217-675dac441d57 h1:ne+kg3aKN/I+jV3Gymsxc+HuVtPbBjzlOh+MGZfik08=
 github.com/bingoohuang/sariaf v0.0.0-20201217050217-675dac441d57/go.mod h1:DSi1LVR76Ap189KzzA40C8pFSpRZHsy/n+kgK8ihfhs=
 github.com/bingoohuang/shellwords v0.0.0-20200303142623-5c675e52d3e1 h1:ZOxJ0X7A0Y0hJHVuPfERGZO34N6DUFZj4aH2Kw1Y1J4=
@@ -190,8 +192,6 @@ github.com/lucasb-eyer/go-colorful v1.0.2/go.mod h1:0MS4r+7BZKSJ5mw4/S5MPN+qHFF1
 github.com/lucasb-eyer/go-colorful v1.0.3/go.mod h1:R4dSotOR9KMtayYi1e77YzuveK+i7ruzyGqttikkLy0=
 github.com/magiconair/properties v1.8.1 h1:ZC2Vc7/ZFkGmsVC9KvOjumD+G5lXy2RtTKyzRKO2BQ4=
 github.com/magiconair/properties v1.8.1/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=
-github.com/markbates/pkger v0.17.1 h1:/MKEtWqtc0mZvu9OinB9UzVN9iYCwLWuyUv4Bw+PCno=
-github.com/markbates/pkger v0.17.1/go.mod h1:0JoVlrol20BSywW79rN3kdFFsE5xYM+rSCQDXbLhiuI=
 github.com/mattn/go-isatty v0.0.7/go.mod h1:Iq45c/XA43vh69/j3iqttzPXn0bhXyGjM0Hdxcsrc5s=
 github.com/mattn/go-isatty v0.0.8/go.mod h1:Iq45c/XA43vh69/j3iqttzPXn0bhXyGjM0Hdxcsrc5s=
 github.com/mattn/go-isatty v0.0.9 h1:d5US/mDsogSGW37IV293h//ZFaeajb69h+EHFsv2xGg=

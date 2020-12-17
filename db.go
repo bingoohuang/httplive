@@ -15,8 +15,8 @@ import (
 	"github.com/bingoohuang/httplive/internal/process"
 	"github.com/bingoohuang/httplive/pkg/util"
 
+	"github.com/bingoohuang/pkger"
 	"github.com/gin-gonic/gin"
-	"github.com/markbates/pkger"
 
 	"github.com/bingoohuang/sqlx"
 	_ "github.com/mattn/go-sqlite3" // import sqlite3
@@ -126,8 +126,12 @@ func createDB(dao *Dao) error {
 		Body: asset("mockbin.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
 	})
 	dao.AddEndpointID(process.Endpoint{
-		ID: "5", Endpoint: "/_internal/acl", Methods: "ANY", MimeType: "", Filename: "",
-		Body: asset("acl.casbin"), CreateTime: now, UpdateTime: now, DeletedAt: "",
+		ID: "5", Endpoint: "/_internal/apiacl", Methods: "ANY", MimeType: "", Filename: "",
+		Body: asset("apiacl.casbin"), CreateTime: now, UpdateTime: now, DeletedAt: "",
+	})
+	dao.AddEndpointID(process.Endpoint{
+		ID: "6", Endpoint: "/_internal/adminacl", Methods: "ANY", MimeType: "", Filename: "",
+		Body: asset("adminacl.casbin"), CreateTime: now, UpdateTime: now, DeletedAt: "",
 	})
 	return nil
 }
@@ -303,6 +307,11 @@ func SyncAPIRouter() {
 	router := gin.New()
 
 	for _, ep := range EndpointList(false) {
+		if strings.HasPrefix(ep.Endpoint, "/_internal") {
+			ep.InternalProcess(ep.Endpoint[10:])
+			continue
+		}
+
 		h := ep.HandleJSON
 		if ep.MimeType != "" {
 			h = ep.HandleFileDownload
