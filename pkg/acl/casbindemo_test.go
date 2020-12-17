@@ -90,6 +90,12 @@ func ExampleCasbindemo2() {
 	e.AddFunction("timeAllow", func(args ...interface{}) (interface{}, error) {
 		return acl.TimeAllow(args[0].(string), args[1].(string)), nil
 	})
+	e.AddFunction("routerMatch", func(args ...interface{}) (interface{}, error) {
+		return acl.RouterMatch(args[0].(string), args[1].(string)), nil
+	})
+	e.AddFunction("wildMatch", func(args ...interface{}) (interface{}, error) {
+		return acl.WildcardMatch(args[0].(string), args[1].(string)), nil
+	})
 
 	for _, r := range acl.SplitLines(r1) {
 		t, _ := acl.CsvTokens(r)
@@ -105,9 +111,9 @@ func ExampleCasbindemo2() {
 }
 
 const p1 = `
-p, alice, /alice_data/*, GET, 2020-12-16 17:37:55/2020-12-17 17:37:55
+p, alice, /alice_data/*abc, GET, 2020-12-16 17:37:55/2020-12-17 17:37:55
 p, alice, /alice_data2/:id/using/:resId, GET, 2020-12-16 17:38:00
-p, bob, /*, GET, -
+p, bob, /*abc, GET, -
 `
 
 const r1 = `
@@ -132,5 +138,5 @@ g = _, _
 e = some(where (p.eft == allow))
 
 [matchers]
-m = r.sub == "root" || g(r.sub, p.sub) && r.sub == p.sub && keyMatch2(r.obj, p.obj) && regexMatch(r.act, p.act) && timeAllow(r.time, p.time)
+m = r.sub == "root" || g(r.sub, p.sub) && r.sub == p.sub && routerMatch(r.obj, p.obj) && wildMatch(r.act, p.act) && timeAllow(r.time, p.time)
 `

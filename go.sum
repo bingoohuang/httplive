@@ -36,6 +36,8 @@ github.com/bingoohuang/goreflect v0.0.0-20200307035238-25f6dd474d12 h1:CkprQz54b
 github.com/bingoohuang/goreflect v0.0.0-20200307035238-25f6dd474d12/go.mod h1:LACi2aBN6L9LfGrf3UsZzjPNTmm4wP21onKhgOBqZWs=
 github.com/bingoohuang/gou v0.0.0-20200225004418-9b3655665c46 h1:18kysBxDTlkUYNhzPgJ7o4T8OnZws9WzVPprRgZRcj4=
 github.com/bingoohuang/gou v0.0.0-20200225004418-9b3655665c46/go.mod h1:lfM/iBkZzlmnl23C+mpqiXAgC6npikzZkKVfNAdC+o4=
+github.com/bingoohuang/sariaf v0.0.0-20201217050217-675dac441d57 h1:ne+kg3aKN/I+jV3Gymsxc+HuVtPbBjzlOh+MGZfik08=
+github.com/bingoohuang/sariaf v0.0.0-20201217050217-675dac441d57/go.mod h1:DSi1LVR76Ap189KzzA40C8pFSpRZHsy/n+kgK8ihfhs=
 github.com/bingoohuang/shellwords v0.0.0-20200303142623-5c675e52d3e1 h1:ZOxJ0X7A0Y0hJHVuPfERGZO34N6DUFZj4aH2Kw1Y1J4=
 github.com/bingoohuang/shellwords v0.0.0-20200303142623-5c675e52d3e1/go.mod h1:4ETdbVSa47WB7cYJb4ke+44RDYW6WHMIe+YbvQRmcKk=
 github.com/bingoohuang/sqlx v0.0.0-20200327050032-f36e67f412f6 h1:R2IHDTNyOIuUJxmJifRH2UnhM56rLeIF57TE5cleJV4=

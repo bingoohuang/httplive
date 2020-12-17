@@ -3,7 +3,9 @@ package acl
 import (
 	"bufio"
 	"encoding/csv"
+	"github.com/bingoohuang/sariaf"
 	"io"
+	"net/http"
 	"path/filepath"
 	"strings"
 	"time"
@@ -77,6 +79,17 @@ var CasbinStartTime = time.Now()
 
 // CasbinTimeLayout defines the time layout used in casbin.
 const CasbinTimeLayout = "2006-01-02 15:04:05"
+
+func RouterMatch(router, pattern string) bool {
+	r := sariaf.New()
+	if err := r.Handle(http.MethodGet, pattern, nil); err != nil {
+		logrus.Errorf("failed to parse pattern %s: %v", pattern, err)
+		return false
+	}
+
+	node, _ := r.Search(http.MethodGet, router)
+	return node != nil
+}
 
 // TimeAllow 允许运行时间
 // policy 格式
