@@ -91,7 +91,9 @@ define(["knockout", "toastr", "httplive/app/utils", "httplive/app/main"], functi
           webcli.refreshTree(data.data.ID);
           params.showModal(false);
         },
-        error: function(response) {}
+        error: function (xhr, status, error) {
+          toastr["error"](error + ":" + xhr.responseText)
+        }
       };
 
       var jqXHR = ($.ajax(ajaxOptions).always = function(

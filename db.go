@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/bingoohuang/sariaf"
 	"io"
 	"net/http"
 	"path/filepath"
@@ -140,6 +141,10 @@ func createDB(dao *Dao) error {
 func SaveEndpoint(model process.APIDataModel) (*process.Endpoint, error) {
 	if model.Endpoint == "" || model.Method == "" {
 		return nil, fmt.Errorf("model endpoint and method could not be empty")
+	}
+
+	if err := TestAPIRouter(model); err != nil {
+		return nil, err
 	}
 
 	defer SyncAPIRouter()
@@ -300,6 +305,23 @@ func JoinContextPath(elem string) string {
 	}
 
 	return filepath.Join(Environments.ContextPath, elem)
+}
+
+// TestAPIRouter ...
+func TestAPIRouter(p process.APIDataModel) error {
+	router := sariaf.New()
+
+	for _, ep := range EndpointList(false) {
+		if ep.ID == p.ID {
+			continue
+		}
+
+		if err := router.Handle(http.MethodGet, JoinContextPath(ep.Endpoint), nil); err != nil {
+			return err
+		}
+	}
+
+	return router.Handle(http.MethodGet, JoinContextPath(p.Endpoint), nil)
 }
 
 // SyncAPIRouter ...

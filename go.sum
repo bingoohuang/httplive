@@ -38,8 +38,8 @@ github.com/bingoohuang/gou v0.0.0-20200225004418-9b3655665c46 h1:18kysBxDTlkUYNh
 github.com/bingoohuang/gou v0.0.0-20200225004418-9b3655665c46/go.mod h1:lfM/iBkZzlmnl23C+mpqiXAgC6npikzZkKVfNAdC+o4=
 github.com/bingoohuang/pkger v0.0.0-20201203120856-f480b68feae4 h1:VqYnheswBp8s1gh4UHoRnHpMuGct2vWjJAIFC3XY/YI=
 github.com/bingoohuang/pkger v0.0.0-20201203120856-f480b68feae4/go.mod h1:GJXGVR/nVdNNo7wNQm/FFh0uznqYCVxsL3TL6sk+LKU=
-github.com/bingoohuang/sariaf v0.0.0-20201217050217-675dac441d57 h1:ne+kg3aKN/I+jV3Gymsxc+HuVtPbBjzlOh+MGZfik08=
-github.com/bingoohuang/sariaf v0.0.0-20201217050217-675dac441d57/go.mod h1:DSi1LVR76Ap189KzzA40C8pFSpRZHsy/n+kgK8ihfhs=
+github.com/bingoohuang/sariaf v0.0.0-20201222043148-21fd9703b115 h1:EFFNU0tKdIPNrBSuSgL3UDF4bnFPMzQs3YaUWn4rxM4=
+github.com/bingoohuang/sariaf v0.0.0-20201222043148-21fd9703b115/go.mod h1:DSi1LVR76Ap189KzzA40C8pFSpRZHsy/n+kgK8ihfhs=
 github.com/bingoohuang/shellwords v0.0.0-20200303142623-5c675e52d3e1 h1:ZOxJ0X7A0Y0hJHVuPfERGZO34N6DUFZj4aH2Kw1Y1J4=
 github.com/bingoohuang/shellwords v0.0.0-20200303142623-5c675e52d3e1/go.mod h1:4ETdbVSa47WB7cYJb4ke+44RDYW6WHMIe+YbvQRmcKk=
 github.com/bingoohuang/sqlx v0.0.0-20200327050032-f36e67f412f6 h1:R2IHDTNyOIuUJxmJifRH2UnhM56rLeIF57TE5cleJV4=
