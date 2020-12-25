@@ -37,7 +37,7 @@ func UnquoteCover(s, start, end string) string {
 // server-acceptable mime-type
 // Failure should yield an HTTP 415 (`http.StatusUnsupportedMediaType`)
 func HasContentType(r *http.Request, mimetype string) bool {
-	contentType := r.Header.Get("Content-type")
+	contentType := r.Header.Get("Content-Type")
 	if contentType == "" {
 		return mimetype == "application/octet-stream"
 	}
@@ -119,7 +119,7 @@ func GetMultiPartFormValue(c *gin.Context) interface{} {
 }
 
 // GetFormBody ...
-func GetFormBody(c *gin.Context) interface{} {
+func GetFormBody(c *gin.Context) map[string]string {
 	_ = c.Request.ParseForm()
 
 	form := make(map[string]string)
@@ -153,12 +153,13 @@ func GetRequestBody(c *gin.Context) interface{} {
 	}
 
 	formBody := GetFormBody(c)
-	if formBody != nil {
+	if len(formBody) > 0 {
 		return formBody
 	}
 
-	switch c.ContentType() {
-	case binding.MIMEJSON:
+	contentType := c.ContentType()
+	switch {
+	case strings.Contains(contentType, binding.MIMEJSON):
 		return TryBind(c)
 	default:
 		body, _ := ioutil.ReadAll(c.Request.Body)
