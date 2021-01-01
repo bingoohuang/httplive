@@ -5,7 +5,7 @@
 The **HttpLive** is a tool for **API designers, Proxy, mobile and web application developers**
 to develop and test their applications faster without being dependent on any server or backend applications.
 
-![](doc/httplive-ui.png)
+![alt text](doc/httplive-ui.png "Your Title Here")
 
 HttpLive has a built-in user interface. Therefore, you can do all the configurations you need on this UI,
 and with dynamic URL (Routing) definitions you can specify your own JSON return types for your applications.
@@ -73,7 +73,7 @@ Upload a database file from the web interface.
 - [Smocker is a simple and efficient HTTP mock server](https://github.com/Thiht/smocker)
 
 ## Extensions
- 
+
 1. Dynamic demo [config demo](assets/dynamicdemo.json)
 1. Proxy demo [config demo](assets/proxydemo.json)
 
@@ -120,40 +120,39 @@ Write throughput:               11 MiB/sec
 Test time:                      10.002748474s
 ```
 
-
 sleep in mockbin format demo:
 
-1. [httpstat go version](go get github.com/davecheney/httpstat)
+1. [httpstat go version](https://www.github.com/davecheney/httpstat)
 
-```bash
-[ 22:17:49 ] ❯ http  "http://127.0.0.1:5003/mockbin?_hl=conf"
-HTTP/1.1 200 OK
-Content-Length: 55
-Content-Type: application/json; charset=utf-8
-Date: Mon, 14 Dec 2020 03:18:37 GMT
+    ```bash
+    [ 22:17:49 ] ❯ http  "http://127.0.0.1:5003/mockbin?_hl=conf"
+    HTTP/1.1 200 OK
+    Content-Length: 55
+    Content-Type: application/json; charset=utf-8
+    Date: Mon, 14 Dec 2020 03:18:37 GMT
 
-{
-    "method": "GET",
-    "sleep": "1s",
-    "status": 200
-}
+    {
+        "method": "GET",
+        "sleep": "1s",
+        "status": 200
+    }
 
-[ 22:17:44 ] ❯ httpstat  "http://127.0.0.1:5003/mockbin?_hl=sleep100ms"
+    [ 22:17:44 ] ❯ httpstat  "http://127.0.0.1:5003/mockbin?_hl=sleep100ms"
 
-Connected to 127.0.0.1:5003
+    Connected to 127.0.0.1:5003
 
-HTTP/1.1 200 OK
-Content-Length: 0
-Content-Type: text/plain; charset=utf-8
-Date: Mon, 14 Dec 2020 03:17:49 GMT
+    HTTP/1.1 200 OK
+    Content-Length: 0
+    Content-Type: text/plain; charset=utf-8
+    Date: Mon, 14 Dec 2020 03:17:49 GMT
 
-Body discarded
+    Body discarded
 
-   DNS Lookup   TCP Connection   Server Processing   Content Transfer
-[       0ms  |           0ms  |           1102ms  |             0ms  ]
-             |                |                   |                  |
-    namelookup:0ms            |                   |                  |
-                        connect:0ms               |                  |
-                                      starttransfer:1102ms           |
-                                                                 total:1103ms
-```
+    DNS Lookup   TCP Connection   Server Processing   Content Transfer
+    [       0ms  |           0ms  |           1102ms  |             0ms  ]
+                |                |                   |                  |
+        namelookup:0ms            |                   |                  |
+                            connect:0ms               |                  |
+                                        starttransfer:1102ms           |
+                                                                    total:1103ms
+    ```
