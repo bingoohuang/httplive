@@ -3,6 +3,7 @@ package process
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/bingoohuang/httplive/pkg/httptee"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -42,7 +43,24 @@ func (ep Endpoint) CreateProxy(m *APIDataModel) {
 		return
 	}
 
+	var (
+		err            error
+		httpteeHandler *httptee.Handler
+	)
+
+	tee := gjson.Get(ep.Body, "_tee")
+	isTee := proxy.Type == gjson.String && util.HasPrefix(proxy.String(), "http")
+	if isTee {
+		if httpteeHandler, err = httptee.CreateHandler(tee.String()); err != nil {
+			log.Printf("E! tee server failed %v", err)
+		}
+	}
+
 	m.ServeFn = func(c *gin.Context) {
+		if httpteeHandler != nil {
+			httpteeHandler.Tee(c.Request)
+		}
+
 		p := pool.GetNextPeer()
 		rp := util.ReverseProxy(c.Request.URL.String(), p.Addr.Host, p.Addr.Path)
 		rp.ServeHTTP(c.Writer, c.Request)

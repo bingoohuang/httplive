@@ -35,10 +35,10 @@ func ReverseProxy(originalPath, targetHost, targetPath string) *httputil.Reverse
 	}
 
 	// 更多可以参见 https://github.com/Integralist/go-reverse-proxy/blob/master/proxy/proxy.go
-	return &httputil.ReverseProxy{Director: director, ModifyResponse: modifyResponse, Transport: transport}
+	return &httputil.ReverseProxy{Director: director, ModifyResponse: modifyResponse, Transport: Transport}
 }
 
-var transport = &http.Transport{DialContext: TimeoutDialer(30*time.Second, 30*time.Second)}
+var Transport = &http.Transport{DialContext: TimeoutDialer(30*time.Second, 30*time.Second)}
 
 // Dialer defines dialer function alias
 type Dialer func(ctx context.Context, net, addr string) (c net.Conn, err error)
