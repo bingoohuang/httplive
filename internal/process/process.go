@@ -54,14 +54,13 @@ func (ep *Endpoint) CreateDirect(m *APIDataModel) {
 	}
 
 	m.ServeFn = func(c *gin.Context) {
-		rsp := []byte(direct.String())
-		c.Data(http.StatusOK, util.DetectContentType(rsp), rsp)
+		util.GinData(c, []byte(direct.String()))
 	}
 }
 
 func (ep *Endpoint) CreateDefault(m *APIDataModel) {
 	dynamic := gjson.Get(ep.Body, "_dynamic")
-	if dynamic.Type == gjson.JSON && util.HasPrefix(dynamic.Raw, "[") {
+	if dynamic.Type == gjson.JSON && dynamic.IsArray() {
 		m.dynamicValuers = createDynamics(ep.Body, []byte(dynamic.Raw))
 	}
 
@@ -71,8 +70,7 @@ func (ep *Endpoint) CreateDefault(m *APIDataModel) {
 			return
 		}
 
-		b := []byte(ep.Body)
-		c.Data(http.StatusOK, util.DetectContentType(b), b)
+		util.GinData(c, []byte(ep.Body))
 	}
 }
 

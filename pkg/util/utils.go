@@ -18,6 +18,15 @@ import (
 	"github.com/gin-gonic/gin/binding"
 )
 
+// Or returns or if s is empty.
+func Or(s, or string) string {
+	if s == "" {
+		return or
+	}
+
+	return s
+}
+
 //  UnquoteCover unquotes string from s.
 func UnquoteCover(s, start, end string) string {
 	startIndex := strings.Index(s, start)
@@ -185,6 +194,11 @@ const (
 // TimeFmt format time.
 func TimeFmt(t time.Time) string {
 	return t.Format("2006-01-02 15:04:05.0000")
+}
+
+// GinData writes some data into the body stream and updates the HTTP code.
+func GinData(c *gin.Context, b []byte) {
+	c.Data(http.StatusOK, DetectContentType(b), b)
 }
 
 // DetectContentType detects the contentType of b.

@@ -3,6 +3,7 @@ package http2curl
 import (
 	"bytes"
 	"fmt"
+	"github.com/bingoohuang/httplive/pkg/util"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -45,13 +46,8 @@ func GetCurlCmd(r *http.Request) (*CurlCmd, error) {
 
 func createURL(r *http.Request) string {
 	u := *r.URL
-	if u.Scheme == "" {
-		u.Scheme = "http"
-	}
-
-	if u.Host == "" {
-		u.Host = r.Host
-	}
+	u.Scheme = util.Or(u.Scheme, "http")
+	u.Host = util.Or(u.Host, r.Host)
 
 	return u.String()
 }

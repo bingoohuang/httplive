@@ -88,9 +88,7 @@ func (m Mockbin) Handle(c *gin.Context) {
 	}
 
 	for _, v := range m.Cookies {
-		if v.Path == "" {
-			v.Path = "/"
-		}
+		v.Path = util.Or(v.Path, "/")
 		v.SetCookie(c)
 	}
 

@@ -93,11 +93,7 @@ func trimContextPath(c *gin.Context) string {
 		p = strings.TrimPrefix(p, Environments.ContextPath)
 	}
 
-	if p == "" {
-		return "/"
-	}
-
-	return p
+	return util.Or(p, "/")
 }
 
 // ConfigJsMiddleware ...

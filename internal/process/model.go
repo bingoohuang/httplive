@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"mime"
 	"net/http"
 	"net/http/httputil"
@@ -160,13 +161,9 @@ func (ep APIDataModel) HandleJSON(c *gin.Context) {
 	cw := util.NewGinCopyWriter(c.Writer)
 	c.Writer = cw
 
-	if fn == nil {
-		ep.ServeFn(c)
-	} else {
-		func(c *gin.Context) {
-			ep.ServeFn(c)
-			fn(c)
-		}(c)
+	ep.ServeFn(c)
+	if fn != nil {
+		fn(c)
 	}
 
 	rr := c.Request.Context().Value(RouterResultKey).(*RouterResult)
@@ -308,8 +305,7 @@ func AdminAuth(c *gin.Context) {
 			c.Header("WWW-Authenticate", "Basic realm="+strconv.Quote(realm))
 			c.AbortWithStatus(http.StatusUnauthorized)
 		} else {
-			c.Status(http.StatusForbidden)
-			c.Abort()
+			c.AbortWithStatus(http.StatusForbidden)
 		}
 	}
 }
@@ -324,11 +320,12 @@ func dealHl(c *gin.Context, ep APIDataModel) (bool, gin.HandlerFunc) {
 			ok, err := apiCasbinEnforcer.Enforce(user, c.Request.URL.Path, c.Request.Method, time.Now().Format(acl.CasbinTimeLayout))
 			if err != nil {
 				logrus.Warnf("failed to casbin %v", err)
-			} else if !ok {
+			}
+
+			if !ok {
 				c.Status(http.StatusForbidden)
 				return true, nil
 			}
-
 		}
 	}
 
@@ -340,8 +337,7 @@ func dealHl(c *gin.Context, ep APIDataModel) (bool, gin.HandlerFunc) {
 		cmd, _ := http2curl.GetCurlCmd(c.Request)
 		c.Data(http.StatusOK, util.ContentTypeText, []byte(cmd.String()))
 	case "conf":
-		body := []byte(ep.Body)
-		c.Data(http.StatusOK, util.DetectContentType(body), body)
+		util.GinData(c, []byte(ep.Body))
 	case "echo":
 		c.JSON(http.StatusOK, createRequestMap(c, ep))
 	case "echotext":
@@ -372,11 +368,7 @@ func dealHl(c *gin.Context, ep APIDataModel) (bool, gin.HandlerFunc) {
 
 func dealMore(hl string) (bool, gin.HandlerFunc) {
 	if strings.HasPrefix(hl, "sleep") {
-		v := hl[len("sleep"):]
-		if v == "" {
-			v = "1s"
-		}
-
+		v := util.Or(hl[len("sleep"):], "1s")
 		du, err := time.ParseDuration(v)
 		if err != nil {
 			du = 1 * time.Second
@@ -395,7 +387,7 @@ func dynamicProcess(c *gin.Context, ep APIDataModel) bool {
 
 	reqBody, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
-		fmt.Println(err)
+		log.Printf("E! readall %v", err)
 		return false
 	}
 
@@ -409,13 +401,12 @@ func dynamicProcess(c *gin.Context, ep APIDataModel) bool {
 
 		evaluateResult, err := v.Expr.Evaluate(parameters)
 		if err != nil {
-			fmt.Println(err)
+			log.Printf("E! Evaluate %s error %v", v.Expr.String(), err)
 			return false
 		}
 
 		if yes, ok := evaluateResult.(bool); ok && yes {
 			v.responseDynamic(c)
-
 			return true
 		}
 	}
