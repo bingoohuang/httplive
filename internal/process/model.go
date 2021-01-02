@@ -285,6 +285,14 @@ func (ep *APIDataModel) createCasbin() (*casbin.Enforcer, *sariaf.Router, map[st
 	return e, sariafRouter, authMap
 }
 
+func (m *APIDataModel) TryDo(f func(m *APIDataModel)) {
+	if m.ServeFn != nil {
+		return
+	}
+
+	f(m)
+}
+
 func AdminAuth(c *gin.Context) {
 	if adminAuthHandler == nil {
 		return

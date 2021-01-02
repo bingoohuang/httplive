@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httputil"
-	"net/url"
 	"strings"
 	"time"
+
+	"github.com/bingoohuang/httplive/pkg/lb"
 
 	"github.com/Knetic/govaluate"
 	"github.com/bingoohuang/httplive/pkg/util"
@@ -34,15 +36,15 @@ func (ep Endpoint) CreateProxy(m *APIDataModel) {
 		return
 	}
 
-	p, err := url.Parse(proxy.String())
-	if err != nil {
-		fmt.Println(err)
+	pool := lb.CreateServerPool(proxy.String())
+	if err := pool.CheckBackends(); err != nil {
+		log.Printf("E! proxy server check failed %v", err)
 		return
 	}
 
 	m.ServeFn = func(c *gin.Context) {
-		originalPath := c.Request.URL.String()
-		rp := util.ReverseProxy(originalPath, p.Host, p.Path, 30*time.Second)
+		p := pool.GetNextPeer()
+		rp := util.ReverseProxy(c.Request.URL.String(), p.Addr.Host, p.Addr.Path)
 		rp.ServeHTTP(c.Writer, c.Request)
 	}
 }

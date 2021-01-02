@@ -3,12 +3,13 @@ package http2curl
 import (
 	"bytes"
 	"fmt"
-	"github.com/bingoohuang/httplive/pkg/util"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"sort"
 	"strings"
+
+	"github.com/bingoohuang/httplive/pkg/util"
 )
 
 // CurlCmd contains exec.Cmd compatible slice + helpers

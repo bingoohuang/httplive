@@ -5,13 +5,14 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/bingoohuang/sariaf"
 	"io"
 	"net/http"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/bingoohuang/sariaf"
 
 	"github.com/bingoohuang/httplive/internal/process"
 	"github.com/bingoohuang/httplive/pkg/util"
@@ -198,21 +199,11 @@ func CreateAPIDataModel(ep *process.Endpoint, query bool) *process.APIDataModel 
 		return m
 	}
 
-	if m.ServeFn == nil {
-		ep.CreateMockbin(m)
-	}
-	if m.ServeFn == nil {
-		ep.CreateEcho(m)
-	}
-	if m.ServeFn == nil {
-		ep.CreateProxy(m)
-	}
-	if m.ServeFn == nil {
-		ep.CreateDirect(m)
-	}
-	if m.ServeFn == nil {
-		ep.CreateDefault(m)
-	}
+	m.TryDo(ep.CreateMockbin)
+	m.TryDo(ep.CreateEcho)
+	m.TryDo(ep.CreateProxy)
+	m.TryDo(ep.CreateDirect)
+	m.TryDo(ep.CreateDefault)
 
 	return m
 }

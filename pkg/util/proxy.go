@@ -11,7 +11,7 @@ import (
 
 // ReverseProxy reverse proxy originalPath to targetHost with targetPath.
 // And the relative forwarding is rewritten.
-func ReverseProxy(originalPath, targetHost, targetPath string, timeout time.Duration) *httputil.ReverseProxy {
+func ReverseProxy(originalPath, targetHost, targetPath string) *httputil.ReverseProxy {
 	director := func(req *http.Request) {
 		req.URL.Scheme = "http"
 
@@ -33,11 +33,12 @@ func ReverseProxy(originalPath, targetHost, targetPath string, timeout time.Dura
 
 		return nil
 	}
-	transport := &http.Transport{DialContext: TimeoutDialer(timeout, timeout)}
 
 	// 更多可以参见 https://github.com/Integralist/go-reverse-proxy/blob/master/proxy/proxy.go
 	return &httputil.ReverseProxy{Director: director, ModifyResponse: modifyResponse, Transport: transport}
 }
+
+var transport = &http.Transport{DialContext: TimeoutDialer(30*time.Second, 30*time.Second)}
 
 // Dialer defines dialer function alias
 type Dialer func(ctx context.Context, net, addr string) (c net.Conn, err error)

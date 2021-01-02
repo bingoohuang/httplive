@@ -16,11 +16,12 @@ require (
 	github.com/gorilla/websocket v1.4.1
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
+	github.com/pkg/errors v0.8.1
 	github.com/sirupsen/logrus v1.4.2
 	github.com/skratchdot/open-golang v0.0.0-20190402232053-79abb63cd66e
 	github.com/stretchr/testify v1.6.1
 	github.com/tidwall/gjson v1.6.1
 	github.com/urfave/cli v1.22.3
-	golang.org/x/crypto v0.0.0-20191122220453-ac88ee75c92c // indirect
+	github.com/valyala/fasthttp v1.18.0
 	gopkg.in/yaml.v2 v2.2.8 // indirect
 )
