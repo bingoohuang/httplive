@@ -1,9 +1,10 @@
 package httptee
 
 import (
-	"github.com/bingoohuang/httplive/pkg/util"
 	"net/http"
 	"net/url"
+
+	"github.com/bingoohuang/httplive/pkg/util"
 )
 
 // Handler contains the address of the main PrimaryTarget and the one for the Host target

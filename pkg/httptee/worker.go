@@ -2,6 +2,7 @@ package httptee
 
 import (
 	"context"
+	"fmt"
 	"log"
 )
 
@@ -33,25 +34,29 @@ type WorkerPool struct {
 // Run runs the job by the worker.
 func (p WorkerPool) Run(ctx context.Context, job Runnable) error {
 	answer := make(chan error)
-	//defer close(answer)
+	defer close(answer)
+
+	p.guard <- void{}
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Println("Recovered in WorkerPool Run from:", r)
+				if err, ok := r.(error); ok {
+					answer <- err
+				} else {
+					answer <- fmt.Errorf("Recovered in WorkerPool Run from: %v", r)
+				}
+			}
+			<-p.guard
+		}()
+
+		answer <- job.Run()
+	}()
 
 	select {
-	case p.guard <- void{}:
-		go func() {
-			defer func() {
-				if r := recover(); r != nil {
-					log.Println("Recovered in WorkerPool Run from:", r)
-				}
-				<-p.guard
-			}()
-
-			answer <- job.Run()
-		}()
 	case err := <-answer:
 		return err
 	case <-ctx.Done():
 		return ctx.Err()
 	}
-
-	return nil
 }

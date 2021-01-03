@@ -47,7 +47,7 @@ func CreateDao(db *sql.DB) (*Dao, error) {
 }
 
 func asset(name string) string {
-	pkger.Include("/assets")
+	pkger.Include("/assets") // nolint: staticcheck
 
 	f, err := pkger.Open(filepath.Join("/assets", name))
 	if err != nil {

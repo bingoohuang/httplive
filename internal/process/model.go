@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bingoohuang/ip"
+
 	"github.com/bingoohuang/httplive/pkg/acl"
 	"github.com/bingoohuang/sariaf"
 	"github.com/casbin/casbin/v2"
@@ -273,7 +275,10 @@ func (ep *APIDataModel) createCasbin() (*casbin.Enforcer, *sariaf.Router, map[st
 	policyRows := e.GetNamedPolicy("p")
 	sariafRouter := sariaf.New()
 	for _, row := range policyRows {
-		sariafRouter.Handle(sariaf.MethodAny, row[1], nil)
+		if err := sariafRouter.Handle(sariaf.MethodAny, row[1], nil); err != nil {
+			logrus.Warnf("failed to create casbin: %v", err)
+			return nil, nil, nil
+		}
 	}
 
 	authMap := make(map[string]string)
@@ -348,14 +353,14 @@ func dealHl(c *gin.Context, ep APIDataModel) (bool, gin.HandlerFunc) {
 		util.GinData(c, []byte(ep.Body))
 	case "echo":
 		c.JSON(http.StatusOK, createRequestMap(c, ep))
-	case "echotext":
+	case "echo.text":
 		d, _ := httputil.DumpRequest(c.Request, true)
 		c.Data(http.StatusOK, util.ContentTypeText, d)
 	case "time":
 		c.JSON(http.StatusOK, util.JSON(gin.H{"time": util.TimeFmt(time.Now())}))
-	case "timetext":
+	case "time.text":
 		c.Data(http.StatusOK, util.ContentTypeText, []byte(util.TimeFmt(time.Now())))
-	case "sysinfo", "sysinfotext":
+	case "sysinfo", "sysinfo.text":
 		showsMap := make(map[string]bool)
 		for _, p := range strings.Split("host,mem,cpu,disk,interf,ps", ",") {
 			showsMap[p] = true
@@ -367,6 +372,27 @@ func dealHl(c *gin.Context, ep APIDataModel) (bool, gin.HandlerFunc) {
 			c.Header("Content-Type", util.ContentTypeText)
 			sysinfo.PrintTable(showsMap, "~", c.Writer)
 		}
+	case "ip":
+		mainIP, ipList := ip.MainIP(c.Query("iface"))
+		m := map[string]interface{}{
+			"mainIP":   mainIP,
+			"ipList":   ipList,
+			"outbound": ip.Outbound(),
+		}
+
+		var err error
+
+		if m["v4"], err = ip.ListAllIPv4(); err != nil {
+			m["v4error"] = err.Error()
+		}
+
+		if m["v6"], err = ip.ListAllIPv6(); err != nil {
+			m["v6error"] = err.Error()
+		}
+
+		m["ifaces"] = listIfaces()
+		m["more"] = moreInfo()
+		c.JSON(http.StatusOK, m)
 	default:
 		return dealMore(hl)
 	}

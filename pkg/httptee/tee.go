@@ -86,7 +86,7 @@ func (h *Handler) handleAlterRequest(r AlternativeReq, t http.RoundTripper) {
 	}()
 
 	if rsp := handleRequest(r.req, t); rsp != nil {
-		io.Copy(ioutil.Discard, rsp.Body)
+		_, _ = io.Copy(ioutil.Discard, rsp.Body)
 		_ = rsp.Body.Close()
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/casbin/casbin/v2/model"
 )
 
+// nolint:govet
 func ExampleCasbindemo1() {
 	// Initialize the model from a string.
 	m, err := model.NewModelFromString(`
@@ -68,6 +69,7 @@ p,dingoo,db1/db2,*,read/write
 	// true <nil>
 }
 
+// nolint:govet
 func ExampleCasbindemo2() {
 	e, err := acl.NewCasbin(m1, p1)
 	if err != nil {

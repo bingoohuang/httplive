@@ -1,6 +1,7 @@
 package httptee
 
 import (
+	"log"
 	"net/http"
 )
 
@@ -13,6 +14,9 @@ func (h *Handler) Tee(req *http.Request) {
 		SetRequestTarget(alterReq, alt)
 		alterReq.Host = alt.Host
 
-		h.workers.Run(req.Context(), AlternativeReq{Handler: h, req: alterReq})
+		err := h.workers.Run(req.Context(), AlternativeReq{Handler: h, req: alterReq})
+		if err != nil {
+			log.Printf("E! tee error: %v", err)
+		}
 	}
 }
