@@ -3,6 +3,8 @@ package process
 import (
 	"context"
 	"encoding/json"
+	"github.com/gin-gonic/gin"
+	"github.com/gobars/cmd"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -13,6 +15,34 @@ import (
 	"github.com/bingoohuang/ip"
 	"github.com/hexops/valast"
 )
+
+func processIP(c *gin.Context) {
+	mainIP, ipList := ip.MainIP(c.Query("iface"))
+	m := map[string]interface{}{
+		"mainIP":   mainIP,
+		"ipList":   ipList,
+		"outbound": ip.Outbound(),
+	}
+
+	var err error
+
+	if m["v4"], err = ip.ListAllIPv4(); err != nil {
+		m["v4error"] = err.Error()
+	}
+	if m["v6"], err = ip.ListAllIPv6(); err != nil {
+		m["v6error"] = err.Error()
+	}
+
+	m["ifaces"] = listIfaces()
+	m["more"] = moreInfo()
+
+	_, status := cmd.Bash(`hostname -I`)
+	m["hostname -I"] = strings.Join(append(status.Stdout, status.Stderr...), " ")
+	_, status = cmd.Bash(`hostname -i`)
+	m["hostname -i"] = strings.Join(append(status.Stdout, status.Stderr...), " ")
+
+	c.JSON(http.StatusOK, m)
+}
 
 // SimplifyValAst simplifies the v's ast representation.
 func SimplifyValAst(v interface{}) string {
@@ -103,13 +133,13 @@ func moreInfo() map[string]interface{} {
 
 	eip := net.ParseIP(externalIP)
 	if eip != nil {
+		m["ipDecimal"] = ip.ToDecimal(net.ParseIP(externalIP))
+
 		result := TabaoAPI(externalIP)
 		if result != nil && result.Data.Country != "" {
 			m["ipInfo"] = result
 		}
 	}
-
-	m["ipDecimal"] = ip.ToDecimal(net.ParseIP(externalIP))
 
 	return m
 }

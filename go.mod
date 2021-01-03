@@ -14,6 +14,7 @@ require (
 	github.com/casbin/casbin/v2 v2.19.4
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/gin-gonic/gin v1.5.0
+	github.com/gobars/cmd v0.0.0-20191114090003-c6a602977f49
 	github.com/gorilla/websocket v1.4.1
 	github.com/hexops/valast v1.1.0
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect

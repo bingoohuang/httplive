@@ -14,8 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bingoohuang/ip"
-
 	"github.com/bingoohuang/httplive/pkg/acl"
 	"github.com/bingoohuang/sariaf"
 	"github.com/casbin/casbin/v2"
@@ -373,26 +371,7 @@ func dealHl(c *gin.Context, ep APIDataModel) (bool, gin.HandlerFunc) {
 			sysinfo.PrintTable(showsMap, "~", c.Writer)
 		}
 	case "ip":
-		mainIP, ipList := ip.MainIP(c.Query("iface"))
-		m := map[string]interface{}{
-			"mainIP":   mainIP,
-			"ipList":   ipList,
-			"outbound": ip.Outbound(),
-		}
-
-		var err error
-
-		if m["v4"], err = ip.ListAllIPv4(); err != nil {
-			m["v4error"] = err.Error()
-		}
-
-		if m["v6"], err = ip.ListAllIPv6(); err != nil {
-			m["v6error"] = err.Error()
-		}
-
-		m["ifaces"] = listIfaces()
-		m["more"] = moreInfo()
-		c.JSON(http.StatusOK, m)
+		processIP(c)
 	default:
 		return dealMore(hl)
 	}
