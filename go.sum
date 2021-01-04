@@ -38,8 +38,8 @@ github.com/bingoohuang/goreflect v0.0.0-20200307035238-25f6dd474d12 h1:CkprQz54b
 github.com/bingoohuang/goreflect v0.0.0-20200307035238-25f6dd474d12/go.mod h1:LACi2aBN6L9LfGrf3UsZzjPNTmm4wP21onKhgOBqZWs=
 github.com/bingoohuang/gou v0.0.0-20200225004418-9b3655665c46 h1:18kysBxDTlkUYNhzPgJ7o4T8OnZws9WzVPprRgZRcj4=
 github.com/bingoohuang/gou v0.0.0-20200225004418-9b3655665c46/go.mod h1:lfM/iBkZzlmnl23C+mpqiXAgC6npikzZkKVfNAdC+o4=
-github.com/bingoohuang/ip v0.0.0-20210104042611-96fff540626e h1:VRS4OwhvPIgo9HhifXhFcG92H8ZftDp2kuUc9692km0=
-github.com/bingoohuang/ip v0.0.0-20210104042611-96fff540626e/go.mod h1:X+oXf5mBw05NjeizxdqIBsB8kaCixUX6BZ9u8KEEPCE=
+github.com/bingoohuang/ip v0.0.0-20210104062707-4224f84beef1 h1:MdKPJ0vEM7TiU0oCM+IkBWCMHRm9U1ApWIHUC9+Hpm4=
+github.com/bingoohuang/ip v0.0.0-20210104062707-4224f84beef1/go.mod h1:X+oXf5mBw05NjeizxdqIBsB8kaCixUX6BZ9u8KEEPCE=
 github.com/bingoohuang/pkger v0.0.0-20201203120856-f480b68feae4 h1:VqYnheswBp8s1gh4UHoRnHpMuGct2vWjJAIFC3XY/YI=
 github.com/bingoohuang/pkger v0.0.0-20201203120856-f480b68feae4/go.mod h1:GJXGVR/nVdNNo7wNQm/FFh0uznqYCVxsL3TL6sk+LKU=
 github.com/bingoohuang/sariaf v0.0.0-20201222043148-21fd9703b115 h1:EFFNU0tKdIPNrBSuSgL3UDF4bnFPMzQs3YaUWn4rxM4=
