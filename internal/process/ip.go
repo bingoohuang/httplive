@@ -3,17 +3,17 @@ package process
 import (
 	"context"
 	"encoding/json"
-	"github.com/gin-gonic/gin"
-	"github.com/gobars/cmd"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
-	"regexp"
 	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
+	"github.com/gobars/cmd"
+
 	"github.com/bingoohuang/ip"
-	"github.com/hexops/valast"
 )
 
 func processIP(c *gin.Context) {
@@ -24,13 +24,16 @@ func processIP(c *gin.Context) {
 		"outbound": ip.Outbound(),
 	}
 
-	var err error
-
-	if m["v4"], err = ip.ListAllIPv4(); err != nil {
+	if v, err := ip.ListAllIPv4(); err != nil {
 		m["v4error"] = err.Error()
+	} else if len(v) > 0 {
+		m["v4"] = v
 	}
-	if m["v6"], err = ip.ListAllIPv6(); err != nil {
+
+	if v, err := ip.ListAllIPv6(); err != nil {
 		m["v6error"] = err.Error()
+	} else if len(v) > 0 {
+		m["v6"] = v
 	}
 
 	m["ifaces"] = listIfaces()
@@ -42,22 +45,6 @@ func processIP(c *gin.Context) {
 	m["hostname -i"] = strings.Join(append(status.Stdout, status.Stderr...), " ")
 
 	c.JSON(http.StatusOK, m)
-}
-
-// SimplifyValAst simplifies the v's ast representation.
-func SimplifyValAst(v interface{}) string {
-	// WARNING: valast.String is very slow, only for debugging/testing or limited ui access.
-	s := valast.StringWithOptions(v, &valast.Options{Unqualify: true})
-	p := regexp.MustCompile(`: "|\["|",|"}|"]|[\r\n\t]`)
-	return p.ReplaceAllStringFunc(s, func(r string) string {
-		if strings.HasPrefix(r, `"`) {
-			return r[1:]
-		} else if strings.HasSuffix(r, `"`) {
-			return r[:len(r)-1]
-		}
-
-		return ""
-	})
 }
 
 // listIfaces 根据mode 列出本机所有IP和网卡名称
@@ -80,7 +67,7 @@ func listIfaces() map[string]interface{} {
 
 	for i, iface := range list {
 		interfaces[i] = InterfaceInfo{
-			Iface: SimplifyValAst(iface),
+			Iface: fmt.Sprintf("%+v", iface),
 		}
 
 		if iface.HardwareAddr == nil || iface.Flags&net.FlagUp == 0 || iface.Flags&net.FlagLoopback == 1 {
