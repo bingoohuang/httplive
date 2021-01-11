@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/Knetic/govaluate"
+	"github.com/bingoohuang/govaluate"
 	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
 

@@ -7,5 +7,14 @@
     "password": "",
     "db": 0
   },
-  "name": "@redis redis1 name"
+  "name": "@redis redis1 name",
+
+  "db1@db-instance": {
+    "dsn":"user:pass@tcp(127.0.0.1:3306)/api_statistical?charset=utf8mb4&parseTime=true&loc=Local&timeout=10s&writeTimeout=10s&readTimeout=10s"
+  },
+  "counts@db-query": {
+    "instance": "db1",
+    "query": "select SUM(request_count_outside) from product_gw_pv_rt"
+  },
+  "requestCountOutside":"@db-value toInt(counts.request_count_outside)/1024/1024"
 }

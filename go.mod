@@ -2,10 +2,12 @@ module github.com/bingoohuang/httplive
 
 go 1.14
 
+//replace github.com/bingoohuang/govaluate => ../govaluate
+
 require (
-	github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible
 	github.com/bingoohuang/gor v0.0.0-20200319063139-1085d3628b07
 	github.com/bingoohuang/gou v0.0.0-20200225004418-9b3655665c46
+	github.com/bingoohuang/govaluate v0.0.0-20210111112129-7f2350ca3f5d
 	github.com/bingoohuang/ip v0.0.0-20210104062707-4224f84beef1
 	github.com/bingoohuang/pkger v0.0.0-20201203120856-f480b68feae4
 	github.com/bingoohuang/sariaf v0.0.0-20201222043148-21fd9703b115
@@ -15,6 +17,7 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/gin-gonic/gin v1.5.0
 	github.com/go-redis/redis/v8 v8.4.8
+	github.com/go-sql-driver/mysql v1.4.1
 	github.com/gobars/cmd v0.0.0-20191114090003-c6a602977f49
 	github.com/gorilla/websocket v1.4.1
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect

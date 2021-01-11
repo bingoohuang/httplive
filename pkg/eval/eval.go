@@ -22,6 +22,7 @@ func Eval(body string) string {
 
 	root := gjson.Parse(body)
 	ctx := NewContext()
+	defer ctx.Close()
 
 	root.ForEach(func(k, v gjson.Result) bool {
 		kk := k.String()
@@ -43,7 +44,7 @@ func Eval(body string) string {
 			case EvaluatorSet:
 				body, err = sjson.Set(body, kk, evaluated.Val)
 			case EvaluatorSetRaw:
-				body, err = sjson.SetRaw(body, kk, evaluated.Val)
+				body, err = sjson.SetRaw(body, kk, evaluated.Val.(string))
 			case EvaluatorDel:
 				body, err = sjson.Delete(body, kk)
 			}

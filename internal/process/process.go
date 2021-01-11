@@ -16,7 +16,7 @@ import (
 
 	"github.com/bingoohuang/httplive/pkg/lb"
 
-	"github.com/Knetic/govaluate"
+	"github.com/bingoohuang/govaluate"
 	"github.com/bingoohuang/httplive/pkg/util"
 	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
