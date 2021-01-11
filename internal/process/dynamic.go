@@ -2,6 +2,7 @@ package process
 
 import (
 	"encoding/json"
+	"github.com/bingoohuang/httplive/pkg/eval"
 	"net/http"
 	"strings"
 
@@ -39,11 +40,12 @@ func (v DynamicValue) responseDynamic(c *gin.Context) {
 		}
 	}
 
+	payload := []byte(eval.Eval(string(v.Response)))
 	if contentType == "" {
-		contentType = util.DetectContentType(v.Response)
+		contentType = util.DetectContentType(payload)
 	}
 
-	c.Data(statusCode, contentType, v.Response)
+	c.Data(statusCode, contentType, payload)
 }
 
 func MakeParamValuer(jsonConfig string, expr *govaluate.EvaluableExpression) map[string]Valuer {

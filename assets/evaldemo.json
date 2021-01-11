@@ -1,0 +1,11 @@
+{
+  "#upstream": true,
+  "_hl": "eval",
+  "update": "@date yyyy-MM-dd HH:mm:ss",
+  "redis1@redis-instance": {
+    "addr": "localhost:6379",
+    "password": "",
+    "db": 0
+  },
+  "name": "@redis redis1 name"
+}

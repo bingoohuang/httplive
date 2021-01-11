@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bingoohuang/httplive/pkg/eval"
+
 	"github.com/bingoohuang/httplive/pkg/httptee"
 
 	"github.com/bingoohuang/httplive/pkg/lb"
@@ -91,7 +93,7 @@ func (ep *Endpoint) CreateDefault(m *APIDataModel) {
 			return
 		}
 
-		util.GinData(c, []byte(ep.Body))
+		util.GinData(c, []byte(eval.Eval(ep.Body)))
 	}
 }
 

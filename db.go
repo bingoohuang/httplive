@@ -107,34 +107,45 @@ func createDB(dao *Dao) error {
 	}
 
 	now := util.TimeFmt(time.Now())
+	i := -1
+	f := func() process.ID {
+		i++
+		return process.ID(fmt.Sprintf("%d", i))
+	}
+
 	dao.AddEndpointID(process.Endpoint{
-		ID: "0", Endpoint: "/api/demo", Methods: http.MethodGet, MimeType: "", Filename: "",
+		ID: f(), Endpoint: "/api/demo", Methods: http.MethodGet, MimeType: "", Filename: "",
 		Body: asset("apidemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
 	})
 	dao.AddEndpointID(process.Endpoint{
-		ID: "1", Endpoint: "/dynamic/demo", Methods: http.MethodPost, MimeType: "", Filename: "",
+		ID: f(), Endpoint: "/dynamic/demo", Methods: http.MethodPost, MimeType: "", Filename: "",
 		Body: asset("dynamicdemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
 	})
 	dao.AddEndpointID(process.Endpoint{
-		ID: "2", Endpoint: "/proxy/demo", Methods: http.MethodGet, MimeType: "", Filename: "",
+		ID: f(), Endpoint: "/proxy/demo", Methods: http.MethodGet, MimeType: "", Filename: "",
 		Body: asset("proxydemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
 	})
 	dao.AddEndpointID(process.Endpoint{
-		ID: "3", Endpoint: "/echo/:id", Methods: "ANY", MimeType: "", Filename: "",
+		ID: f(), Endpoint: "/echo/:id", Methods: "ANY", MimeType: "", Filename: "",
 		Body: asset("echo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
 	})
 	dao.AddEndpointID(process.Endpoint{
-		ID: "4", Endpoint: "/mockbin", Methods: "ANY", MimeType: "", Filename: "",
+		ID: f(), Endpoint: "/mockbin", Methods: "ANY", MimeType: "", Filename: "",
 		Body: asset("mockbin.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
 	})
 	dao.AddEndpointID(process.Endpoint{
-		ID: "5", Endpoint: "/_internal/apiacl", Methods: "ANY", MimeType: "", Filename: "",
+		ID: f(), Endpoint: "/eval", Methods: "ANY", MimeType: "", Filename: "",
+		Body: asset("evaldemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
+	})
+	dao.AddEndpointID(process.Endpoint{
+		ID: f(), Endpoint: "/_internal/apiacl", Methods: "ANY", MimeType: "", Filename: "",
 		Body: asset("apiacl.casbin"), CreateTime: now, UpdateTime: now, DeletedAt: "",
 	})
 	dao.AddEndpointID(process.Endpoint{
-		ID: "6", Endpoint: "/_internal/adminacl", Methods: "ANY", MimeType: "", Filename: "",
+		ID: f(), Endpoint: "/_internal/adminacl", Methods: "ANY", MimeType: "", Filename: "",
 		Body: asset("adminacl.casbin"), CreateTime: now, UpdateTime: now, DeletedAt: "",
 	})
+
 	return nil
 }
 
