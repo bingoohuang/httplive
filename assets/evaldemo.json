@@ -2,7 +2,7 @@
   "#upstream": true,
   "_hl": "eval",
   "#_cache": "1m",
-  "update": "@date yyyy-MM-dd HH:mm:ss",
+  "update": "@now yyyy-MM-dd HH:mm:ss",
   "redis1@redis-instance": {
     "addr": "localhost:6379",
     "password": "",
@@ -129,26 +129,37 @@
       "order by serviceName, hours ASC"
     ]
   },
-  "requestServiceDayHour1@group-json":  {
+  "7dStepper@time-steper": {
+    "fmt": "yyyyMMdd",
+    "startOffset": "-6d",
+    "endOffset": "1d",
+    "step": "1d",
+    "fill": 0
+  },
+  "24hStepper@time-steper": {
+    "fmt": "yyyyMMddHH",
+    "startOffset": "23h",
+    "endOffset": "1h",
+    "step": "1h",
+    "fill": 0
+  },
+  "requestServiceDayHour1@group-json": {
     "group-by": "serviceName",
     "flatten-key": "days",
     "flatten-values": "days_value",
-    "fill-start@date": {"fmt":"yyyyMMdd", "offset":"-6d"},
-    "fill-end@date": {"fmt":"yyyyMMdd", "offset":"1d"},
-    "fill-step@date-step": {"fmt":"yyyyMMddHH", "step":"1d"},
-    "fill": "0"
+    "fill":"7dStepper"
   },
   "requestServiceDayHour2@group-json": {
     "group-by": "serviceName",
     "flatten-key": "hours",
     "flatten-values": "hours_value",
-    "fill-start@date": {"fmt":"yyyyMMddHH", "offset":"-23h"},
-    "fill-end@date": {"fmt":"yyyyMMddHH", "offset":"1h"},
-    "fill-step@date-step": {"fmt":"yyyyMMddHH", "step":"1h"},
-    "fill": "0"
+    "fill":"24hStepper"
   },
   "requestServiceDayHour@merge-json": {
-    "objects":["requestServiceDayHour1", "requestServiceDayHour2"],
+    "objects": [
+      "requestServiceDayHour1",
+      "requestServiceDayHour2"
+    ],
     "by": "serviceName"
   }
 }

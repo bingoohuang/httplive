@@ -17,11 +17,12 @@ func (d GroupJsonEvaluator) Eval(ctx *Context, key, param string) EvaluatorResul
 	groupBy := jp.Get("group-by").String()
 	flattenKey := jp.Get("flatten-key").String()
 	flattenValuesKey := jp.Get("flatten-values").String()
-	fillStart := tryToFloat64(jp.Get("fill-start").String())
-	fillEnd := tryToFloat64(jp.Get("fill-end").String())
-	fillStep := tryToFloat64(jp.Get("fill-step").String()).(float64)
-	fill := jp.Get("fill").String()
-	fillValue := tryToFloat64(fill)
+
+	var stepper Stepper
+	fill := jp.Get("fill")
+	if fill.String() != "" {
+		stepper = fill.Value().(Stepper)
+	}
 
 	srcJson := ctx.Var(key)
 	srcJJ := jj.Parse(string(srcJson.(RawString)))
@@ -29,13 +30,13 @@ func (d GroupJsonEvaluator) Eval(ctx *Context, key, param string) EvaluatorResul
 	lastGroupByValue := ""
 	flattenArray := make([]interface{}, 0)
 	flatten := make([]interface{}, 0)
-	lastFlattenKeyValue := fillStart
 
 	f := func() {
-		if fl, ok := lastFlattenKeyValue.(float64); ok {
-			tf := fillEnd.(float64)
-			for fl += fillStep; fl < tf; fl += fillStep {
-				flattenArray = append(flattenArray, fillValue)
+		if stepper != nil {
+			_, _, ok := stepper.Step()
+			for ok {
+				flattenArray = append(flattenArray, stepper.Fill())
+				_, _, ok = stepper.Step()
 			}
 		}
 
@@ -54,21 +55,21 @@ func (d GroupJsonEvaluator) Eval(ctx *Context, key, param string) EvaluatorResul
 			flattenArray = append(flattenArray, flattenValue)
 		}
 
-		if fl, ok := lastFlattenKeyValue.(float64); ok {
+		if stepper != nil {
 			tf := flattenKeyValue.(float64)
-			for fl++; fl < tf; fl++ {
-				flattenArray = append(flattenArray, fillValue)
+			_, stepF, ok := stepper.Step()
+			for ok && stepF < tf {
+				flattenArray = append(flattenArray, stepper.Fill())
+				_, stepF, ok = stepper.Step()
 			}
 		}
 
 		if lastGroupByValue == "" || groupByValue == lastGroupByValue {
 			lastGroupByValue = groupByValue
-			lastFlattenKeyValue = flattenKeyValue
 			return true
 		}
 
 		f()
-		lastFlattenKeyValue = fillStart
 
 		lastGroupByValue = groupByValue
 		flattenArray = make([]interface{}, 0)
