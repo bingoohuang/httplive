@@ -56,7 +56,7 @@ func doEval(evaluator EvaluatorFn, body string, kk string, setOptions jj.SetOpti
 	err := evaluated.Err
 	if err != nil {
 		log.Printf("W! error: %v", err)
-		return ""
+		return body
 	}
 
 	switch evaluated.Mode {

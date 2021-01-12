@@ -8,11 +8,11 @@
     "db": 0
   },
   "name": "@redis redis1 name",
-  "db1@db-instance": {
+  "default@db-instance": {
     "dsn": "user:pass@tcp(127.0.0.1:3306)/api_statistical?charset=utf8mb4&parseTime=true&loc=Local&timeout=10s&writeTimeout=10s&readTimeout=10s"
   },
   "counts@db-query": {
-    "instance": "db1",
+    "instance": "default",
     "query": [
       "select SUM(request_count_outside)",
       "from product_gw_pv_rt"
@@ -29,8 +29,7 @@
     "unit": "s",
     "truncate": "24h"
   },
-  "provinceCount@db-query": {
-    "instance": "db1",
+  "provinceStat@db-query": {
     "query": [
       "select c.province as province, c.count as count from",
       "(select province,sum(call_count) as count from product_region_request_stat",
@@ -39,10 +38,32 @@
       "where c.province = p.province order BY c.count desc",
       "limit 10"
     ],
-    "resultType": "json"
+    "resultType": "json-array"
   },
   "totalStat": {
     "requestCountOutside": "@db-value toInt(counts.request_count_outside)/1024/1024"
   },
-  "provinceStat": "@db-value provinceCount"
+  "provinceStat": "@db-value",
+  
+  "responseOver@db-query": {
+    "query":["    SELECT",
+      "    r.over_50ms_outside + over_50ms_inside AS over50ms,",
+      "    r.over_300ms_outside + over_300ms_inside AS over300ms,",
+      "    r.over_1000ms_outside + r.over_1000ms_inside AS over1000ms,",
+      "    r.over_5000ms_outside + r.over_5000ms_inside AS over5000ms",
+      "      FROM    (SELECT",
+      "                sum(response_over_50ms_outside) AS over_50ms_outside,",
+      "                sum(response_over_50ms_inside) AS over_50ms_inside,",
+      "                sum(response_over_300ms_outside) AS over_300ms_outside,",
+      "                sum(response_over_300ms_inside) AS over_300ms_inside,",
+      "                sum(response_over_1000ms_outside) AS over_1000ms_outside,",
+      "                sum(response_over_1000ms_inside) AS over_1000ms_inside,",
+      "                sum(response_over_5000ms_outside) AS over_5000ms_outside,",
+      "                sum(response_over_5000ms_inside) AS over_5000ms_inside",
+      "           FROM",
+      "    product_api_pv_rt",
+      " WHERE request_time >= #timeStart# AND request_time < #timeEnd#) AS r"],
+    "resultType": "json-object"
+  },
+  "responseOver":"@db-value"
 }

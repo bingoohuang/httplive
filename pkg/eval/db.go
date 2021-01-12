@@ -42,7 +42,7 @@ func init() { registerEvaluator("@db-query", &DbQueryEvaluator{}) }
 
 func (d DbQueryEvaluator) Eval(ctx *Context, key, param string) EvaluatorResult {
 	jparam := jj.Parse(param)
-	instance := JSONStr(jparam, "instance")
+	instance := JSONStrOr(jparam, "instance", "default")
 	resultType := JSONStr(jparam, "resultType")
 	maxRows := JSONInt(jparam, "maxRows")
 
@@ -75,7 +75,7 @@ func (d DbQueryEvaluator) Eval(ctx *Context, key, param string) EvaluatorResult 
 		columns[i] = purifyColumnName(col)
 	}
 
-	rowsData := make([]map[string]string, 0)
+	rowsData := make([]map[string]interface{}, 0)
 
 	for i := 0; rows.Next() && (maxRows == 0 || i < maxRows); i++ {
 		holders := make([]sql.NullString, columnSize)
@@ -88,20 +88,26 @@ func (d DbQueryEvaluator) Eval(ctx *Context, key, param string) EvaluatorResult 
 			return EvaluatorResult{Err: err}
 		}
 
-		values := make(map[string]string)
+		values := make(map[string]interface{})
 		for i, h := range holders {
-			values[columns[i]] = h.String
+			values[columns[i]] = tryToFloat64(h.String)
 		}
 
-		if resultType == "map" || resultType == "" {
-			ctx.SetVar(key, values)
+		if resultType == "map" || resultType == "" || resultType == "json-object" {
+			if resultType == "map" || resultType == "" {
+				ctx.SetVar(key, values)
+			} else {
+				valuesJSON, _ := json.Marshal(values)
+				ctx.SetVar(key, RawString(valuesJSON))
+			}
+
 			break
 		}
 
 		rowsData = append(rowsData, values)
 	}
 
-	if resultType == "json" {
+	if resultType == "json-array" {
 		rowsJSON, _ := json.Marshal(rowsData)
 		ctx.SetVar(key, RawString(rowsJSON))
 	}
@@ -110,6 +116,18 @@ func (d DbQueryEvaluator) Eval(ctx *Context, key, param string) EvaluatorResult 
 		Mode: EvaluatorDel,
 		Key:  key,
 	}
+}
+
+func tryToFloat64(s string) interface{} {
+	if s == "" {
+		return s
+	}
+
+	if v, err := strconv.ParseFloat(s, 64); err == nil {
+		return v
+	}
+
+	return s
 }
 
 func purifyColumnName(col string) string {
@@ -133,6 +151,9 @@ func init() { registerEvaluator("@db-value", &DbValueEvaluator{}) }
 type RawString string
 
 func (d DbValueEvaluator) Eval(ctx *Context, key, param string) EvaluatorResult {
+	if param == "" {
+		param = key
+	}
 	expr, err := govaluate.NewEvaluableExpressionWithFunctions(strings.TrimSpace(param), exprFns)
 	if err != nil {
 		return EvaluatorResult{Err: err}
