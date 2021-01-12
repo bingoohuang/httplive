@@ -1,6 +1,7 @@
 {
   "#upstream": true,
   "_hl": "eval",
+  "#_cache": "1m",
   "update": "@date yyyy-MM-dd HH:mm:ss",
   "redis1@redis-instance": {
     "addr": "localhost:6379",
@@ -8,16 +9,19 @@
     "db": 0
   },
   "name": "@redis redis1 name",
-  "default@db-instance": {
+  "db1@db-instance": {
     "dsn": "user:pass@tcp(127.0.0.1:3306)/api_statistical?charset=utf8mb4&parseTime=true&loc=Local&timeout=10s&writeTimeout=10s&readTimeout=10s"
   },
   "counts@db-query": {
-    "instance": "default",
+    "instance": "db1",
     "query": [
       "select SUM(request_count_outside)",
       "from product_gw_pv_rt"
     ],
     "resultType": "map"
+  },
+  "totalStat": {
+    "requestCountOutside": "@db-value toInt(counts.request_count_outside)/1024/1024"
   },
   "timeStart@time": {
     "value": "today",
@@ -30,6 +34,7 @@
     "truncate": "24h"
   },
   "provinceStat@db-query": {
+    "instance": "db1",
     "query": [
       "select c.province as province, c.count as count from",
       "(select province,sum(call_count) as count from product_region_request_stat",
@@ -40,13 +45,11 @@
     ],
     "resultType": "json-array"
   },
-  "totalStat": {
-    "requestCountOutside": "@db-value toInt(counts.request_count_outside)/1024/1024"
-  },
   "provinceStat": "@db-value",
-  
   "responseOver@db-query": {
-    "query":["    SELECT",
+    "instance": "db1",
+    "query": [
+      "    SELECT",
       "    r.over_50ms_outside + over_50ms_inside AS over50ms,",
       "    r.over_300ms_outside + over_300ms_inside AS over300ms,",
       "    r.over_1000ms_outside + r.over_1000ms_inside AS over1000ms,",
@@ -62,8 +65,90 @@
       "                sum(response_over_5000ms_inside) AS over_5000ms_inside",
       "           FROM",
       "    product_api_pv_rt",
-      " WHERE request_time >= #timeStart# AND request_time < #timeEnd#) AS r"],
+      " WHERE request_time >= #timeStart# AND request_time < #timeEnd#) AS r"
+    ],
     "resultType": "json-object"
   },
-  "responseOver":"@db-value"
+  "responseOver": "@db-value",
+  "requestTop10@db-query": {
+    "instance": "db1",
+    "resultType": "json-array",
+    "query": [
+      "SELECT a.`name` as apiName, c.api_version_id as apiVersionId, c.count as",
+      "requestCount, ROUND((c.resp_total/c.count)*1000,2) as responseRate",
+      "from",
+      "(select api_version_id,",
+      "sum(request_count_outside + request_count_inside) as count,",
+      "sum(response_total_outside + response_total_inside) as resp_total",
+      "from product_api_pv_one_minute",
+      "where request_time >= #timeStart# AND request_time <  #timeEnd#",
+      "GROUP BY api_version_id",
+      "ORDER BY count DESC",
+      "limit 10) as c, api as a, api_version as v ",
+      "where c.api_version_id=v.id and v.api_id=a.id"
+    ]
+  },
+  "requestTop10": "@db-value",
+  "last7dStart@time": {
+    "value": "today",
+    "offset": "-6d",
+    "unit": "s",
+    "truncate": "24h"
+  },
+  "last24hStart@time": {
+    "value": "today",
+    "offset": "-23h",
+    "unit": "s",
+    "truncate": "1h"
+  },
+  "requestServiceDayHour1@db-query": {
+    "instance": "db1",
+    "resultType": "json-array",
+    "query": [
+      "SELECT g.group_name as serviceName,",
+      "FROM_UNIXTIME(c.request_time,'%Y%m%d')as days,",
+      "SUM(c.request_count_outside + c.request_count_inside) as days_value",
+      "from product_api_pv_one_minute c, api a, api_group g,api_version v",
+      "where c.api_version_id = v.id and v.api_id=a.id and a.category_id = g.group_id",
+      "and  request_time >= #last7dStart# AND request_time < #timeEnd#",
+      "group by g.group_id, days",
+      "order by serviceName, days ASC"
+    ]
+  },
+  "requestServiceDayHour2@db-query": {
+    "instance": "db1",
+    "resultType": "json-array",
+    "query": [
+      "SELECT g.group_name as serviceName,",
+      "FROM_UNIXTIME(c.request_time,'%Y%m%d%H')as hours,",
+      "SUM(c.request_count_outside + c.request_count_inside) as hours_value",
+      "from product_api_pv_one_minute c, api a, api_group g,api_version v",
+      "where c.api_version_id = v.id and v.api_id=a.id and a.category_id = g.group_id",
+      "and  request_time >= #last24hStart# AND request_time < #timeEnd#",
+      "group by g.group_id, hours",
+      "order by serviceName, hours ASC"
+    ]
+  },
+  "requestServiceDayHour1@group-json":  {
+    "group-by": "serviceName",
+    "flatten-key": "days",
+    "flatten-values": "days_value",
+    "fill-start@date": {"fmt":"yyyyMMdd", "offset":"-6d"},
+    "fill-end@date": {"fmt":"yyyyMMdd", "offset":"1d"},
+    "fill-step@date-step": {"fmt":"yyyyMMddHH", "step":"1d"},
+    "fill": "0"
+  },
+  "requestServiceDayHour2@group-json": {
+    "group-by": "serviceName",
+    "flatten-key": "hours",
+    "flatten-values": "hours_value",
+    "fill-start@date": {"fmt":"yyyyMMddHH", "offset":"-23h"},
+    "fill-end@date": {"fmt":"yyyyMMddHH", "offset":"1h"},
+    "fill-step@date-step": {"fmt":"yyyyMMddHH", "step":"1h"},
+    "fill": "0"
+  },
+  "requestServiceDayHour@merge-json": {
+    "objects":["requestServiceDayHour1", "requestServiceDayHour2"],
+    "by": "serviceName"
+  }
 }
