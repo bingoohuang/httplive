@@ -34,23 +34,35 @@ func Eval(endpoint string, body string) string {
 		}
 	}
 
+	f := func() string {
+		root := jj.Parse(body)
+		ctx := NewContext()
+		defer ctx.Close()
+
+		evalResult := intervalEval(body, root, ctx)
+		if cacheTime > 0 {
+			// Set the value of the key "foo" to "bar", with the default expiration time
+			evalCache.Set(endpoint, evalResult, cacheTime)
+		}
+
+		return evalResult
+	}
+
+	evalResult := ""
+
 	if cacheTime > 0 {
-		if result, ok := evalCache.Get(endpoint); ok {
-			return result.(string)
+		result, expired, ok := evalCache.GetWithExpiration(endpoint)
+		if ok {
+			evalResult = result.(string)
+			if expired.Sub(time.Now()) <= 10*time.Second {
+				go f()
+			}
+
+			return evalResult
 		}
 	}
 
-	root := jj.Parse(body)
-	ctx := NewContext()
-	defer ctx.Close()
-
-	evalResult := intervalEval(body, root, ctx)
-	if cacheTime > 0 {
-		// Set the value of the key "foo" to "bar", with the default expiration time
-		evalCache.Set(endpoint, evalResult, cacheTime)
-	}
-
-	return evalResult
+	return f()
 }
 
 func intervalEval(body string, root jj.Result, ctx *Context) string {
