@@ -42,6 +42,8 @@ func init() { registerEvaluator("@db-query", &DbQueryEvaluator{}) }
 func (d DbQueryEvaluator) Eval(ctx *Context, key, param string) EvaluatorResult {
 	jparam := jj.Parse(param)
 	instance := JSONStr(jparam, "instance")
+	resultType := JSONStr(jparam, "resultType")
+
 	db, _ := ctx.Var(instance).(*sql.DB)
 	if db == nil {
 		return EvaluatorResult{
@@ -64,7 +66,9 @@ func (d DbQueryEvaluator) Eval(ctx *Context, key, param string) EvaluatorResult 
 		columns[i] = purifyColumnName(col)
 	}
 
-	if rows.Next() {
+	rowsData := make([]map[string]string, 0)
+
+	for rows.Next() {
 		holders := make([]sql.NullString, columnSize)
 		pointers := make([]interface{}, columnSize)
 		for i := 0; i < columnSize; i++ {
@@ -80,7 +84,17 @@ func (d DbQueryEvaluator) Eval(ctx *Context, key, param string) EvaluatorResult 
 			values[columns[i]] = h.String
 		}
 
-		ctx.SetVar(key, values)
+		if resultType == "map" || resultType == "" {
+			ctx.SetVar(key, values)
+			break
+		}
+
+		rowsData = append(rowsData, values)
+	}
+
+	if resultType == "json" {
+		rowsJSON, _ := json.Marshal(rowsData)
+		ctx.SetVar(key, RawString(rowsJSON))
 	}
 
 	return EvaluatorResult{
@@ -107,6 +121,8 @@ type DbValueEvaluator struct{}
 
 func init() { registerEvaluator("@db-value", &DbValueEvaluator{}) }
 
+type RawString string
+
 func (d DbValueEvaluator) Eval(ctx *Context, key, param string) EvaluatorResult {
 	expr, err := govaluate.NewEvaluableExpressionWithFunctions(strings.TrimSpace(param), exprFns)
 	if err != nil {
@@ -119,8 +135,9 @@ func (d DbValueEvaluator) Eval(ctx *Context, key, param string) EvaluatorResult 
 	}
 
 	mode := EvaluatorSet
-	if rs, ok := result.(string); ok && json.Valid([]byte(rs)) {
+	if v, ok := result.(RawString); ok {
 		mode = EvaluatorSetRaw
+		result = string(v)
 	}
 
 	return EvaluatorResult{

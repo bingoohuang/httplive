@@ -8,16 +8,31 @@
     "db": 0
   },
   "name": "@redis redis1 name",
-
   "db1@db-instance": {
-    "dsn":"user:pass@tcp(127.0.0.1:3306)/api_statistical?charset=utf8mb4&parseTime=true&loc=Local&timeout=10s&writeTimeout=10s&readTimeout=10s"
+    "dsn": "user:pass@tcp(127.0.0.1:3306)/api_statistical?charset=utf8mb4&parseTime=true&loc=Local&timeout=10s&writeTimeout=10s&readTimeout=10s"
   },
   "counts@db-query": {
     "instance": "db1",
-    "query": ["select SUM(request_count_outside)",
-      "from product_gw_pv_rt"]
+    "query": [
+      "select SUM(request_count_outside)",
+      "from product_gw_pv_rt"
+    ],
+    "resultType": "map"
+  },
+  "provinceCount@db-query": {
+    "instance": "db1",
+    "query": [
+      "select c.province as province, c.count as count from",
+      "(select province,sum(call_count) as count from product_region_request_stat",
+      "where request_time >= 1610409600 AND request_time < 1610496000",
+      "GROUP BY province ) as c, province p",
+      "where c.province = p.province order BY c.count desc",
+      "limit 10"
+    ],
+    "resultType": "json"
   },
   "totalStat": {
-    "requestCountOutside":"@db-value toInt(counts.request_count_outside)/1024/1024"
-  }
+    "requestCountOutside": "@db-value toInt(counts.request_count_outside)/1024/1024"
+  },
+  "provinceStat": "@db-value provinceCount"
 }
