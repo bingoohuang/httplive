@@ -5,7 +5,7 @@
 
 # 全部命令都默认成远程执行，相当于自动添加了%host标识。
 globalRemote = true
-cmdTimeout = "30s"
+cmdTimeout = "300s"
 # confirm = true
 # exec mode(0: cmd by cmd, 1 host by host).
 execMode = 0
@@ -22,8 +22,7 @@ cmds = [
   "go build -mod vendor -o httplive ./cmd/httplive",
   "ls -lh ./httplive",
   "./httplive -v",
-#  "../upx-3.96-amd64_linux/upx httplive",
-#  "pwd && ./httplive -v",
+  "../upx-3.96-amd64_linux/upx httplive",
   "ls -lh ./httplive",
   "%dl rigagasrc/httplive/httplive @Today/",
   "%local ls -lhd $PWD/@Today/*",

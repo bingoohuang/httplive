@@ -12,17 +12,18 @@ g = _, _
 e = some(where (p.eft == allow))
 
 [matchers]
-m = r.user == "root" || g(r.user, p.user) && r.user == p.user && routerMatch(r.router, p.router) && wildMatch(r.method, p.method) && timeAllow(r.time, p.time)
+m = r.user == "admin" || g(r.user, p.user) && r.user == p.user && routerMatch(r.router, p.router) && wildMatch(r.method, p.method) && timeAllow(r.time, p.time)
 ###END_MODEL###
 
 ###START_POLICY###
 p, alice, /alice_data/*action, GET, 2020-12-16 17:37:55/2020-12-17 17:37:55
 p, alice, /alice_data2/:id/using/:resId, GET, 2020-12-16 17:38:00
-p, bob, /*action, GET, -
+#p, bob, /*action, GET, -
 ###END_POLICY###
 
 ###START_AUTH###
 #format user:pass
+admin:admin
 alice:alice
 bob:bob
 ###END_AUTH###

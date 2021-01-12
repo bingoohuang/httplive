@@ -2,13 +2,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/bingoohuang/golog"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
-
-	"github.com/bingoohuang/golog"
 
 	"github.com/bingoohuang/httplive/internal/process"
 
@@ -27,7 +26,6 @@ import (
 
 func main() {
 	gin.SetMode(gin.ReleaseMode)
-	golog.SetupLogrus()
 	app := cli.NewApp()
 	env := &httplive.Environments
 
@@ -117,6 +115,8 @@ func host(env *httplive.EnvVars) error {
 		logrus.Warnf("failed to create DB %v", err)
 		return err
 	}
+
+	golog.SetupLogrus()
 
 	r := gin.New()
 	r.Use(httplive.APIMiddleware, httplive.StaticFileMiddleware,
