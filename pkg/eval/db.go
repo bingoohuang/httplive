@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/bingoohuang/jj"
+	"log"
 	"strconv"
 	"strings"
 
@@ -48,7 +49,8 @@ func (d DbQueryEvaluator) Eval(ctx *Context, key, param string) EvaluatorResult 
 		}
 	}
 
-	query := JSONStr(jparam, "query")
+	query := JSONStrSep(jparam, "query", " ")
+	log.Printf("I! query: %s", query)
 	rows, err := db.Query(query)
 	if err != nil {
 		return EvaluatorResult{Err: err}

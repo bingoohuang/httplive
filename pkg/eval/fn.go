@@ -82,7 +82,20 @@ func NewContext() *Context {
 }
 
 func JSONStr(gj jj.Result, k string) string {
+	return JSONStrSep(gj, k, "")
+}
+
+func JSONStrSep(gj jj.Result, k, arraySep string) string {
 	v := gj.Get(k)
+	if v.IsArray() {
+		s := ""
+		for _, item := range v.Array() {
+			s += item.String() + arraySep
+		}
+
+		return s
+	}
+
 	return v.String()
 }
 
