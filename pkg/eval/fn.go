@@ -5,7 +5,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/tidwall/gjson"
+	"github.com/bingoohuang/jj"
 )
 
 type Evaluator interface {
@@ -35,7 +35,7 @@ type EvaluatorResult struct {
 
 type EvaluatorFn func() EvaluatorResult
 
-func parseEvaluator(ctx *Context, k, v gjson.Result) EvaluatorFn {
+func parseEvaluator(ctx *Context, k, v jj.Result) EvaluatorFn {
 	ks, vs := k.String(), v.String()
 	for evaluatorKey, evaluator := range evaluatorRegistry {
 		if strings.HasPrefix(vs, evaluatorKey) {
@@ -81,12 +81,12 @@ func NewContext() *Context {
 	}
 }
 
-func JSONStr(gj gjson.Result, k string) string {
+func JSONStr(gj jj.Result, k string) string {
 	v := gj.Get(k)
 	return v.String()
 }
 
-func JSONStrOr(gj gjson.Result, k, defaultV string) string {
+func JSONStrOr(gj jj.Result, k, defaultV string) string {
 	v := gj.Get(k)
 	s := v.String()
 	if s == "" {
@@ -96,7 +96,7 @@ func JSONStrOr(gj gjson.Result, k, defaultV string) string {
 	return s
 }
 
-func JSONInt(gj gjson.Result, k string) int {
+func JSONInt(gj jj.Result, k string) int {
 	v := gj.Get(k)
 	return int(v.Int())
 }

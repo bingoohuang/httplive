@@ -1,33 +1,33 @@
 package eval
 
 import (
+	"github.com/bingoohuang/jj"
 	"log"
 	"strings"
-
-	"github.com/tidwall/gjson"
-	"github.com/tidwall/sjson"
 )
 
 func Eval(body string) string {
-	_hl := gjson.Get(body, "_hl")
-	if !(_hl.Type == gjson.String && _hl.String() == "eval") {
+	_hl := jj.Get(body, "_hl")
+	if !(_hl.Type == jj.String && _hl.String() == "eval") {
 		return body
 	}
 
-	body, err := sjson.Delete(body, "_hl")
+	body, err := jj.Delete(body, "_hl")
 	if err != nil {
 		log.Printf("failed to delete %s in json, error:%v", "_hl", err)
 		return body
 	}
 
-	root := gjson.Parse(body)
+	root := jj.Parse(body)
 	ctx := NewContext()
 	defer ctx.Close()
 
-	root.ForEach(func(k, v gjson.Result) bool {
+	setOptions := jj.SetOptions{ReplaceInPlace: true}
+
+	root.ForEach(func(k, v jj.Result) bool {
 		kk := k.String()
 		if strings.HasPrefix(kk, "#") || strings.HasPrefix(kk, "//") {
-			body, err = sjson.Delete(body, kk)
+			body, err = jj.Delete(body, kk)
 			return true
 		}
 
@@ -42,11 +42,11 @@ func Eval(body string) string {
 
 			switch evaluated.Mode {
 			case EvaluatorSet:
-				body, err = sjson.Set(body, kk, evaluated.Val)
+				body, err = jj.Set(body, kk, evaluated.Val, setOptions)
 			case EvaluatorSetRaw:
-				body, err = sjson.SetRaw(body, kk, evaluated.Val.(string))
+				body, err = jj.SetRaw(body, kk, evaluated.Val.(string), setOptions)
 			case EvaluatorDel:
-				body, err = sjson.Delete(body, kk)
+				body, err = jj.Delete(body, kk, setOptions)
 			}
 
 			if err != nil {

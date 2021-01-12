@@ -3,13 +3,12 @@ package util
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/bingoohuang/jj"
 	"net/http"
 	"testing"
 
 	"github.com/bingoohuang/govaluate"
 	"github.com/gin-gonic/gin"
-	"github.com/tidwall/gjson"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -63,7 +62,7 @@ func TestGson(t *testing.T) {
 }
 `)
 
-	result := gjson.GetBytes(j, "_dynamic")
+	result := jj.GetBytes(j, "_dynamic")
 	fmt.Println(result)
 
 	reqBody := []byte(`
@@ -72,7 +71,7 @@ func TestGson(t *testing.T) {
 }
 `)
 
-	if result.Type == gjson.JSON {
+	if result.Type == jj.JSON {
 		var dynamicValues []DynamicValue
 		if err := json.Unmarshal([]byte(result.Raw), &dynamicValues); err != nil {
 			fmt.Println(err)
@@ -87,7 +86,7 @@ func TestGson(t *testing.T) {
 			parameters := make(gin.H)
 			for _, va := range expr.Vars() {
 				if HasPrefix(va, "json_") {
-					parameters[va] = gjson.GetBytes(reqBody, va[5:]).Value()
+					parameters[va] = jj.GetBytes(reqBody, va[5:]).Value()
 				}
 			}
 

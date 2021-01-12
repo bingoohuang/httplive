@@ -3,10 +3,10 @@ package eval
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/bingoohuang/jj"
 	"strings"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/tidwall/gjson"
 )
 
 type RedisInstance struct{}
@@ -14,7 +14,7 @@ type RedisInstance struct{}
 func init() { registerEvaluator("@redis-instance", &RedisInstance{}) }
 
 func (r RedisInstance) Eval(ctx *Context, key, param string) EvaluatorResult {
-	jparam := gjson.Parse(param)
+	jparam := jj.Parse(param)
 	opt := &redis.Options{
 		Addr:     JSONStr(jparam, "addr"),
 		Password: JSONStr(jparam, "password"),

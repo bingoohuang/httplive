@@ -2,6 +2,7 @@ package process
 
 import (
 	"encoding/json"
+	"github.com/bingoohuang/jj"
 	"net/http"
 	"strings"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/bingoohuang/govaluate"
 	"github.com/bingoohuang/httplive/pkg/util"
 	"github.com/gin-gonic/gin"
-	"github.com/tidwall/gjson"
 )
 
 type Valuer func(reqBody []byte, c *gin.Context) interface{}
@@ -62,7 +62,7 @@ func makeParameter(va string, jsonConfig string) Valuer {
 	switch {
 	case util.HasPrefix(va, "json_"):
 		k := va[5:]
-		return func(payload []byte, c *gin.Context) interface{} { return gjson.GetBytes(payload, k).Value() }
+		return func(payload []byte, c *gin.Context) interface{} { return jj.GetBytes(payload, k).Value() }
 	case util.HasPrefix(va, "query_"):
 		k := va[6:]
 		return func(_ []byte, c *gin.Context) interface{} { return c.Query(k) }
@@ -74,7 +74,7 @@ func makeParameter(va string, jsonConfig string) Valuer {
 		k := va[7:]
 		return func(_ []byte, c *gin.Context) interface{} { return c.GetHeader(k) }
 	default:
-		indirectVa := gjson.Get(jsonConfig, va).String()
+		indirectVa := jj.Get(jsonConfig, va).String()
 		if indirectVa == "" {
 			return func(_ []byte, c *gin.Context) interface{} { return nil }
 		}

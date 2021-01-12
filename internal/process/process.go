@@ -3,6 +3,7 @@ package process
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/bingoohuang/jj"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -19,7 +20,6 @@ import (
 	"github.com/bingoohuang/govaluate"
 	"github.com/bingoohuang/httplive/pkg/util"
 	"github.com/gin-gonic/gin"
-	"github.com/tidwall/gjson"
 )
 
 // RouterResult result for router
@@ -34,8 +34,8 @@ type RouterResult struct {
 }
 
 func (ep Endpoint) CreateProxy(m *APIDataModel) {
-	proxy := gjson.Get(ep.Body, "_proxy")
-	isProxy := proxy.Type == gjson.String && util.HasPrefix(proxy.String(), "http")
+	proxy := jj.Get(ep.Body, "_proxy")
+	isProxy := proxy.Type == jj.String && util.HasPrefix(proxy.String(), "http")
 	if !isProxy {
 		return
 	}
@@ -51,8 +51,8 @@ func (ep Endpoint) CreateProxy(m *APIDataModel) {
 		httpteeHandler *httptee.Handler
 	)
 
-	tee := gjson.Get(ep.Body, "_tee")
-	isTee := proxy.Type == gjson.String && util.HasPrefix(proxy.String(), "http")
+	tee := jj.Get(ep.Body, "_tee")
+	isTee := proxy.Type == jj.String && util.HasPrefix(proxy.String(), "http")
 	if isTee {
 		if httpteeHandler, err = httptee.CreateHandler(tee.String()); err != nil {
 			log.Printf("E! tee server failed %v", err)
@@ -71,8 +71,8 @@ func (ep Endpoint) CreateProxy(m *APIDataModel) {
 }
 
 func (ep *Endpoint) CreateDirect(m *APIDataModel) {
-	direct := gjson.Get(ep.Body, "_direct")
-	if direct.Type == gjson.Null {
+	direct := jj.Get(ep.Body, "_direct")
+	if direct.Type == jj.Null {
 		return
 	}
 
@@ -82,8 +82,8 @@ func (ep *Endpoint) CreateDirect(m *APIDataModel) {
 }
 
 func (ep *Endpoint) CreateDefault(m *APIDataModel) {
-	dynamic := gjson.Get(ep.Body, "_dynamic")
-	if dynamic.Type == gjson.JSON && dynamic.IsArray() {
+	dynamic := jj.Get(ep.Body, "_dynamic")
+	if dynamic.Type == jj.JSON && dynamic.IsArray() {
 		m.dynamicValuers = createDynamics(ep.Body, []byte(dynamic.Raw))
 	}
 
@@ -107,8 +107,8 @@ func (ep *Endpoint) CreateMockbin(m *APIDataModel) {
 }
 
 func (ep *Endpoint) CreateEcho(m *APIDataModel) {
-	echoType := gjson.Get(ep.Body, "_echo")
-	if echoType.Type != gjson.String {
+	echoType := jj.Get(ep.Body, "_echo")
+	if echoType.Type != jj.String {
 		return
 	}
 

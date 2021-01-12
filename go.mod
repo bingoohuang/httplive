@@ -9,6 +9,7 @@ require (
 	github.com/bingoohuang/gou v0.0.0-20200225004418-9b3655665c46
 	github.com/bingoohuang/govaluate v0.0.0-20210111112129-7f2350ca3f5d
 	github.com/bingoohuang/ip v0.0.0-20210104062707-4224f84beef1
+	github.com/bingoohuang/jj v0.0.0-20210112062650-92135efa7aa5
 	github.com/bingoohuang/pkger v0.0.0-20201203120856-f480b68feae4
 	github.com/bingoohuang/sariaf v0.0.0-20201222043148-21fd9703b115
 	github.com/bingoohuang/sqlx v0.0.0-20200327050032-f36e67f412f6
@@ -26,8 +27,7 @@ require (
 	github.com/sirupsen/logrus v1.5.0
 	github.com/skratchdot/open-golang v0.0.0-20190402232053-79abb63cd66e
 	github.com/stretchr/testify v1.6.1
-	github.com/tidwall/gjson v1.6.7
-	github.com/tidwall/sjson v1.1.4
+	github.com/tidwall/pretty v1.0.2 // indirect
 	github.com/urfave/cli v1.22.3
 	github.com/valyala/fasthttp v1.18.0
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
