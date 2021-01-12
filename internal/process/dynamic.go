@@ -27,7 +27,7 @@ type DynamicValue struct {
 	ParametersEvaluator map[string]Valuer
 }
 
-func (v DynamicValue) responseDynamic(c *gin.Context) {
+func (v DynamicValue) responseDynamic(ep APIDataModel, c *gin.Context) {
 	statusCode := v.Status
 	if statusCode == 0 {
 		statusCode = http.StatusOK
@@ -42,7 +42,7 @@ func (v DynamicValue) responseDynamic(c *gin.Context) {
 		}
 	}
 
-	payload := []byte(eval.Eval(string(v.Response)))
+	payload := []byte(eval.Eval(ep.Endpoint, string(v.Response)))
 	if contentType == "" {
 		contentType = util.DetectContentType(payload)
 	}

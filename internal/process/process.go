@@ -94,7 +94,7 @@ func (ep *Endpoint) CreateDefault(m *APIDataModel) {
 			return
 		}
 
-		util.GinData(c, []byte(eval.Eval(ep.Body)))
+		util.GinData(c, []byte(eval.Eval(ep.Endpoint, ep.Body)))
 	}
 }
 

@@ -23,6 +23,7 @@ require (
 	github.com/gobars/cmd v0.0.0-20191114090003-c6a602977f49
 	github.com/gorilla/websocket v1.4.1
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.6.0
 	github.com/skratchdot/open-golang v0.0.0-20190402232053-79abb63cd66e

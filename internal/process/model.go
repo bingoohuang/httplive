@@ -419,7 +419,7 @@ func dynamicProcess(c *gin.Context, ep APIDataModel) bool {
 		}
 
 		if yes, ok := evaluateResult.(bool); ok && yes {
-			v.responseDynamic(c)
+			v.responseDynamic(ep, c)
 			return true
 		}
 	}
