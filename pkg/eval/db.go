@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/bingoohuang/httplive/pkg/placeholder"
 	"github.com/bingoohuang/jj"
 	"log"
 	"strconv"
@@ -43,6 +44,7 @@ func (d DbQueryEvaluator) Eval(ctx *Context, key, param string) EvaluatorResult 
 	jparam := jj.Parse(param)
 	instance := JSONStr(jparam, "instance")
 	resultType := JSONStr(jparam, "resultType")
+	maxRows := JSONInt(jparam, "maxRows")
 
 	db, _ := ctx.Var(instance).(*sql.DB)
 	if db == nil {
@@ -52,8 +54,15 @@ func (d DbQueryEvaluator) Eval(ctx *Context, key, param string) EvaluatorResult 
 	}
 
 	query := JSONStrSep(jparam, "query", " ")
-	log.Printf("I! query: %s", query)
-	rows, err := db.Query(query)
+
+	pl, err := placeholder.Create(query, ctx.Vars, "?")
+	if err != nil {
+		return EvaluatorResult{Err: err}
+	}
+
+	log.Printf("I! query: %s with vars:%v", pl.Value, pl.Vars)
+
+	rows, err := db.Query(pl.Value, pl.Vars...)
 	if err != nil {
 		return EvaluatorResult{Err: err}
 	}
@@ -68,7 +77,7 @@ func (d DbQueryEvaluator) Eval(ctx *Context, key, param string) EvaluatorResult 
 
 	rowsData := make([]map[string]string, 0)
 
-	for rows.Next() {
+	for i := 0; rows.Next() && (maxRows == 0 || i < maxRows); i++ {
 		holders := make([]sql.NullString, columnSize)
 		pointers := make([]interface{}, columnSize)
 		for i := 0; i < columnSize; i++ {

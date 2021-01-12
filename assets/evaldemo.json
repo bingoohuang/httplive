@@ -19,12 +19,22 @@
     ],
     "resultType": "map"
   },
+  "timeStart@time": {
+    "value": "today",
+    "unit": "s",
+    "truncate": "24h"
+  },
+  "timeEnd@time": {
+    "value": "tomorrow",
+    "unit": "s",
+    "truncate": "24h"
+  },
   "provinceCount@db-query": {
     "instance": "db1",
     "query": [
       "select c.province as province, c.count as count from",
       "(select province,sum(call_count) as count from product_region_request_stat",
-      "where request_time >= 1610409600 AND request_time < 1610496000",
+      "where request_time >= #timeStart# AND request_time < #timeEnd#",
       "GROUP BY province ) as c, province p",
       "where c.province = p.province order BY c.count desc",
       "limit 10"
