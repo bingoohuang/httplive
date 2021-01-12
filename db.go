@@ -12,6 +12,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bingoohuang/golog/pkg/hlog"
+
 	"github.com/bingoohuang/sariaf"
 
 	"github.com/bingoohuang/httplive/internal/process"
@@ -295,7 +297,7 @@ func serveAPI(w http.ResponseWriter, r *http.Request) (v process.RouterResult) {
 	apiRouterLock.Unlock()
 
 	ctx := context.WithValue(r.Context(), process.RouterResultKey, &v)
-	router.ServeHTTP(w, r.WithContext(ctx))
+	hlog.StdLogWrapHandler(router).ServeHTTP(w, r.WithContext(ctx))
 
 	return
 }

@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/bingoohuang/golog"
+
 	"github.com/bingoohuang/httplive/internal/process"
 
 	"github.com/bingoohuang/httplive/pkg/util"
@@ -25,6 +27,7 @@ import (
 
 func main() {
 	gin.SetMode(gin.ReleaseMode)
+	golog.SetupLogrus()
 	app := cli.NewApp()
 	env := &httplive.Environments
 

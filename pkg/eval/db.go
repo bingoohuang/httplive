@@ -4,11 +4,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/bingoohuang/httplive/pkg/placeholder"
-	"github.com/bingoohuang/jj"
 	"log"
 	"strconv"
 	"strings"
+
+	"github.com/bingoohuang/httplive/pkg/placeholder"
+	"github.com/bingoohuang/jj"
 
 	"github.com/bingoohuang/govaluate"
 	_ "github.com/go-sql-driver/mysql"
