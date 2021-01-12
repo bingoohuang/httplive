@@ -17,5 +17,7 @@
     "query": ["select SUM(request_count_outside)",
       "from product_gw_pv_rt"]
   },
-  "requestCountOutside":"@db-value toInt(counts.request_count_outside)/1024/1024"
+  "totalStat": {
+    "requestCountOutside":"@db-value toInt(counts.request_count_outside)/1024/1024"
+  }
 }
