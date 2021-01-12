@@ -39,7 +39,7 @@ func Eval(endpoint string, body string) string {
 		ctx := NewContext()
 		defer ctx.Close()
 
-		evalResult := intervalEval(body, root, ctx)
+		evalResult := intervalEval(ctx, body, root)
 		if cacheTime > 0 {
 			// Set the value of the key "foo" to "bar", with the default expiration time
 			evalCache.Set(endpoint, evalResult, cacheTime)
@@ -65,7 +65,7 @@ func Eval(endpoint string, body string) string {
 	return f()
 }
 
-func intervalEval(body string, root jj.Result, ctx *Context) string {
+func intervalEval(ctx *Context, body string, root jj.Result) string {
 	setOptions := jj.SetOptions{ReplaceInPlace: true}
 
 	root.ForEach(func(k, v jj.Result) bool {
@@ -81,7 +81,7 @@ func intervalEval(body string, root jj.Result, ctx *Context) string {
 		}
 
 		if v.IsObject() {
-			sub := intervalEval(v.Raw, v, ctx)
+			sub := intervalEval(ctx, v.Raw, v)
 			body, _ = jj.SetRaw(body, kk, sub, setOptions)
 		}
 
@@ -101,9 +101,9 @@ func doEval(evaluator EvaluatorFn, body string, kk string, setOptions jj.SetOpti
 
 	switch evaluated.Mode {
 	case EvaluatorSet:
-		body, err = jj.Set(body, kk, evaluated.Val, setOptions)
+		body, err = jj.Set(body, evaluated.Key, evaluated.Val, setOptions)
 	case EvaluatorSetRaw:
-		body, err = jj.SetRaw(body, kk, evaluated.Val.(string), setOptions)
+		body, err = jj.SetRaw(body, evaluated.Key, evaluated.Val.(string), setOptions)
 	case EvaluatorDel:
 		body, err = jj.Delete(body, kk, setOptions)
 	}
