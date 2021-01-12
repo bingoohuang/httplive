@@ -36,6 +36,7 @@ func (d TimeEvaluator) Eval(ctx *Context, key, param string) EvaluatorResult {
 	value := p.Get("value").String()
 	unit := p.Get("unit").String()
 	truncate := p.Get("truncate").String()
+	offset := p.Get("offset").String()
 
 	result := EvaluatorResult{
 		Mode: EvaluatorDel,
@@ -44,25 +45,33 @@ func (d TimeEvaluator) Eval(ctx *Context, key, param string) EvaluatorResult {
 
 	switch value {
 	case "today":
-		ctx.SetVar(key, todayTime(time.Now(), unit, truncate))
+		ctx.SetVar(key, timeValue(time.Now(), offset, unit, truncate))
 	case "tomorrow":
-		ctx.SetVar(key, todayTime(time.Now().Add(24*time.Hour), unit, truncate))
+		ctx.SetVar(key, timeValue(time.Now().Add(24*time.Hour), offset, unit, truncate))
 	}
 
 	return result
 }
 
-func todayTime(t time.Time, unit string, truncate string) interface{} {
-	d := time.Duration(0)
-	if truncate != "" {
-		v, err := time.ParseDuration(truncate)
-		if err != nil {
-			log.Printf("W! failed to parse truncate %s, err: %v", truncate, err)
-		} else {
-			d = v
-		}
-
+func parseDuration(duration, name string) time.Duration {
+	if duration == "" {
+		return 0
 	}
+
+	v, err := time.ParseDuration(duration)
+	if err != nil {
+		log.Printf("W! failed to parse %s %s, err: %v", name, duration, err)
+	}
+	return v
+}
+
+func timeValue(t time.Time, offset, unit, truncate string) interface{} {
+	d := parseDuration(truncate, "truncate")
+	off := parseDuration(offset, "offset")
+	if off != 0 {
+		t = t.Add(off)
+	}
+
 	switch unit {
 	case "s", "seconds":
 		return t.Truncate(d).Unix()
