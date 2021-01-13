@@ -26,44 +26,44 @@ func Eval(endpoint string, body string) string {
 		return body
 	}
 
-	cacheTime := time.Duration(0)
-	_cache := jj.Get(body, "_cache")
-	if _cache.Type == jj.String {
-		cacheTime, err = time.ParseDuration(_cache.String())
-		if err != nil {
-			log.Printf("W! failed to parse cache time:%s, error:%v", _cache.String(), err)
-		}
-	}
-
-	f := func() string {
-		root := jj.Parse(body)
+	f0 := func() string {
 		ctx := NewContext()
 		defer ctx.Close()
 
-		evalResult := intervalEval(ctx, body, root)
-		if cacheTime > 0 {
-			// Set the value of the key "foo" to "bar", with the default expiration time
-			evalCache.Set(endpoint, evalResult, cacheTime)
-		}
-
-		return evalResult
+		return string(jj.Ugly([]byte(intervalEval(ctx, body, jj.Parse(body)))))
 	}
 
-	evalResult := ""
+	cacheTime := parseCacheTime(body, err)
+	if cacheTime <= 0 {
+		return f0()
+	}
 
-	if cacheTime > 0 {
-		result, expired, ok := evalCache.GetWithExpiration(endpoint)
-		if ok {
-			evalResult = result.(string)
-			if time.Until(expired) <= 10*time.Second {
-				go f()
-			}
+	f1 := func() string {
+		s := f0()
+		evalCache.Set(endpoint, s, cacheTime+10*time.Second)
+		return s
+	}
 
-			return evalResult
+	if r, exp, ok := evalCache.GetWithExpiration(endpoint); ok {
+		if time.Until(exp) <= 10*time.Second {
+			go f1()
+		}
+
+		return r.(string)
+	}
+
+	return f1()
+}
+
+func parseCacheTime(body string, err error) time.Duration {
+	cacheTime := time.Duration(0)
+	if v := jj.Get(body, "_cache"); v.Type == jj.String {
+		if cacheTime, err = time.ParseDuration(v.String()); err != nil {
+			log.Printf("W! failed to parse cache time:%s, error:%v", v.String(), err)
 		}
 	}
 
-	return f()
+	return cacheTime
 }
 
 func intervalEval(ctx *Context, body string, root jj.Result) string {
@@ -73,15 +73,9 @@ func intervalEval(ctx *Context, body string, root jj.Result) string {
 		kk := k.String()
 		if strings.HasPrefix(kk, "#") || strings.HasPrefix(kk, "//") {
 			body, _ = jj.Delete(body, kk)
-			return true
-		}
-
-		if evaluator := parseEvaluator(ctx, k, v); evaluator != nil {
+		} else if evaluator := parseEvaluator(ctx, k, v); evaluator != nil {
 			body = doEval(evaluator, body, kk, setOptions)
-			return true
-		}
-
-		if v.IsObject() {
+		} else if v.IsObject() {
 			sub := intervalEval(ctx, v.Raw, v)
 			body, _ = jj.SetRaw(body, kk, sub, setOptions)
 		}
