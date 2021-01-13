@@ -2,6 +2,7 @@ package eval
 
 import (
 	"encoding/json"
+
 	"github.com/bingoohuang/jj"
 )
 
@@ -21,7 +22,7 @@ func (d GroupJsonEvaluator) Eval(ctx *Context, key, param string) EvaluatorResul
 	var stepper Stepper
 	fill := jp.Get("fill")
 	if fill.String() != "" {
-		stepper = fill.Value().(Stepper)
+		stepper = ctx.Var(fill.String()).(Stepper)
 	}
 
 	srcJson := ctx.Var(key)
@@ -38,42 +39,36 @@ func (d GroupJsonEvaluator) Eval(ctx *Context, key, param string) EvaluatorResul
 				flattenArray = append(flattenArray, stepper.Fill())
 				_, _, ok = stepper.Step()
 			}
+			stepper.Reset()
 		}
 
 		v := map[string]interface{}{}
 		v[flattenKey] = flattenArray
 		v[groupBy] = lastGroupByValue
 		flatten = append(flatten, v)
+		flattenArray = make([]interface{}, 0)
 	}
 
 	srcJJ.ForEach(func(_, value jj.Result) bool {
 		groupByValue := value.Get(groupBy).String()
-		flattenValue := value.Get(flattenValuesKey).Value()
-		flattenKeyValue := value.Get(flattenKey).Value()
-
-		if lastGroupByValue == "" || groupByValue == lastGroupByValue {
-			flattenArray = append(flattenArray, flattenValue)
+		groupChanged := lastGroupByValue != "" && groupByValue != lastGroupByValue
+		if groupChanged {
+			f()
 		}
 
 		if stepper != nil {
-			tf := flattenKeyValue.(float64)
+			flattenKeyValue := value.Get(flattenKey).Value()
+			tf := stepper.Parse(flattenKeyValue.(float64))
 			_, stepF, ok := stepper.Step()
-			for ok && stepF < tf {
+			for ok && stepF <= tf {
 				flattenArray = append(flattenArray, stepper.Fill())
 				_, stepF, ok = stepper.Step()
 			}
 		}
 
-		if lastGroupByValue == "" || groupByValue == lastGroupByValue {
-			lastGroupByValue = groupByValue
-			return true
-		}
-
-		f()
-
 		lastGroupByValue = groupByValue
-		flattenArray = make([]interface{}, 0)
-
+		flattenValue := value.Get(flattenValuesKey).Value()
+		flattenArray = append(flattenArray, flattenValue)
 		return true
 	})
 

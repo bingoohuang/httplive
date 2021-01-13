@@ -2,7 +2,7 @@
   "#upstream": true,
   "_hl": "eval",
   "#_cache": "1m",
-  "update": "@now yyyy-MM-dd HH:mm:ss",
+  "update": "@date yyyy-MM-dd HH:mm:ss",
   "redis1@redis-instance": {
     "addr": "localhost:6379",
     "password": "",
@@ -12,16 +12,21 @@
   "db1@db-instance": {
     "dsn": "user:pass@tcp(127.0.0.1:3306)/api_statistical?charset=utf8mb4&parseTime=true&loc=Local&timeout=10s&writeTimeout=10s&readTimeout=10s"
   },
-  "counts@db-query": {
-    "instance": "db1",
-    "query": [
-      "select SUM(request_count_outside)",
-      "from product_gw_pv_rt"
-    ],
-    "resultType": "map"
+  "monthStart@time": {
+    "value": "monthStart",
+    "unit": "s"
   },
-  "totalStat": {
-    "requestCountOutside": "@db-value toInt(counts.request_count_outside)/1024/1024"
+  "monthEnd@time": {
+    "value": "nextMonthStart",
+    "unit": "s"
+  },
+  "dayStart@time": {
+    "value": "dayStart",
+    "unit": "s"
+  },
+  "dayEnd@time": {
+    "value": "nextDayStart",
+    "unit": "s"
   },
   "timeStart@time": {
     "value": "today",
@@ -33,19 +38,42 @@
     "unit": "s",
     "truncate": "24h"
   },
-  "provinceStat@db-query": {
+  "c@db-query": {
     "instance": "db1",
     "query": [
-      "select c.province as province, c.count as count from",
-      "(select province,sum(call_count) as count from product_region_request_stat",
-      "where request_time >= #timeStart# AND request_time < #timeEnd#",
-      "GROUP BY province ) as c, province p",
-      "where c.province = p.province order BY c.count desc",
-      "limit 10"
+      "select",
+      "SUM(request_count_outside),",
+      "SUM(error_count_outside),",
+      "SUM(request_count_inside),",
+      "SUM(error_count_inside),",
+      "SUM(reqcontravention_count_outside),",
+      "SUM(reqcontravention_count_inside),",
+      "SUM(downstream_traffic_outside),",
+      "SUM(downstream_traffic_inside),",
+      "SUM(upstream_traffic_outside),",
+      "SUM(upstream_traffic_inside)",
+      "from product_gw_pv_rt",
+      "where request_time >= #dayStart# AND request_time < #dayEnd#"
     ],
-    "resultType": "json-array"
+    "resultType": "map"
   },
-  "provinceStat": "@db-value",
+  "totalStat": {
+    "requestCount": "@val-eval c.request_count_outside+c.request_count_inside+c.reqcontravention_count_outside+c.reqcontravention_count_inside",
+    "failRate": "@val-eval (c.error_count_outside+c.error_count_inside)/(c.request_count_outside+c.request_count_inside)*100",
+    "successRate": "@val-eval 100-failRate",
+    "contraventionRate": "@val-eval (c.reqcontravention_count_outside+c.reqcontravention_count_inside)/requestCount * 100",
+    "forwordRate": "@val-eval (c.request_count_outside+c.request_count_inside)/requestCount * 100",
+    "requestCountInsideSuccess": "@val-eval c.request_count_inside - c.error_count_inside",
+    "errorCountInsideFail": "@val-eval c.error_count_inside",
+    "requestCountOutsideSuccess": "@val-eval c.request_count_outside-c.error_count_outside",
+    "errorCountOutsideFail": "@val-eval c.error_count_outside",
+    "upstreamTrafficOutside": "@val-eval c.upstream_traffic_outside/1024/1024/1024",
+    "upstreamTrafficInside": "@val-eval c.upstream_traffic_inside/1024/1024/1024",
+    "upstream": "@val-eval upstreamTrafficOutside+upstreamTrafficInside",
+    "downstreamTrafficOutside": "@val-eval c.downstream_traffic_outside/1024/1024/1024",
+    "downstreamTrafficInside": "@val-eval c.downstream_traffic_inside/1024/1024/1024",
+    "downstream": "@val-eval downstreamTrafficOutside+downstreamTrafficInside"
+  },
   "responseOver@db-query": {
     "instance": "db1",
     "query": [
@@ -69,7 +97,33 @@
     ],
     "resultType": "json-object"
   },
-  "responseOver": "@db-value",
+  "responseOver": "@val-eval",
+  "provinceStat@db-query": {
+    "instance": "db1",
+    "query": [
+      "select c.province as province, c.count as count from",
+      "(select province,sum(call_count) as count from product_region_request_stat",
+      "where request_time >= #dayStart# AND request_time < #dayEnd#",
+      "GROUP BY province ) as c, province p",
+      "where c.province = p.province order BY c.count desc",
+      "limit 10"
+    ],
+    "resultType": "json-array"
+  },
+  "provinceMonthStat@db-query": {
+    "instance": "db1",
+    "query": [
+      "select c.province as province, c.count as count from",
+      "(select province,sum(call_count) as count from product_region_request_stat",
+      "where request_time >= #monthStart# AND request_time < #monthEnd#",
+      "GROUP BY province ) as c, province p",
+      "where c.province = p.province order BY c.count desc",
+      "limit 10"
+    ],
+    "resultType": "json-array"
+  },
+  "provinceStat": "@val-eval",
+  "provinceMonthStat": "@val-eval",
   "requestTop10@db-query": {
     "instance": "db1",
     "resultType": "json-array",
@@ -88,7 +142,7 @@
       "where c.api_version_id=v.id and v.api_id=a.id"
     ]
   },
-  "requestTop10": "@db-value",
+  "requestTop10": "@val-eval",
   "last7dStart@time": {
     "value": "today",
     "offset": "-6d",
@@ -129,16 +183,16 @@
       "order by serviceName, hours ASC"
     ]
   },
-  "7dStepper@time-steper": {
+  "7dStepper@time-stepper": {
     "fmt": "yyyyMMdd",
     "startOffset": "-6d",
     "endOffset": "1d",
     "step": "1d",
     "fill": 0
   },
-  "24hStepper@time-steper": {
+  "24hStepper@time-stepper": {
     "fmt": "yyyyMMddHH",
-    "startOffset": "23h",
+    "startOffset": "-23h",
     "endOffset": "1h",
     "step": "1h",
     "fill": 0
@@ -147,19 +201,47 @@
     "group-by": "serviceName",
     "flatten-key": "days",
     "flatten-values": "days_value",
-    "fill":"7dStepper"
+    "fill": "7dStepper"
   },
   "requestServiceDayHour2@group-json": {
     "group-by": "serviceName",
     "flatten-key": "hours",
     "flatten-values": "hours_value",
-    "fill":"24hStepper"
+    "fill": "24hStepper"
   },
   "requestServiceDayHour@merge-json": {
     "objects": [
       "requestServiceDayHour1",
       "requestServiceDayHour2"
     ],
-    "by": "serviceName"
+    "by": "serviceName",
+    "fulfil": {
+      "hours": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
   }
 }

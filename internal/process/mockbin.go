@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/bingoohuang/httplive/pkg/timex"
+	"github.com/bingoohuang/httplive/pkg/timx"
 	"github.com/bingoohuang/httplive/pkg/util"
 	"github.com/gin-gonic/gin"
 )
@@ -35,7 +35,7 @@ type Mockbin struct {
 	Close       bool              `json:"close"`
 	ContentType string            `json:"contentType"`
 	Payload     json.RawMessage   `json:"payload"`
-	Sleep       timex.Duration    `json:"sleep"`
+	Sleep       timx.Duration     `json:"sleep"`
 }
 
 func countIf(cond bool) int {

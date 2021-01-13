@@ -1,16 +1,16 @@
-package timex_test
+package timx_test
 
 import (
 	"encoding/json"
 	"fmt"
 	"strings"
 
-	"github.com/bingoohuang/httplive/pkg/timex"
+	"github.com/bingoohuang/httplive/pkg/timx"
 )
 
 type Ex struct {
-	S timex.Duration
-	I timex.Duration
+	S timx.Duration
+	I timx.Duration
 }
 
 func ExampleMarshal() {

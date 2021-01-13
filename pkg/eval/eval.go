@@ -1,10 +1,11 @@
 package eval
 
 import (
-	"github.com/patrickmn/go-cache"
 	"log"
 	"strings"
 	"time"
+
+	"github.com/patrickmn/go-cache"
 
 	"github.com/bingoohuang/jj"
 )
@@ -54,7 +55,7 @@ func Eval(endpoint string, body string) string {
 		result, expired, ok := evalCache.GetWithExpiration(endpoint)
 		if ok {
 			evalResult = result.(string)
-			if expired.Sub(time.Now()) <= 10*time.Second {
+			if time.Until(expired) <= 10*time.Second {
 				go f()
 			}
 

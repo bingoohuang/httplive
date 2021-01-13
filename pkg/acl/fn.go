@@ -118,7 +118,7 @@ func TimeAllow(request, policy string) bool {
 		return false
 	}
 
-	req, err := time.Parse(CasbinTimeLayout, request)
+	req, err := time.ParseInLocation(CasbinTimeLayout, request, time.Local)
 	if err != nil {
 		logrus.Errorf("failed to parse request %s: %v", request, err)
 		return false
@@ -133,7 +133,7 @@ func TimeAllow(request, policy string) bool {
 		p1 := parts[0]
 		p2 := parts[1]
 
-		from, err := time.Parse(CasbinTimeLayout, p1)
+		from, err := time.ParseInLocation(CasbinTimeLayout, p1, time.Local)
 		if err != nil {
 			logrus.Errorf("unknown format of policy %s", policy)
 		} else if req.Before(from) {
@@ -149,7 +149,7 @@ func TimeAllow(request, policy string) bool {
 
 func timeUntil(layout, until, policy string, start, req time.Time) bool {
 	// try until time
-	if until, err := time.Parse(layout, until); err == nil {
+	if until, err := time.ParseInLocation(layout, until, time.Local); err == nil {
 		return req.Before(until)
 	}
 	// try duration
