@@ -373,7 +373,7 @@ func dealHl(c *gin.Context, ep APIDataModel) (bool, gin.HandlerFunc) {
 		} else {
 			c.Data(http.StatusOK, util.ContentTypeText, []byte(util.TimeFmt(time.Now())))
 		}
-	case "", "conf":
+	case "conf":
 		util.GinData(c, []byte(ep.Body))
 	case "sysinfo":
 		showsMap := make(map[string]bool)

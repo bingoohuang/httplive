@@ -24,6 +24,6 @@ cmds = [
   "./httplive -v",
   "../upx-3.96-amd64_linux/upx httplive",
   "ls -lh ./httplive",
-  "%dl rigagasrc/httplive/httplive @Today/",
-  "%local ls -lhd $PWD/@Today/*",
+  "%dl rigagasrc/httplive/httplive httplivelinux-@Today/",
+  "%local ls -lhd $PWD/httplivelinux-@Today/*",
 ]
