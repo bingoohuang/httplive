@@ -9,7 +9,7 @@ require (
 	github.com/bingoohuang/gor v0.0.0-20200319063139-1085d3628b07
 	github.com/bingoohuang/gou v0.0.0-20200225004418-9b3655665c46
 	github.com/bingoohuang/govaluate v0.0.0-20210111112129-7f2350ca3f5d
-	github.com/bingoohuang/ip v0.0.0-20210104062707-4224f84beef1
+	github.com/bingoohuang/ip v0.0.0-20210113063640-987be7fa1d51
 	github.com/bingoohuang/jj v0.0.0-20210112062650-92135efa7aa5
 	github.com/bingoohuang/pkger v0.0.0-20201203120856-f480b68feae4
 	github.com/bingoohuang/sariaf v0.0.0-20201222043148-21fd9703b115

@@ -43,8 +43,8 @@ github.com/bingoohuang/gou v0.0.0-20200225004418-9b3655665c46 h1:18kysBxDTlkUYNh
 github.com/bingoohuang/gou v0.0.0-20200225004418-9b3655665c46/go.mod h1:lfM/iBkZzlmnl23C+mpqiXAgC6npikzZkKVfNAdC+o4=
 github.com/bingoohuang/govaluate v0.0.0-20210111112129-7f2350ca3f5d h1:LpDajfSH+5HR+wWZAUxG264QWCDnin6JEiEHqqjxPAk=
 github.com/bingoohuang/govaluate v0.0.0-20210111112129-7f2350ca3f5d/go.mod h1:WheQYDXwdBkLBozIeKMsjMV3VvqReBPZYkrT6hAQ5jY=
-github.com/bingoohuang/ip v0.0.0-20210104062707-4224f84beef1 h1:MdKPJ0vEM7TiU0oCM+IkBWCMHRm9U1ApWIHUC9+Hpm4=
-github.com/bingoohuang/ip v0.0.0-20210104062707-4224f84beef1/go.mod h1:X+oXf5mBw05NjeizxdqIBsB8kaCixUX6BZ9u8KEEPCE=
+github.com/bingoohuang/ip v0.0.0-20210113063640-987be7fa1d51 h1:EdFG6CQPNPIWGBl8/aaAD42ogxA2atwbnkdTde8uUlA=
+github.com/bingoohuang/ip v0.0.0-20210113063640-987be7fa1d51/go.mod h1:X+oXf5mBw05NjeizxdqIBsB8kaCixUX6BZ9u8KEEPCE=
 github.com/bingoohuang/jj v0.0.0-20210112062650-92135efa7aa5 h1:tkoNbbHXkBxwEYDuA8jcqVLwFZEQrTulVuJEDoe14Xo=
 github.com/bingoohuang/jj v0.0.0-20210112062650-92135efa7aa5/go.mod h1:adqBmfXtUV8WsjQV0s+CfdtCW23RDt6Qze7Od5BDV2o=
 github.com/bingoohuang/pkger v0.0.0-20201203120856-f480b68feae4 h1:VqYnheswBp8s1gh4UHoRnHpMuGct2vWjJAIFC3XY/YI=
