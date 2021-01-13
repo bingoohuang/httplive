@@ -119,7 +119,7 @@ func (ep *Endpoint) CreateEcho(m *APIDataModel) {
 	m.ServeFn = func(c *gin.Context) {
 		switch strings.ToLower(echoMode) {
 		case "json":
-			c.JSON(http.StatusOK, createRequestMap(c, model))
+			c.JSON(http.StatusOK, CreateRequestMap(c, &model))
 		default:
 			dumpRequest, _ := httputil.DumpRequest(c.Request, true)
 			c.Data(http.StatusOK, util.ContentTypeText, dumpRequest)
@@ -127,7 +127,7 @@ func (ep *Endpoint) CreateEcho(m *APIDataModel) {
 	}
 }
 
-func createRequestMap(c *gin.Context, model APIDataModel) map[string]interface{} {
+func CreateRequestMap(c *gin.Context, model *APIDataModel) map[string]interface{} {
 	r := c.Request
 	m := map[string]interface{}{
 		"timeGo":     util.TimeFmt(time.Now()),
@@ -140,7 +140,9 @@ func createRequestMap(c *gin.Context, model APIDataModel) map[string]interface{}
 		"headers":    util.ConvertHeader(r.Header),
 	}
 
-	fulfilRouter(c, model, m)
+	if model != nil {
+		fulfilRouter(c, model, m)
+	}
 	fulfilQuery(r, m)
 	fulfilOther(r, m)
 	fulfilPayload(r, m)
@@ -159,7 +161,7 @@ func fulfilOther(r *http.Request, m map[string]interface{}) {
 	}
 }
 
-func fulfilRouter(c *gin.Context, model APIDataModel, m map[string]interface{}) {
+func fulfilRouter(c *gin.Context, model *APIDataModel, m map[string]interface{}) {
 	m["router"] = model.Endpoint
 	if len(c.Params) > 0 {
 		p := make(map[string]string)

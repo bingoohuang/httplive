@@ -7,10 +7,15 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httputil"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/bingoohuang/httplive/pkg/http2curl"
+	"github.com/bingoohuang/sysinfo"
+	"github.com/mssola/user_agent"
 
 	"github.com/bingoohuang/golog/pkg/hlog"
 
@@ -350,9 +355,88 @@ func SyncAPIRouter() {
 		}
 	}
 
+	router.NoRoute(noRouteHandlerWrap)
+
 	apiRouterLock.Lock()
 	apiRouter = router
 	apiRouterLock.Unlock()
+}
+
+func noRouteHandlerWrap(c *gin.Context) {
+	cw := util.NewGinCopyWriter(c.Writer)
+	c.Writer = cw
+
+	processed := noRouteHandler(c)
+
+	rr := c.Request.Context().Value(process.RouterResultKey).(*process.RouterResult)
+	rr.RouterServed = processed
+	rr.RouterBody = cw.Bytes()
+	rr.RemoteAddr = c.Request.RemoteAddr
+	rr.ResponseSize = cw.Size()
+	rr.ResponseStatus = cw.Status()
+	rr.ResponseHeader = util.ConvertHeader(cw.Header())
+}
+
+func noRouteHandler(c *gin.Context) (processed bool) {
+	processed = true
+	p := c.Request.URL.Path
+
+	ua := user_agent.New(c.Request.UserAgent())
+	isBrowser := ua.OS() != ""
+	useJSON := util.HasContentType(c.Request, "application/json") || !isBrowser
+	hl := strings.ToLower(c.Query("_hl"))
+	if strings.HasSuffix(hl, ".json") {
+		useJSON = true
+		hl = hl[:len(hl)-5]
+	}
+
+	if strings.HasSuffix(p, ".json") {
+		useJSON = true
+		p = p[:len(p)-5]
+	}
+
+	switch {
+	case hl == "v" || p == "/v":
+		c.JSON(http.StatusOK, gin.H{"version": Version, "updateTime": UpdateTime})
+	case hl == "curl" || p == "/curl":
+		values := c.Request.URL.Query()
+		delete(values, "_hl")
+		c.Request.URL.RawQuery = values.Encode()
+		cmd, _ := http2curl.GetCurlCmd(c.Request)
+		c.Data(http.StatusOK, util.ContentTypeText, []byte(cmd.String()))
+	case hl == "ip" || p == "/ip":
+		process.ProcessIP(c, useJSON)
+	case hl == "time" || p == "/time":
+		if useJSON {
+			c.JSON(http.StatusOK, gin.H{"time": util.TimeFmt(time.Now())})
+		} else {
+			c.Data(http.StatusOK, util.ContentTypeText, []byte(util.TimeFmt(time.Now())))
+		}
+	case hl == "sysinfo" || p == "/sysinfo":
+		showsMap := make(map[string]bool)
+		for _, p := range strings.Split("host,mem,cpu,disk,interf,ps", ",") {
+			showsMap[p] = true
+		}
+		if useJSON {
+			c.JSON(http.StatusOK, sysinfo.GetSysInfo(showsMap))
+		} else {
+			c.Status(http.StatusOK)
+			c.Header("Content-Type", util.ContentTypeText)
+			sysinfo.PrintTable(showsMap, "~", c.Writer)
+		}
+	case (hl == "" && p == "/") || hl == "echo" || p == "/echo":
+		if useJSON {
+			c.JSON(http.StatusOK, process.CreateRequestMap(c, nil))
+		} else {
+			d, _ := httputil.DumpRequest(c.Request, true)
+			c.Data(http.StatusOK, util.ContentTypeText, d)
+		}
+	default:
+		c.Status(http.StatusNotFound)
+		processed = false
+	}
+
+	return
 }
 
 // EndpointList ...

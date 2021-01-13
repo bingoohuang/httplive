@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mssola/user_agent"
+
 	"github.com/bingoohuang/httplive/internal/process"
 
 	"github.com/bingoohuang/httplive/internal/res"
@@ -42,7 +44,11 @@ func StaticFileMiddleware(c *gin.Context) {
 // APIMiddleware ...
 func APIMiddleware(c *gin.Context) {
 	p := trimContextPath(c)
-	if util.AnyOf(p, "/", "/favicon.ico") || util.HasPrefix(p, "/httplive/") {
+	ua := user_agent.New(c.Request.UserAgent())
+	isBrowser := ua.OS() != ""
+	isBrowserIndex := isBrowser && c.Request.URL.Path == "/" && c.Query("_hl") == ""
+
+	if isBrowserIndex || util.AnyOf(p, "/favicon.ico") || util.HasPrefix(p, "/httplive/") {
 		c.Next()
 		return
 	}

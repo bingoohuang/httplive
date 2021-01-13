@@ -10,13 +10,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bingoohuang/httplive/pkg/util"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gobars/cmd"
 
 	"github.com/bingoohuang/ip"
 )
 
-func processIP(c *gin.Context) {
+// ProcessIP process ip request.
+func ProcessIP(c *gin.Context, useJSON bool) {
 	mainIP, ipList := ip.MainIP(c.Query("iface"))
 	m := map[string]interface{}{
 		"mainIP":   mainIP,
@@ -44,7 +47,12 @@ func processIP(c *gin.Context) {
 	_, status = cmd.Bash(`hostname -i`)
 	m["hostname -i"] = strings.Join(append(status.Stdout, status.Stderr...), " ")
 
-	c.JSON(http.StatusOK, m)
+	if useJSON {
+		c.JSON(http.StatusOK, m)
+	} else {
+		jb, _ := json.MarshalIndent(m, "", "  ")
+		c.Data(http.StatusOK, util.ContentTypeText, jb)
+	}
 }
 
 // listIfaces 根据mode 列出本机所有IP和网卡名称

@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mssola/user_agent"
+
 	"github.com/bingoohuang/httplive/pkg/acl"
 	"github.com/bingoohuang/sariaf"
 	"github.com/casbin/casbin/v2"
@@ -340,38 +342,51 @@ func dealHl(c *gin.Context, ep APIDataModel) (bool, gin.HandlerFunc) {
 		}
 	}
 
-	switch hl := strings.ToLower(c.Query("_hl")); hl {
+	ua := user_agent.New(c.Request.UserAgent())
+	isBrowser := ua.OS() != ""
+	useJSON := util.HasContentType(c.Request, "application/json") || !isBrowser
+	hl := strings.ToLower(c.Query("_hl"))
+	if strings.HasSuffix(hl, ".json") {
+		useJSON = true
+		hl = hl[:len(hl)-5]
+	}
+
+	switch hl {
 	case "curl":
 		values := c.Request.URL.Query()
 		delete(values, "_hl")
 		c.Request.URL.RawQuery = values.Encode()
 		cmd, _ := http2curl.GetCurlCmd(c.Request)
 		c.Data(http.StatusOK, util.ContentTypeText, []byte(cmd.String()))
-	case "conf":
-		util.GinData(c, []byte(ep.Body))
+	case "ip":
+		ProcessIP(c, useJSON)
 	case "echo":
-		c.JSON(http.StatusOK, createRequestMap(c, ep))
-	case "echo.text":
-		d, _ := httputil.DumpRequest(c.Request, true)
-		c.Data(http.StatusOK, util.ContentTypeText, d)
+		if useJSON {
+			c.JSON(http.StatusOK, CreateRequestMap(c, &ep))
+		} else {
+			d, _ := httputil.DumpRequest(c.Request, true)
+			c.Data(http.StatusOK, util.ContentTypeText, d)
+		}
 	case "time":
-		c.JSON(http.StatusOK, util.JSON(gin.H{"time": util.TimeFmt(time.Now())}))
-	case "time.text":
-		c.Data(http.StatusOK, util.ContentTypeText, []byte(util.TimeFmt(time.Now())))
-	case "sysinfo", "sysinfo.text":
+		if useJSON {
+			c.JSON(http.StatusOK, gin.H{"time": util.TimeFmt(time.Now())})
+		} else {
+			c.Data(http.StatusOK, util.ContentTypeText, []byte(util.TimeFmt(time.Now())))
+		}
+	case "", "conf":
+		util.GinData(c, []byte(ep.Body))
+	case "sysinfo":
 		showsMap := make(map[string]bool)
 		for _, p := range strings.Split("host,mem,cpu,disk,interf,ps", ",") {
 			showsMap[p] = true
 		}
-		if hl == "sysinfo" {
+		if useJSON {
 			c.JSON(http.StatusOK, sysinfo.GetSysInfo(showsMap))
 		} else {
 			c.Status(http.StatusOK)
 			c.Header("Content-Type", util.ContentTypeText)
 			sysinfo.PrintTable(showsMap, "~", c.Writer)
 		}
-	case "ip":
-		processIP(c)
 	default:
 		return dealMore(hl)
 	}
