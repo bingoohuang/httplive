@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
-	"log"
 	"net/http"
 	"os"
 	"path"
@@ -108,9 +106,7 @@ func host(env *httplive.EnvVars) error {
 	if env.Logging {
 		golog.SetupLogrus()
 	} else {
-		logrus.SetLevel(logrus.PanicLevel)
-		log.SetOutput(io.Discard)
-		log.SetFlags(0)
+		golog.DisableLogging()
 	}
 
 	r := gin.New()

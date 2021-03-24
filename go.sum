@@ -31,8 +31,8 @@ github.com/averagesecurityguy/random v0.0.0-20180326012618-37cce341d2af/go.mod h
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
 github.com/beorn7/perks v1.0.0/go.mod h1:KWe93zE9D1o94FZ5RNwFwVgaQK1VOXiVxmqh+CedLV8=
 github.com/bingoohuang/ginx v0.0.0-20200729033750-047869f5e81c/go.mod h1:fv5fKhsGUfPInVsslF5FJv2oNlZn153C5OogaaUFvFc=
-github.com/bingoohuang/golog v0.0.0-20210322080612-784352c5358e h1:g7piW3WfkxrqxmVLiWa9oHJ153PVDyuYu8uybadHNwY=
-github.com/bingoohuang/golog v0.0.0-20210322080612-784352c5358e/go.mod h1:NMB5RiZQOln+BwIoHZIaA1XYmdrE4lvTfwTrT7Vx8Hs=
+github.com/bingoohuang/golog v0.0.0-20210324153231-3b0996a1989b h1:RT7pC0chPaixuqr0fMfQsQVPR2Rixkk7b/I9jWnrKz8=
+github.com/bingoohuang/golog v0.0.0-20210324153231-3b0996a1989b/go.mod h1:NMB5RiZQOln+BwIoHZIaA1XYmdrE4lvTfwTrT7Vx8Hs=
 github.com/bingoohuang/gonet v0.0.0-20190716021716-fd516efe8b31/go.mod h1:lSe5gMXAiQESg/xTshM6sByKvDkMGdDffZSXt0d64JI=
 github.com/bingoohuang/gor v0.0.0-20200319063139-1085d3628b07 h1:Uq+G8EVZC+nttF8MGCL85hhyCq/oxl5AXeqlYD7bitk=
 github.com/bingoohuang/gor v0.0.0-20200319063139-1085d3628b07/go.mod h1:ahEOivpxL+rGjwq6hk2H8aQEMh/Uc6r1N3ohugldIww=

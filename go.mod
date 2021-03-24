@@ -5,7 +5,7 @@ go 1.14
 //replace github.com/bingoohuang/govaluate => ../govaluate
 
 require (
-	github.com/bingoohuang/golog v0.0.0-20210322080612-784352c5358e
+	github.com/bingoohuang/golog v0.0.0-20210324153231-3b0996a1989b
 	github.com/bingoohuang/gor v0.0.0-20200319063139-1085d3628b07
 	github.com/bingoohuang/gou v0.0.0-20200225004418-9b3655665c46
 	github.com/bingoohuang/govaluate v0.0.0-20210111112129-7f2350ca3f5d
