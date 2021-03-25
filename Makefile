@@ -65,7 +65,7 @@ coverview:
 # docker run --rm -it -v "$PWD":/usr/src/myapp -w /usr/src/myapp golang bash
 # 静态连接 glibc
 docker:
-	mkdir -f ~/dockergo
+	mkdir -p ~/dockergo
 	docker run --rm -v "$$PWD":/usr/src/myapp -v "$$HOME/dockergo":/go -w /usr/src/myapp golang make dockerinstall
 	#upx ~/dockergo/bin/${app}
 	gzip -f ~/dockergo/bin/${app}
