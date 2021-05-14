@@ -27,6 +27,7 @@ require (
 	github.com/mssola/user_agent v0.5.3-0.20210105155253-ad27bf0a6b2e
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
+	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.6.0
 	github.com/skratchdot/open-golang v0.0.0-20190402232053-79abb63cd66e
 	github.com/stretchr/testify v1.7.0
