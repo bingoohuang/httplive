@@ -19,7 +19,9 @@
   "close": true,
   "contentType": "application/json; charset=utf-8",
   "payload": {
-    "name": "bingoo"
+    "name": "bingoo",
+    "id": "{uuid}",
+    "addr":"{}"
   },
-  "sleep": "1s"
+  "sleep": "100ms-1s"
 }

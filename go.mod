@@ -5,6 +5,7 @@ go 1.14
 //replace github.com/bingoohuang/govaluate => ../govaluate
 
 require (
+	github.com/bingoohuang/gg v0.0.0-20210514033414-7dff3fc40443
 	github.com/bingoohuang/golog v0.0.0-20210324153231-3b0996a1989b
 	github.com/bingoohuang/gor v0.0.0-20200319063139-1085d3628b07
 	github.com/bingoohuang/gou v0.0.0-20200225004418-9b3655665c46
@@ -28,7 +29,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.6.0
 	github.com/skratchdot/open-golang v0.0.0-20190402232053-79abb63cd66e
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/pretty v1.0.2 // indirect
 	github.com/urfave/cli v1.22.3
 	github.com/valyala/fasthttp v1.18.0

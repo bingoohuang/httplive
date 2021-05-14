@@ -2,12 +2,10 @@ package process
 
 import (
 	"encoding/json"
-	"net/http"
-	"time"
-
-	"github.com/bingoohuang/httplive/pkg/timx"
+	"github.com/bingoohuang/gg/pkg/thinktime"
 	"github.com/bingoohuang/httplive/pkg/util"
 	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 // MockbinCookie defines the cookie format.
@@ -35,7 +33,7 @@ type Mockbin struct {
 	Close       bool              `json:"close"`
 	ContentType string            `json:"contentType"`
 	Payload     json.RawMessage   `json:"payload"`
-	Sleep       timx.Duration     `json:"sleep"`
+	Sleep       string            `json:"sleep"`
 }
 
 func countIf(cond bool) int {
@@ -46,7 +44,7 @@ func countIf(cond bool) int {
 	return 0
 }
 
-// IsValid tellsthe mockbin is valid or not.
+// IsValid tells the mockbin is valid or not.
 func (m Mockbin) IsValid() bool {
 	return countIf(m.Status >= 100)+
 		countIf(m.Method != "")+
@@ -54,8 +52,7 @@ func (m Mockbin) IsValid() bool {
 		countIf(m.ContentType != "")+
 		countIf(len(m.Payload) > 0)+
 		countIf(len(m.Headers) > 0)+
-		countIf(len(m.Cookies) > 0)+
-		countIf(m.Sleep > 0) >= 3
+		countIf(len(m.Cookies) > 0) >= 3
 }
 
 func (m Mockbin) Redirect(c *gin.Context) {
@@ -105,8 +102,11 @@ func (m Mockbin) Handle(c *gin.Context) {
 		m.ContentType = util.DetectContentType(m.Payload)
 	}
 
-	if m.Sleep > 0 {
-		time.Sleep(time.Duration(m.Sleep))
+	if m.Sleep != "" {
+		thinkTime, _ := thinktime.ParseThinkTime(m.Sleep)
+		if thinkTime != nil {
+			thinkTime.Think(true)
+		}
 	}
 
 	c.Data(m.Status, m.ContentType, m.Payload)
