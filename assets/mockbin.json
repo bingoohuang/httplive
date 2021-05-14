@@ -21,7 +21,7 @@
   "payload": {
     "name": "bingoo",
     "id": "{uuid}",
-    "addr":"{}"
+    "addr":"{random_string}"
   },
   "sleep": "100ms-1s"
 }

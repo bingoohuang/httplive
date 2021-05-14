@@ -2,10 +2,13 @@ package process
 
 import (
 	"encoding/json"
+	"github.com/bingoohuang/gg/pkg/rand"
 	"github.com/bingoohuang/gg/pkg/thinktime"
 	"github.com/bingoohuang/httplive/pkg/util"
 	"github.com/gin-gonic/gin"
+	uuid "github.com/satori/go.uuid"
 	"net/http"
+	"strings"
 )
 
 // MockbinCookie defines the cookie format.
@@ -109,5 +112,17 @@ func (m Mockbin) Handle(c *gin.Context) {
 		}
 	}
 
-	c.Data(m.Status, m.ContentType, m.Payload)
+	payload := string(m.Payload)
+	for k, v := range genFfnMap {
+		payload = strings.ReplaceAll(payload, k, v())
+	}
+
+	c.Data(m.Status, m.ContentType, []byte(payload))
+}
+
+type genFn func() string
+
+var genFfnMap = map[string]genFn{
+	"{uuid}":          func() string { return uuid.NewV4().String() },
+	"{random_string}": func() string { return rand.String(100) },
 }
