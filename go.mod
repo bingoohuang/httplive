@@ -7,7 +7,7 @@ go 1.16
 require (
 	github.com/bingoohuang/gg v0.0.0-20210518063046-396635d89a6a
 	github.com/bingoohuang/goip v0.0.0-20210508064334-25b5f0ce3522
-	github.com/bingoohuang/golog v0.0.0-20210517163115-be1629efa323
+	github.com/bingoohuang/golog v0.0.0-20210518063956-b6bef02c2f30
 	github.com/bingoohuang/gor v0.0.0-20200319063139-1085d3628b07
 	github.com/bingoohuang/govaluate v0.0.0-20210111112129-7f2350ca3f5d
 	github.com/bingoohuang/jj v0.0.0-20210510053147-220ad64d552c
