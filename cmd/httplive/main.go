@@ -104,7 +104,7 @@ func host(env *httplive.EnvVars) error {
 	}
 
 	if env.Logging {
-		golog.SetupLogrus()
+		golog.SetupLogrus(golog.Spec("stdout"))
 	} else {
 		golog.DisableLogging()
 	}

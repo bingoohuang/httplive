@@ -1,17 +1,16 @@
 module github.com/bingoohuang/httplive
 
-go 1.14
+go 1.16
 
 //replace github.com/bingoohuang/govaluate => ../govaluate
 
 require (
-	github.com/bingoohuang/gg v0.0.0-20210514033414-7dff3fc40443
-	github.com/bingoohuang/golog v0.0.0-20210324153231-3b0996a1989b
+	github.com/bingoohuang/gg v0.0.0-20210518063046-396635d89a6a
+	github.com/bingoohuang/goip v0.0.0-20210508064334-25b5f0ce3522
+	github.com/bingoohuang/golog v0.0.0-20210517163115-be1629efa323
 	github.com/bingoohuang/gor v0.0.0-20200319063139-1085d3628b07
-	github.com/bingoohuang/gou v0.0.0-20200225004418-9b3655665c46
 	github.com/bingoohuang/govaluate v0.0.0-20210111112129-7f2350ca3f5d
-	github.com/bingoohuang/ip v0.0.0-20210113063640-987be7fa1d51
-	github.com/bingoohuang/jj v0.0.0-20210112062650-92135efa7aa5
+	github.com/bingoohuang/jj v0.0.0-20210510053147-220ad64d552c
 	github.com/bingoohuang/pkger v0.0.0-20201203120856-f480b68feae4
 	github.com/bingoohuang/sariaf v0.0.0-20201222043148-21fd9703b115
 	github.com/bingoohuang/sqlx v0.0.0-20200327050032-f36e67f412f6

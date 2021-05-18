@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/bingoohuang/gg/pkg/cast"
 	"io/ioutil"
 	"log"
 	"mime"
@@ -25,7 +26,6 @@ import (
 
 	"github.com/bingoohuang/httplive/pkg/http2curl"
 
-	"github.com/bingoohuang/gou/str"
 	"github.com/bingoohuang/httplive/pkg/util"
 	"github.com/gin-gonic/gin"
 )
@@ -42,12 +42,11 @@ type ID string
 // UnmarshalJSON unmarshals JSON from integer or string.
 func (i *ID) UnmarshalJSON(b []byte) error {
 	*i = ID(b)
-
 	return nil
 }
 
 // Int convert ID to integer.
-func (i ID) Int() int { return str.ParseInt(string(i)) }
+func (i ID) Int() int { return cast.ToInt(i) }
 
 // APIDataModel ...
 type APIDataModel struct {

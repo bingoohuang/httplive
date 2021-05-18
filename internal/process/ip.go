@@ -15,25 +15,25 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gobars/cmd"
 
-	"github.com/bingoohuang/ip"
+	"github.com/bingoohuang/goip"
 )
 
 // ProcessIP process ip request.
 func ProcessIP(c *gin.Context, useJSON bool) {
-	mainIP, ipList := ip.MainIP(c.Query("iface"))
+	mainIP, ipList := goip.MainIP(c.Query("iface"))
 	m := map[string]interface{}{
 		"mainIP":   mainIP,
 		"ipList":   ipList,
-		"outbound": ip.Outbound(),
+		"outbound": goip.Outbound(),
 	}
 
-	if v, err := ip.ListAllIPv4(); err != nil {
+	if v, err := goip.ListAllIPv4(); err != nil {
 		m["v4error"] = err.Error()
 	} else if len(v) > 0 {
 		m["v4"] = v
 	}
 
-	if v, err := ip.ListAllIPv6(); err != nil {
+	if v, err := goip.ListAllIPv6(); err != nil {
 		m["v6error"] = err.Error()
 	} else if len(v) > 0 {
 		m["v6"] = v
@@ -116,7 +116,7 @@ func listIfaces() map[string]interface{} {
 }
 
 func moreInfo() map[string]interface{} {
-	externalIP := ip.External()
+	externalIP := goip.External()
 
 	m := map[string]interface{}{
 		"publicIP": externalIP,
@@ -128,7 +128,7 @@ func moreInfo() map[string]interface{} {
 
 	eip := net.ParseIP(externalIP)
 	if eip != nil {
-		m["ipDecimal"] = ip.ToDecimal(net.ParseIP(externalIP))
+		m["ipDecimal"] = goip.ToDecimal(net.ParseIP(externalIP))
 
 		result := TabaoAPI(externalIP)
 		if result != nil && result.Data.Country != "" {
