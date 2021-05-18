@@ -72,3 +72,11 @@ docker:
 
 dockerinstall:
 	go install -v -x -a -ldflags '-extldflags "-static"' ./...
+
+targz:
+	find . -name ".DS_Store" -delete
+	find . -type f -name '\.*' -print
+	cd .. && rm -f ${app}.tar.gz && tar czvf ${app}.tar.gz --exclude .git --exclude .idea ${app}
+
+static:
+	CGO_ENABLED=1 go build -a -tags netgo -ldflags '-w -s -extldflags "-static"' .
