@@ -78,7 +78,8 @@ func (m Mockbin) Redirect(c *gin.Context) {
 }
 
 func (m Mockbin) Handle(c *gin.Context) {
-	if m.Method != "" && m.Method != c.Request.Method {
+	M := strings.ToUpper(m.Method)
+	if M != "" && !strings.Contains(M, "ANY") && !strings.Contains(M, c.Request.Method) {
 		c.Status(http.StatusMethodNotAllowed)
 		return
 	}
