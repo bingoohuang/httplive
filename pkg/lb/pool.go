@@ -9,8 +9,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// CreateServerPool creates a server pool by serverList
-func CreateServerPool(serverList string) *BackendPool {
+// CreateProxyServerPool creates a server pool by serverList
+func CreateProxyServerPool(serverList string) *BackendPool {
 	var serverPool BackendPool
 
 	for _, tok := range strings.Split(serverList, ",") {
@@ -28,7 +28,7 @@ func CreateServerPool(serverList string) *BackendPool {
 
 		serverPool.Add(b)
 
-		log.Printf("Configured server: %s", tok)
+		log.Printf("Configured proxy server: %s", tok)
 	}
 
 	return &serverPool
