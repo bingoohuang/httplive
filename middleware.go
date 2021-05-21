@@ -1,6 +1,7 @@
 package httplive
 
 import (
+	"embed"
 	"fmt"
 	"net/http"
 	"path/filepath"
@@ -19,6 +20,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+//go:embed public
+var publicFS embed.FS
+
 // StaticFileMiddleware ...
 func StaticFileMiddleware(c *gin.Context) {
 	p := trimContextPath(c)
@@ -33,7 +37,7 @@ func StaticFileMiddleware(c *gin.Context) {
 		assetPath = "/public/index.html"
 	}
 
-	if res.TryGetFile(c, assetPath, Environments.ContextPath) {
+	if res.TryGetFile(publicFS, c, assetPath, Environments.ContextPath) {
 		c.Abort()
 		return
 	}

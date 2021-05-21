@@ -2,7 +2,8 @@ package res
 
 import (
 	"bytes"
-	"io"
+	"embed"
+	"io/fs"
 	"io/ioutil"
 	"mime"
 	"net/http"
@@ -10,17 +11,16 @@ import (
 	"path"
 	"strings"
 
-	"github.com/bingoohuang/pkger"
 	"github.com/gin-gonic/gin"
 )
 
 // TryGetFile ...
-func TryGetFile(c *gin.Context, assetPath, contextPath string) bool {
+func TryGetFile(publicFS embed.FS, c *gin.Context, assetPath, contextPath string) bool {
 	if os.Getenv("debug") != "" {
 		return tryGetLocalFile(c, assetPath, contextPath)
 	}
 
-	return tryGetAssetFile(c, assetPath, contextPath)
+	return tryGetAssetFile(publicFS, c, assetPath, contextPath)
 }
 
 func tryGetLocalFile(c *gin.Context, filePath, contextPath string) bool {
@@ -37,38 +37,36 @@ func tryGetLocalFile(c *gin.Context, filePath, contextPath string) bool {
 	return true
 }
 
-func tryGetAssetFile(c *gin.Context, filePath, contextPath string) bool {
-	pkger.Include("/public") // nolint:staticcheck
-	info, err := pkger.Stat(filePath)
+func tryGetAssetFile(publicFS embed.FS, c *gin.Context, filePath, contextPath string) bool {
+	if strings.HasPrefix(filePath, "/") {
+		filePath = filePath[1:]
+	}
+	info, err := fs.Stat(publicFS, filePath)
 	if err != nil || info.IsDir() {
 		return false
 	}
 
 	// 具体单个文件，直接查找静态文件，返回文件内容
-	if err := serveStaticFile(c, filePath, contextPath); err != nil {
+	if err := serveStaticFile(publicFS, c, filePath, contextPath); err != nil {
 		_ = c.Error(err)
 	}
 
 	return true
 }
 
-func serveStaticFile(c *gin.Context, filePath, contextPath string) error {
-	f, err := pkger.Open(filePath)
+func serveStaticFile(publicFS embed.FS, c *gin.Context, filePath, contextPath string) error {
+	buf, err := fs.ReadFile(publicFS, filePath)
 	if err != nil {
 		return err
 	}
 
-	defer f.Close()
-
 	ext := path.Ext(filePath)
 	contentType := mime.TypeByExtension(ext)
-	buf := new(bytes.Buffer)
-	_, _ = io.Copy(buf, f)
 
 	if strings.EqualFold(ext, ".js") || strings.EqualFold(ext, ".css") || strings.EqualFold(ext, ".html") {
-		c.Data(http.StatusOK, contentType, ReplaceContextPath(buf.Bytes(), contextPath))
+		c.Data(http.StatusOK, contentType, ReplaceContextPath(buf, contextPath))
 	} else {
-		c.Data(http.StatusOK, contentType, buf.Bytes())
+		c.Data(http.StatusOK, contentType, buf)
 	}
 
 	return nil

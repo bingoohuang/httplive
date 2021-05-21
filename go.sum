@@ -49,8 +49,6 @@ github.com/bingoohuang/govaluate v0.0.0-20210111112129-7f2350ca3f5d h1:LpDajfSH+
 github.com/bingoohuang/govaluate v0.0.0-20210111112129-7f2350ca3f5d/go.mod h1:WheQYDXwdBkLBozIeKMsjMV3VvqReBPZYkrT6hAQ5jY=
 github.com/bingoohuang/jj v0.0.0-20210510053147-220ad64d552c h1:zmeFPI9Xmx2OP7r1A3UaqRiBpY1sl1f9bzcpEPc8B/I=
 github.com/bingoohuang/jj v0.0.0-20210510053147-220ad64d552c/go.mod h1:bWJgpCAKIq/UOMbGxmZlOjU2JZfHhta8XVw5ztrVWRM=
-github.com/bingoohuang/pkger v0.0.0-20201203120856-f480b68feae4 h1:VqYnheswBp8s1gh4UHoRnHpMuGct2vWjJAIFC3XY/YI=
-github.com/bingoohuang/pkger v0.0.0-20201203120856-f480b68feae4/go.mod h1:GJXGVR/nVdNNo7wNQm/FFh0uznqYCVxsL3TL6sk+LKU=
 github.com/bingoohuang/sariaf v0.0.0-20201222043148-21fd9703b115 h1:EFFNU0tKdIPNrBSuSgL3UDF4bnFPMzQs3YaUWn4rxM4=
 github.com/bingoohuang/sariaf v0.0.0-20201222043148-21fd9703b115/go.mod h1:DSi1LVR76Ap189KzzA40C8pFSpRZHsy/n+kgK8ihfhs=
 github.com/bingoohuang/shellwords v0.0.0-20200303142623-5c675e52d3e1 h1:ZOxJ0X7A0Y0hJHVuPfERGZO34N6DUFZj4aH2Kw1Y1J4=
@@ -140,8 +138,6 @@ github.com/go-test/deep v1.0.2 h1:onZX1rnHT3Wv6cqNgYyFOOlgVKJrksuCMCRvJStbMYw=
 github.com/go-test/deep v1.0.2/go.mod h1:wGDj63lr65AM2AQyKZd/NYHGb0R+1RLqB8NKt3aSFNA=
 github.com/gobars/cmd v0.0.0-20191114090003-c6a602977f49 h1:ouB5+asYy+vXHlwCNCPJ9mKdBt71qI7hNU+6GuvIC+E=
 github.com/gobars/cmd v0.0.0-20191114090003-c6a602977f49/go.mod h1:y4ATcJLNdRZk/9ex76986LU8ZB4yaPq08XoWhXU9z88=
-github.com/gobuffalo/here v0.6.0 h1:hYrd0a6gDmWxBM4TnrGw8mQg24iSVoIkHEk7FodQcBI=
-github.com/gobuffalo/here v0.6.0/go.mod h1:wAG085dHOYqUpf+Ap+WOdrPTp5IYcDAs/x7PLa8Y5fM=
 github.com/gogo/protobuf v1.1.1/go.mod h1:r8qH/GZQm5c6nD/R0oafs1akxWv10x8SbQlK7atdtwQ=
 github.com/gogo/protobuf v1.2.0/go.mod h1:r8qH/GZQm5c6nD/R0oafs1akxWv10x8SbQlK7atdtwQ=
 github.com/gogo/protobuf v1.2.1/go.mod h1:hp+jE20tsWTFYpLwKvXlhS1hjn+gTNwPg2I6zVXpSg4=

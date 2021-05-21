@@ -1,11 +1,11 @@
 package httplive
 
 import (
-	"bytes"
 	"context"
 	"database/sql"
+	"embed"
 	"fmt"
-	"io"
+	"io/fs"
 	"net/http"
 	"net/http/httputil"
 	"path/filepath"
@@ -24,7 +24,6 @@ import (
 	"github.com/bingoohuang/httplive/internal/process"
 	"github.com/bingoohuang/httplive/pkg/util"
 
-	"github.com/bingoohuang/pkger"
 	"github.com/gin-gonic/gin"
 
 	"github.com/bingoohuang/sqlx"
@@ -53,20 +52,21 @@ func CreateDao(db *sql.DB) (*Dao, error) {
 	return dao, err
 }
 
-func asset(name string) string {
-	pkger.Include("/assets") // nolint: staticcheck
+//go:embed assets
+var assetsFS embed.FS
+var subAssets fs.FS
 
-	f, err := pkger.Open(filepath.Join("/assets", name))
+func init() {
+	subAssets, _ = fs.Sub(assetsFS, "assets")
+}
+
+func asset(name string) string {
+	data, err := fs.ReadFile(subAssets, name)
 	if err != nil {
 		panic(err)
 	}
 
-	defer f.Close()
-
-	buf := new(bytes.Buffer)
-	_, _ = io.Copy(buf, f)
-
-	return buf.String()
+	return string(data)
 }
 
 // nolint gochecknoglobals

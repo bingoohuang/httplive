@@ -11,7 +11,6 @@ require (
 	github.com/bingoohuang/gor v0.0.0-20200319063139-1085d3628b07
 	github.com/bingoohuang/govaluate v0.0.0-20210111112129-7f2350ca3f5d
 	github.com/bingoohuang/jj v0.0.0-20210510053147-220ad64d552c
-	github.com/bingoohuang/pkger v0.0.0-20201203120856-f480b68feae4
 	github.com/bingoohuang/sariaf v0.0.0-20201222043148-21fd9703b115
 	github.com/bingoohuang/sqlx v0.0.0-20200327050032-f36e67f412f6
 	github.com/bingoohuang/sysinfo v1.0.1-0.20201211083624-a04a55b2d1e6
