@@ -333,9 +333,19 @@ func TestAPIRouter(p process.APIDataModel) error {
 	return router.Handle(http.MethodGet, JoinContextPath(p.Endpoint), nil)
 }
 
+func echoXHeaders(c *gin.Context) {
+	rh := c.Request.Header
+	for k := range rh {
+		if strings.HasPrefix(k, "X-") {
+			c.Header(k, rh.Get(k))
+		}
+	}
+}
+
 // SyncAPIRouter ...
 func SyncAPIRouter() {
 	router := gin.New()
+	router.Use(echoXHeaders)
 
 	for _, ep := range EndpointList(false) {
 		if strings.HasPrefix(ep.Endpoint, "/_internal") {
