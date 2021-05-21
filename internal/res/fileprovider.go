@@ -38,9 +38,7 @@ func tryGetLocalFile(c *gin.Context, filePath, contextPath string) bool {
 }
 
 func tryGetAssetFile(publicFS embed.FS, c *gin.Context, filePath, contextPath string) bool {
-	if strings.HasPrefix(filePath, "/") {
-		filePath = filePath[1:]
-	}
+	filePath = strings.TrimPrefix(filePath, "/")
 	info, err := fs.Stat(publicFS, filePath)
 	if err != nil || info.IsDir() {
 		return false
