@@ -361,14 +361,14 @@ func dealHl(c *gin.Context, ep APIDataModel) (bool, gin.HandlerFunc) {
 		ProcessIP(c, useJSON)
 	case "echo":
 		if useJSON {
-			c.JSON(http.StatusOK, CreateRequestMap(c, &ep))
+			c.PureJSON(http.StatusOK, CreateRequestMap(c, &ep))
 		} else {
 			d, _ := httputil.DumpRequest(c.Request, true)
 			c.Data(http.StatusOK, util.ContentTypeText, d)
 		}
 	case "time":
 		if useJSON {
-			c.JSON(http.StatusOK, gin.H{"time": util.TimeFmt(time.Now())})
+			c.PureJSON(http.StatusOK, gin.H{"time": util.TimeFmt(time.Now())})
 		} else {
 			c.Data(http.StatusOK, util.ContentTypeText, []byte(util.TimeFmt(time.Now())))
 		}
@@ -380,7 +380,7 @@ func dealHl(c *gin.Context, ep APIDataModel) (bool, gin.HandlerFunc) {
 			showsMap[p] = true
 		}
 		if useJSON {
-			c.JSON(http.StatusOK, sysinfo.GetSysInfo(showsMap))
+			c.PureJSON(http.StatusOK, sysinfo.GetSysInfo(showsMap))
 		} else {
 			c.Status(http.StatusOK)
 			c.Header("Content-Type", util.ContentTypeText)

@@ -48,7 +48,7 @@ func ProcessIP(c *gin.Context, useJSON bool) {
 	m["hostname -i"] = strings.Join(append(status.Stdout, status.Stderr...), " ")
 
 	if useJSON {
-		c.JSON(http.StatusOK, m)
+		c.PureJSON(http.StatusOK, m)
 	} else {
 		jb, _ := json.MarshalIndent(m, "", "  ")
 		c.Data(http.StatusOK, util.ContentTypeText, jb)

@@ -407,7 +407,7 @@ func noRouteHandler(c *gin.Context) (processed bool) {
 
 	switch {
 	case hl == "v" || p == "/v":
-		c.JSON(http.StatusOK, gin.H{"version": Version, "updateTime": UpdateTime})
+		c.PureJSON(http.StatusOK, gin.H{"version": Version, "updateTime": UpdateTime})
 	case hl == "curl" || p == "/curl":
 		values := c.Request.URL.Query()
 		delete(values, "_hl")
@@ -418,7 +418,7 @@ func noRouteHandler(c *gin.Context) (processed bool) {
 		process.ProcessIP(c, useJSON)
 	case hl == "time" || p == "/time":
 		if useJSON {
-			c.JSON(http.StatusOK, gin.H{"time": util.TimeFmt(time.Now())})
+			c.PureJSON(http.StatusOK, gin.H{"time": util.TimeFmt(time.Now())})
 		} else {
 			c.Data(http.StatusOK, util.ContentTypeText, []byte(util.TimeFmt(time.Now())))
 		}
@@ -428,7 +428,7 @@ func noRouteHandler(c *gin.Context) (processed bool) {
 			showsMap[p] = true
 		}
 		if useJSON {
-			c.JSON(http.StatusOK, sysinfo.GetSysInfo(showsMap))
+			c.PureJSON(http.StatusOK, sysinfo.GetSysInfo(showsMap))
 		} else {
 			c.Status(http.StatusOK)
 			c.Header("Content-Type", util.ContentTypeText)
@@ -436,7 +436,7 @@ func noRouteHandler(c *gin.Context) (processed bool) {
 		}
 	case (hl == "" && p == "/") || hl == "echo" || p == "/echo":
 		if useJSON {
-			c.JSON(http.StatusOK, process.CreateRequestMap(c, nil))
+			c.PureJSON(http.StatusOK, process.CreateRequestMap(c, nil))
 		} else {
 			d, _ := httputil.DumpRequest(c.Request, true)
 			c.Data(http.StatusOK, util.ContentTypeText, d)
