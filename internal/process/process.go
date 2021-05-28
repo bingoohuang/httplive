@@ -119,7 +119,7 @@ func (ep *Endpoint) CreateEcho(m *APIDataModel) {
 	m.ServeFn = func(c *gin.Context) {
 		switch strings.ToLower(echoMode) {
 		case "json":
-			c.JSON(http.StatusOK, CreateRequestMap(c, &model))
+			c.PureJSON(http.StatusOK, CreateRequestMap(c, &model))
 		default:
 			dumpRequest, _ := httputil.DumpRequest(c.Request, true)
 			c.Data(http.StatusOK, util.ContentTypeText, dumpRequest)
