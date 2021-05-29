@@ -5,7 +5,6 @@ app=$(notdir $(shell pwd))
 
 tool:
 	go get github.com/securego/gosec/cmd/gosec
-	go get github.com/bingoohuang/pkger/cmd/pkger@master
 
 sec:
 	@gosec ./...
@@ -13,7 +12,6 @@ sec:
 
 init:
 	export GOPROXY=https://goproxy.cn
-	pkger
 
 lint:
 	#golangci-lint run --enable-all
