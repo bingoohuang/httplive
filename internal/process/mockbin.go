@@ -2,11 +2,10 @@ package process
 
 import (
 	"encoding/json"
-	"github.com/bingoohuang/gg/pkg/rand"
 	"github.com/bingoohuang/gg/pkg/thinktime"
 	"github.com/bingoohuang/httplive/pkg/util"
+	"github.com/bingoohuang/jj"
 	"github.com/gin-gonic/gin"
-	uuid "github.com/satori/go.uuid"
 	"net/http"
 	"strings"
 )
@@ -114,16 +113,9 @@ func (m Mockbin) Handle(c *gin.Context) {
 	}
 
 	payload := string(m.Payload)
-	for k, v := range genFfnMap {
-		payload = strings.ReplaceAll(payload, k, v())
+	if jj.Valid(payload) {
+		payload = jj.Gen(payload)
 	}
 
 	c.Data(m.Status, m.ContentType, []byte(payload))
-}
-
-type genFn func() string
-
-var genFfnMap = map[string]genFn{
-	"{uuid}":          func() string { return uuid.NewV4().String() },
-	"{random_string}": func() string { return rand.String(100) },
 }

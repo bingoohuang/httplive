@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bingoohuang/gg/pkg/rand"
+	"github.com/bingoohuang/gg/pkg/randx"
 	"github.com/skratchdot/open-golang/open"
 
 	"github.com/gin-gonic/gin"
@@ -218,7 +218,7 @@ func OpenExplorerWithContext(contextPath, port string) {
 			contextPath = ""
 		}
 
-		_ = open.Run("http://127.0.0.1:" + port + contextPath + "?" + rand.String(10))
+		_ = open.Run("http://127.0.0.1:" + port + contextPath + "?" + randx.String(10))
 	}
 }
 

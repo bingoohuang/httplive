@@ -19,9 +19,9 @@
   "close": true,
   "contentType": "application/json; charset=utf-8",
   "payload": {
-    "name": "bingoo",
-    "id": "{uuid}",
-    "addr":"{random_string}"
+    "name": "@姓名",
+    "id": "@uuid",
+    "addr":"@random(20)"
   },
-  "sleep": "100ms-1s"
+  "sleep": "10ms-100ms"
 }

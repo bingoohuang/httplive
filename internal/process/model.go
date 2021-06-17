@@ -91,16 +91,16 @@ type Endpoint struct {
 	DeletedAt  string `name:"deleted_at"`
 }
 
-func (ep *APIDataModel) HandleFileDownload(c *gin.Context) {
+func (a *APIDataModel) HandleFileDownload(c *gin.Context) {
 	rr := c.Request.Context().Value(RouterResultKey).(RouterResult)
 	rr.RouterServed = true
-	rr.Filename = ep.Filename
+	rr.Filename = a.Filename
 	c.Status(http.StatusOK)
 
 	if c.Query("_view") == "" {
 		h := c.Header
 		h("Content-Disposition", mime.FormatMediaType("attachment",
-			map[string]string{"filename": ep.Filename}))
+			map[string]string{"filename": a.Filename}))
 		h("Content-Description", "File Transfer")
 		h("Content-Type", "application/octet-stream")
 		h("Content-Transfer-Encoding", "binary")
@@ -109,8 +109,8 @@ func (ep *APIDataModel) HandleFileDownload(c *gin.Context) {
 		h("Pragma", "public")
 	}
 
-	http.ServeContent(c.Writer, c.Request, ep.Filename, time.Now(),
-		bytes.NewReader(ep.FileContent))
+	http.ServeContent(c.Writer, c.Request, a.Filename, time.Now(),
+		bytes.NewReader(a.FileContent))
 }
 
 // JsTreeDataModel ...
@@ -153,16 +153,16 @@ func (a APIDataModel) CreateJsTreeModel() JsTreeDataModel {
 	return model
 }
 
-func (ep APIDataModel) HandleJSON(c *gin.Context) {
-	yes, fn := dealHl(c, ep)
-	if yes || ep.ServeFn == nil {
+func (a APIDataModel) HandleJSON(c *gin.Context) {
+	yes, fn := dealHl(c, a)
+	if yes || a.ServeFn == nil {
 		return
 	}
 
 	cw := util.NewGinCopyWriter(c.Writer)
 	c.Writer = cw
 
-	ep.ServeFn(c)
+	a.ServeFn(c)
 	if fn != nil {
 		fn(c)
 	}
@@ -179,7 +179,7 @@ func (ep APIDataModel) HandleJSON(c *gin.Context) {
 	rr.ResponseHeader = util.ConvertHeader(cw.Header())
 }
 
-func (ep *APIDataModel) InternalProcess(subRouter string) {
+func (a *APIDataModel) InternalProcess(subRouter string) {
 	acl.CasbinEpoch = time.Now()
 	apiCasbinEnforcer = nil
 	apiAuthHandler = nil
@@ -187,9 +187,9 @@ func (ep *APIDataModel) InternalProcess(subRouter string) {
 
 	switch subRouter {
 	case "/apiacl":
-		ep.apiacl()
+		a.apiacl()
 	case "/adminacl":
-		ep.adminacl()
+		a.adminacl()
 	}
 }
 
@@ -208,8 +208,8 @@ const (
 	AuthResultFailed
 )
 
-func (ep *APIDataModel) adminacl() {
-	e, _, authMap := ep.createCasbin()
+func (a *APIDataModel) adminacl() {
+	e, _, authMap := a.createCasbin()
 	if e == nil {
 		return
 	}
@@ -233,8 +233,8 @@ func (ep *APIDataModel) adminacl() {
 	}
 }
 
-func (ep *APIDataModel) apiacl() {
-	e, sariafRouter, authMap := ep.createCasbin()
+func (a *APIDataModel) apiacl() {
+	e, sariafRouter, authMap := a.createCasbin()
 	if e == nil {
 		return
 	}
@@ -260,10 +260,10 @@ func (ep *APIDataModel) apiacl() {
 	}
 }
 
-func (ep *APIDataModel) createCasbin() (*casbin.Enforcer, *sariaf.Router, map[string]string) {
-	modelConf := util.UnquoteCover(ep.Body, "###START_MODEL###", "###END_MODEL###")
-	policyConf := util.UnquoteCover(ep.Body, "###START_POLICY###", "###END_POLICY###")
-	authConf := util.UnquoteCover(ep.Body, "###START_AUTH###", "###END_AUTH###")
+func (a *APIDataModel) createCasbin() (*casbin.Enforcer, *sariaf.Router, map[string]string) {
+	modelConf := util.UnquoteCover(a.Body, "###START_MODEL###", "###END_MODEL###")
+	policyConf := util.UnquoteCover(a.Body, "###START_POLICY###", "###END_POLICY###")
+	authConf := util.UnquoteCover(a.Body, "###START_AUTH###", "###END_AUTH###")
 
 	e, err := acl.NewCasbin(modelConf, policyConf)
 	if err != nil {
@@ -289,12 +289,12 @@ func (ep *APIDataModel) createCasbin() (*casbin.Enforcer, *sariaf.Router, map[st
 	return e, sariafRouter, authMap
 }
 
-func (m *APIDataModel) TryDo(f func(m *APIDataModel)) {
-	if m.ServeFn != nil {
+func (a *APIDataModel) TryDo(f func(m *APIDataModel)) {
+	if a.ServeFn != nil {
 		return
 	}
 
-	f(m)
+	f(a)
 }
 
 func AdminAuth(c *gin.Context) {

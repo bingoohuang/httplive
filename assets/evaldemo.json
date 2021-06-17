@@ -2,7 +2,7 @@
   "#upstream": true,
   "_hl": "eval",
   "_cache": "1m",
-  "update": "@now yyyy-MM-dd HH:mm:ss",
+  "update": "@random_time(now, yyyy-MM-ddTHH:mm:ss)",
   "redis1@redis-instance": {
     "addr": "localhost:6379",
     "password": "",

@@ -30,8 +30,8 @@ github.com/averagesecurityguy/random v0.0.0-20180326012618-37cce341d2af h1:P1psV
 github.com/averagesecurityguy/random v0.0.0-20180326012618-37cce341d2af/go.mod h1:xlqW8P0gOqVMB8Kp0mMuUznEi1PzjF+mhHTSC+ymalU=
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
 github.com/beorn7/perks v1.0.0/go.mod h1:KWe93zE9D1o94FZ5RNwFwVgaQK1VOXiVxmqh+CedLV8=
-github.com/bingoohuang/gg v0.0.0-20210518063046-396635d89a6a h1:oGuPPqu5gSdjr2mSYOkFz5ZNpFQ2o67wVdeljcCjERs=
-github.com/bingoohuang/gg v0.0.0-20210518063046-396635d89a6a/go.mod h1:kKNUAtRrABOvh5ztjh9Q5qtJBkx0sxwCHBQDBgWPhbw=
+github.com/bingoohuang/gg v0.0.0-20210608031951-72884199b0ac h1:rotU1tlCTqRCD4oXHr/ahSF2+FSlScIZnqsEIBJjlRA=
+github.com/bingoohuang/gg v0.0.0-20210608031951-72884199b0ac/go.mod h1:kKNUAtRrABOvh5ztjh9Q5qtJBkx0sxwCHBQDBgWPhbw=
 github.com/bingoohuang/ginx v0.0.0-20200729033750-047869f5e81c/go.mod h1:fv5fKhsGUfPInVsslF5FJv2oNlZn153C5OogaaUFvFc=
 github.com/bingoohuang/goip v0.0.0-20210508064334-25b5f0ce3522 h1:6lsFF5RKgAKVAOzOxSKB+5atCpvs3gllBcnXzmbS3C8=
 github.com/bingoohuang/goip v0.0.0-20210508064334-25b5f0ce3522/go.mod h1:nivVQSqLu20dauc/b/IlTcOi7EL07JuSy6RYinVtPuU=
@@ -47,8 +47,8 @@ github.com/bingoohuang/gou v0.0.0-20200225004418-9b3655665c46 h1:18kysBxDTlkUYNh
 github.com/bingoohuang/gou v0.0.0-20200225004418-9b3655665c46/go.mod h1:lfM/iBkZzlmnl23C+mpqiXAgC6npikzZkKVfNAdC+o4=
 github.com/bingoohuang/govaluate v0.0.0-20210111112129-7f2350ca3f5d h1:LpDajfSH+5HR+wWZAUxG264QWCDnin6JEiEHqqjxPAk=
 github.com/bingoohuang/govaluate v0.0.0-20210111112129-7f2350ca3f5d/go.mod h1:WheQYDXwdBkLBozIeKMsjMV3VvqReBPZYkrT6hAQ5jY=
-github.com/bingoohuang/jj v0.0.0-20210510053147-220ad64d552c h1:zmeFPI9Xmx2OP7r1A3UaqRiBpY1sl1f9bzcpEPc8B/I=
-github.com/bingoohuang/jj v0.0.0-20210510053147-220ad64d552c/go.mod h1:bWJgpCAKIq/UOMbGxmZlOjU2JZfHhta8XVw5ztrVWRM=
+github.com/bingoohuang/jj v0.0.0-20210617023017-2d704b7dc62c h1:eGuPUJdFbkHQHnYSqe0g8liFG8Qt8VKSms0G2uvsxYQ=
+github.com/bingoohuang/jj v0.0.0-20210617023017-2d704b7dc62c/go.mod h1:bV9nOhOo9pY9zfWfXnzmkTRYHNKU2bIoz5asX5Xldyw=
 github.com/bingoohuang/sariaf v0.0.0-20201222043148-21fd9703b115 h1:EFFNU0tKdIPNrBSuSgL3UDF4bnFPMzQs3YaUWn4rxM4=
 github.com/bingoohuang/sariaf v0.0.0-20201222043148-21fd9703b115/go.mod h1:DSi1LVR76Ap189KzzA40C8pFSpRZHsy/n+kgK8ihfhs=
 github.com/bingoohuang/shellwords v0.0.0-20200303142623-5c675e52d3e1 h1:ZOxJ0X7A0Y0hJHVuPfERGZO34N6DUFZj4aH2Kw1Y1J4=
@@ -347,7 +347,6 @@ github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6So
 github.com/russross/blackfriday/v2 v2.0.1 h1:lPqVAte+HuHNfhJ/0LC98ESWRz8afy9tM/0RK8m9o+Q=
 github.com/russross/blackfriday/v2 v2.0.1/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/sanity-io/litter v1.2.0/go.mod h1:JF6pZUFgu2Q0sBZ+HSV35P8TVPI1TTzEwyu9FXAw2W4=
-github.com/satori/go.uuid v1.2.0 h1:0uYX9dsZ2yD7q2RtLRtPSdGDWzjeM3TbMJP9utgA0ww=
 github.com/satori/go.uuid v1.2.0/go.mod h1:dA0hQrYB0VpLJoorglMZABFdXlWrHn1NEOzdhQKdks0=
 github.com/shirou/gopsutil v2.20.2+incompatible h1:ucK79BhBpgqQxPASyS2cu9HX8cfDVljBN1WWFvbNvgY=
 github.com/shirou/gopsutil v2.20.2+incompatible/go.mod h1:5b4v6he4MtMOwMlS0TUMTu2PcXUg8+E1lC7eC3UO/RA=

@@ -78,7 +78,7 @@ func (ep *Endpoint) CreateDirect(m *APIDataModel) {
 	}
 
 	m.ServeFn = func(c *gin.Context) {
-		util.GinData(c, []byte(direct.String()))
+		util.GinData(c, []byte(eval.JjGen(direct.String())))
 	}
 }
 
@@ -100,6 +100,7 @@ func (ep *Endpoint) CreateDefault(m *APIDataModel) {
 
 func (ep *Endpoint) CreateMockbin(m *APIDataModel) {
 	var b Mockbin
+
 	if err := json.Unmarshal([]byte(ep.Body), &b); err != nil || !b.IsValid() {
 		return
 	}
