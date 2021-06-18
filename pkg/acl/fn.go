@@ -92,6 +92,10 @@ var CasbinEpoch = time.Now()
 const CasbinTimeLayout = "2006-01-02 15:04:05"
 
 func RouterMatch(router, pattern string) bool {
+	if pattern == "-" {
+		return true
+	}
+
 	r := sariaf.New()
 	if err := r.Handle(http.MethodGet, pattern, nil); err != nil {
 		logrus.Errorf("failed to parse pattern %s: %v", pattern, err)

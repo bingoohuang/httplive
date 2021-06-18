@@ -27,7 +27,7 @@ func Or(s, or string) string {
 	return s
 }
 
-//  UnquoteCover unquotes string from s.
+// UnquoteCover unquotes string from s.
 func UnquoteCover(s, start, end string) string {
 	startIndex := strings.Index(s, start)
 	if startIndex == -1 {

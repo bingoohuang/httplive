@@ -144,14 +144,14 @@ func createDB(dao *Dao) error {
 		ID: f(), Endpoint: "/eval", Methods: "ANY", MimeType: "", Filename: "",
 		Body: asset("evaldemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
 	})
-	dao.AddEndpointID(process.Endpoint{
-		ID: f(), Endpoint: "/_internal/apiacl", Methods: "ANY", MimeType: "", Filename: "",
-		Body: asset("apiacl.casbin"), CreateTime: now, UpdateTime: now, DeletedAt: "",
-	})
-	dao.AddEndpointID(process.Endpoint{
-		ID: f(), Endpoint: "/_internal/adminacl", Methods: "ANY", MimeType: "", Filename: "",
-		Body: asset("adminacl.casbin"), CreateTime: now, UpdateTime: now, DeletedAt: "",
-	})
+	//dao.AddEndpointID(process.Endpoint{
+	//	ID: f(), Endpoint: "/_internal/apiacl", Methods: "ANY", MimeType: "", Filename: "",
+	//	Body: asset("apiacl.casbin"), CreateTime: now, UpdateTime: now, DeletedAt: "",
+	//})
+	//dao.AddEndpointID(process.Endpoint{
+	//	ID: f(), Endpoint: "/_internal/adminacl", Methods: "ANY", MimeType: "", Filename: "",
+	//	Body: asset("adminacl.casbin"), CreateTime: now, UpdateTime: now, DeletedAt: "",
+	//})
 
 	return nil
 }
