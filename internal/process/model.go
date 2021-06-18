@@ -13,6 +13,7 @@ import (
 	"net/http/httputil"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/mssola/user_agent"
@@ -91,11 +92,22 @@ type Endpoint struct {
 	DeletedAt  string `name:"deleted_at"`
 }
 
-func (a *APIDataModel) HandleFileDownload(c *gin.Context) {
+func (a APIDataModel) HandleFileDownload(c *gin.Context) {
+	if !apiAuth(c) {
+		return
+	}
+
 	rr := c.Request.Context().Value(RouterResultKey).(*RouterResult)
 	rr.RouterServed = true
 	rr.Filename = a.Filename
 	c.Status(http.StatusOK)
+
+	hl := c.Query("_hl")
+	switch hl {
+	case "conf":
+		c.JSON(http.StatusOK, a)
+		return
+	}
 
 	dl := c.Query("_dl")
 	if dl == "" {
@@ -182,9 +194,6 @@ func (a APIDataModel) HandleJSON(c *gin.Context) {
 
 func (a *APIDataModel) InternalProcess(subRouter string) {
 	acl.CasbinEpoch = time.Now()
-	apiCasbinEnforcer = nil
-	apiAuthHandler = nil
-	adminAuthHandler = nil
 
 	switch subRouter {
 	case "/apiacl":
@@ -195,11 +204,40 @@ func (a *APIDataModel) InternalProcess(subRouter string) {
 }
 
 var (
+	authLock sync.Mutex
+
 	apiCasbinEnforcer   *casbin.Enforcer
 	adminCasbinEnforcer *casbin.Enforcer
 	apiAuthHandler      func(c *gin.Context) (AuthResultType, string)
 	adminAuthHandler    func(c *gin.Context) (AuthResultType, string)
 )
+
+func apiAuth(c *gin.Context) bool {
+	authLock.Lock()
+	defer authLock.Unlock()
+
+	if apiAuthHandler == nil {
+		return true
+	}
+
+	switch authResultType, user := apiAuthHandler(c); authResultType {
+	case AuthResultIgnore:
+	case AuthResultFailed:
+		return true
+	case AuthResultOK:
+		ok, err := apiCasbinEnforcer.Enforce(user, c.Request.URL.Path, c.Request.Method, time.Now().Format(acl.CasbinTimeLayout))
+		if err != nil {
+			logrus.Warnf("failed to casbin %v", err)
+		}
+
+		if ok {
+			return true
+		}
+	}
+
+	c.Status(http.StatusForbidden)
+	return false
+}
 
 type AuthResultType int
 
@@ -211,7 +249,13 @@ const (
 
 func (a *APIDataModel) adminacl() {
 	e, _, authMap := a.createCasbin()
+
+	authLock.Lock()
+	defer authLock.Unlock()
+
 	if e == nil {
+		adminCasbinEnforcer = nil
+		adminAuthHandler = nil
 		return
 	}
 
@@ -236,12 +280,17 @@ func (a *APIDataModel) adminacl() {
 
 func (a *APIDataModel) apiacl() {
 	e, sariafRouter, authMap := a.createCasbin()
+
+	authLock.Lock()
+	defer authLock.Unlock()
+
 	if e == nil {
+		apiCasbinEnforcer = nil
+		apiAuthHandler = nil
 		return
 	}
 
 	apiCasbinEnforcer = e
-
 	apiAuthHandler = func(c *gin.Context) (AuthResultType, string) {
 		node, _ := sariafRouter.Search(c.Request.Method, c.Request.URL.Path)
 		if node == nil {
@@ -261,7 +310,7 @@ func (a *APIDataModel) apiacl() {
 	}
 }
 
-func (a *APIDataModel) createCasbin() (*casbin.Enforcer, *sariaf.Router, map[string]string) {
+func (a APIDataModel) createCasbin() (*casbin.Enforcer, *sariaf.Router, map[string]string) {
 	modelConf := util.UnquoteCover(a.Body, "###START_MODEL###", "###END_MODEL###")
 	policyConf := util.UnquoteCover(a.Body, "###START_POLICY###", "###END_POLICY###")
 	authConf := util.UnquoteCover(a.Body, "###START_AUTH###", "###END_AUTH###")
@@ -324,22 +373,8 @@ func AdminAuth(c *gin.Context) {
 }
 
 func dealHl(c *gin.Context, ep APIDataModel) (bool, gin.HandlerFunc) {
-	if apiAuthHandler != nil {
-		switch authResultType, user := apiAuthHandler(c); authResultType {
-		case AuthResultIgnore:
-		case AuthResultFailed:
-			return true, nil
-		case AuthResultOK:
-			ok, err := apiCasbinEnforcer.Enforce(user, c.Request.URL.Path, c.Request.Method, time.Now().Format(acl.CasbinTimeLayout))
-			if err != nil {
-				logrus.Warnf("failed to casbin %v", err)
-			}
-
-			if !ok {
-				c.Status(http.StatusForbidden)
-				return true, nil
-			}
-		}
+	if !apiAuth(c) {
+		return true, nil
 	}
 
 	ua := user_agent.New(c.Request.UserAgent())

@@ -344,32 +344,36 @@ func echoXHeaders(c *gin.Context) {
 
 // SyncAPIRouter ...
 func SyncAPIRouter() {
-	router := gin.New()
-	router.Use(echoXHeaders)
+	r := gin.New()
+	r.Use(echoXHeaders)
 
 	for _, ep := range EndpointList(false) {
-		if strings.HasPrefix(ep.Endpoint, "/_internal") {
-			ep.InternalProcess(ep.Endpoint[10:])
-			continue
-		}
-
-		h := ep.HandleJSON
-		if ep.MimeType != "" {
-			h = ep.HandleFileDownload
-		}
-
-		if strings.EqualFold(ep.Method, "ANY") {
-			router.Any(JoinContextPath(ep.Endpoint), h)
-		} else {
-			router.Handle(ep.Method, JoinContextPath(ep.Endpoint), h)
-		}
+		routing(r, ep)
 	}
 
-	router.NoRoute(noRouteHandlerWrap)
+	r.NoRoute(noRouteHandlerWrap)
 
 	apiRouterLock.Lock()
-	apiRouter = router
+	apiRouter = r
 	apiRouterLock.Unlock()
+}
+
+func routing(r *gin.Engine, ep process.APIDataModel) {
+	if strings.HasPrefix(ep.Endpoint, "/_internal") {
+		ep.InternalProcess(ep.Endpoint[10:])
+		return
+	}
+
+	h := ep.HandleJSON
+	if ep.MimeType != "" {
+		h = ep.HandleFileDownload
+	}
+
+	if strings.EqualFold(ep.Method, "ANY") {
+		r.Any(JoinContextPath(ep.Endpoint), h)
+	} else {
+		r.Handle(ep.Method, JoinContextPath(ep.Endpoint), h)
+	}
 }
 
 func noRouteHandlerWrap(c *gin.Context) {
