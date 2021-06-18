@@ -92,25 +92,26 @@ type Endpoint struct {
 }
 
 func (a *APIDataModel) HandleFileDownload(c *gin.Context) {
-	rr := c.Request.Context().Value(RouterResultKey).(RouterResult)
+	rr := c.Request.Context().Value(RouterResultKey).(*RouterResult)
 	rr.RouterServed = true
 	rr.Filename = a.Filename
 	c.Status(http.StatusOK)
 
-	if c.Query("_view") == "" {
-		h := c.Header
-		h("Content-Disposition", mime.FormatMediaType("attachment",
-			map[string]string{"filename": a.Filename}))
-		h("Content-Description", "File Transfer")
-		h("Content-Type", "application/octet-stream")
-		h("Content-Transfer-Encoding", "binary")
-		h("Expires", "0")
-		h("Cache-Control", "must-revalidate")
-		h("Pragma", "public")
+	dl := c.Query("_dl")
+	if dl == "" {
+		http.ServeContent(c.Writer, c.Request, a.Filename, time.Now(), bytes.NewReader(a.FileContent))
+		return
 	}
 
-	http.ServeContent(c.Writer, c.Request, a.Filename, time.Now(),
-		bytes.NewReader(a.FileContent))
+	h := c.Header
+	h("Content-Disposition", mime.FormatMediaType("attachment",
+		map[string]string{"filename": a.Filename}))
+	h("Content-Description", "File Transfer")
+	h("Content-Type", "application/octet-stream")
+	h("Content-Transfer-Encoding", "binary")
+	h("Expires", "0")
+	h("Cache-Control", "must-revalidate")
+	h("Pragma", "public")
 }
 
 // JsTreeDataModel ...
