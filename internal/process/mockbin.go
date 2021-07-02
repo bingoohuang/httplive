@@ -23,16 +23,20 @@ type MockbinCookie struct {
 }
 
 func (v MockbinCookie) SetCookie(c *gin.Context) {
+	c.SetSameSite(parseSameSite(v.SameSite)) // must called before c.SetCookie()
 	c.SetCookie(v.Name, v.Value, v.MaxAge, v.Path, v.Domain, v.Secure, v.HTTPOnly)
-	switch lowerVal := strings.ToLower(v.SameSite); lowerVal {
+}
+
+func parseSameSite(sameSite string) http.SameSite {
+	switch lowerVal := strings.ToLower(sameSite); lowerVal {
 	case "lax":
-		c.SetSameSite(http.SameSiteLaxMode)
+		return http.SameSiteLaxMode
 	case "strict":
-		c.SetSameSite(http.SameSiteStrictMode)
+		return http.SameSiteStrictMode
 	case "none":
-		c.SetSameSite(http.SameSiteNoneMode)
+		return http.SameSiteNoneMode
 	default:
-		c.SetSameSite(http.SameSiteDefaultMode)
+		return http.SameSiteDefaultMode
 	}
 }
 
