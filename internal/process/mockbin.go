@@ -19,10 +19,21 @@ type MockbinCookie struct {
 	Domain   string `json:"domain"`
 	Secure   bool   `json:"secure"`
 	HTTPOnly bool   `json:"httpOnly"`
+	SameSite string `json:"sameSite"`
 }
 
 func (v MockbinCookie) SetCookie(c *gin.Context) {
 	c.SetCookie(v.Name, v.Value, v.MaxAge, v.Path, v.Domain, v.Secure, v.HTTPOnly)
+	switch lowerVal := strings.ToLower(v.SameSite); lowerVal {
+	case "lax":
+		c.SetSameSite(http.SameSiteLaxMode)
+	case "strict":
+		c.SetSameSite(http.SameSiteStrictMode)
+	case "none":
+		c.SetSameSite(http.SameSiteNoneMode)
+	default:
+		c.SetSameSite(http.SameSiteDefaultMode)
+	}
 }
 
 // Mockbin defines the mockbin struct.
