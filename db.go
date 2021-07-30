@@ -2,10 +2,10 @@ package httplive
 
 import (
 	"context"
-	"database/sql"
 	"embed"
 	"fmt"
 	"io/fs"
+	"log"
 	"net/http"
 	"net/http/httputil"
 	"path/filepath"
@@ -13,40 +13,83 @@ import (
 	"sync"
 	"time"
 
+	"github.com/timshannon/bolthold"
+
 	"github.com/bingoohuang/golog/pkg/hlog"
 	"github.com/bingoohuang/httplive/internal/process"
 	"github.com/bingoohuang/httplive/pkg/http2curl"
 	"github.com/bingoohuang/httplive/pkg/util"
 	"github.com/bingoohuang/sariaf"
-	"github.com/bingoohuang/sqlx"
 	"github.com/bingoohuang/sysinfo"
 	"github.com/gin-gonic/gin"
 
-	// import sqlite3
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/mssola/user_agent"
 )
 
 // Dao defines the api to access the database.
 type Dao struct {
-	CreateTable     func()
-	ListEndpoints   func() []process.Endpoint
-	FindEndpoint    func(ID process.ID) *process.Endpoint
-	FindByEndpoint  func(endpoint string) *process.Endpoint
-	AddEndpoint     func(process.Endpoint) int
-	LastInsertRowID func() process.ID
-	AddEndpointID   func(process.Endpoint)
-	UpdateEndpoint  func(process.Endpoint)
-	DeleteEndpoint  func(process.Endpoint)
-	Logger          sqlx.DaoLogger
+	db *bolthold.Store
+}
+
+func (d *Dao) CreateTable() {}
+func (d *Dao) ListEndpoints() (result []process.Endpoint) {
+	err := d.db.ForEach(nil, func(record *process.Endpoint) error {
+		result = append(result, *record)
+		return nil
+	})
+	if err != nil {
+		log.Printf("ForEach error: %v", err)
+	}
+	return
+}
+
+func (d *Dao) FindEndpoint(ID uint64) *process.Endpoint {
+	result := &process.Endpoint{}
+	err := d.db.FindOne(result, bolthold.Where(bolthold.Key).Eq(ID))
+	if err == bolthold.ErrNotFound {
+		return nil
+	}
+
+	return result
+}
+
+func (d *Dao) FindByEndpoint(endpoint string) *process.Endpoint {
+	result := &process.Endpoint{}
+	err := d.db.FindOne(result, bolthold.Where("endpoint").Eq(endpoint).Index("endpoint"))
+	if err == bolthold.ErrNotFound {
+		return nil
+	}
+
+	return result
+}
+
+func (d *Dao) AddEndpoint(ep process.Endpoint) uint64 {
+	if err := d.db.Insert(bolthold.NextSequence(), &ep); err != nil {
+		log.Printf("insert error: %v", err)
+	}
+
+	return ep.ID
+}
+
+func (d *Dao) AddEndpointID(ep process.Endpoint) {
+	d.AddEndpoint(ep)
+}
+
+func (d *Dao) UpdateEndpoint(ep process.Endpoint) {
+	if err := d.db.Update(ep.ID, &ep); err != nil {
+		log.Printf("Update error: %v", err)
+	}
+}
+
+func (d *Dao) DeleteEndpoint(ep process.Endpoint) {
+	if err := d.db.Delete(ep.ID, &ep); err != nil {
+		log.Printf("Delete error: %v", err)
+	}
 }
 
 // CreateDao creates a dao.
-func CreateDao(db *sql.DB) (*Dao, error) {
-	dao := &Dao{Logger: &sqlx.DaoLogrus{}}
-	err := sqlx.CreateDao(dao, sqlx.WithDB(db), sqlx.WithSQLStr(asset("httplive.sql")))
-
-	return dao, err
+func CreateDao(db *bolthold.Store) (*Dao, error) {
+	return &Dao{db: db}, nil
 }
 
 var (
@@ -76,11 +119,7 @@ func DBDo(f func(dao *Dao) error) error {
 	dbLock.Lock()
 	defer dbLock.Unlock()
 
-	db, err := sql.Open("sqlite3", Environments.DBFile)
-	if err != nil {
-		return err
-	}
-
+	db, err := bolthold.Open(Environments.DBFile, 0o666, nil)
 	defer db.Close()
 
 	dao, err := CreateDao(db)
@@ -107,40 +146,33 @@ func CreateDB(createDbRequired bool) error {
 func createDB(dao *Dao) error {
 	dao.CreateTable()
 
-	demo := dao.FindEndpoint("0")
-	if demo != nil {
+	if len(dao.ListEndpoints()) > 0 {
 		return nil
 	}
 
 	now := util.TimeFmt(time.Now())
-	i := -1
-	f := func() process.ID {
-		i++
-		return process.ID(fmt.Sprintf("%d", i))
-	}
-
 	dao.AddEndpointID(process.Endpoint{
-		ID: f(), Endpoint: "/api/demo", Methods: http.MethodGet, MimeType: "", Filename: "",
+		ID: 0, Endpoint: "/api/demo", Methods: http.MethodGet, MimeType: "", Filename: "",
 		Body: asset("apidemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
 	})
 	dao.AddEndpointID(process.Endpoint{
-		ID: f(), Endpoint: "/dynamic/demo", Methods: http.MethodPost, MimeType: "", Filename: "",
+		ID: 0, Endpoint: "/dynamic/demo", Methods: http.MethodPost, MimeType: "", Filename: "",
 		Body: asset("dynamicdemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
 	})
 	dao.AddEndpointID(process.Endpoint{
-		ID: f(), Endpoint: "/proxy/demo", Methods: http.MethodGet, MimeType: "", Filename: "",
+		ID: 0, Endpoint: "/proxy/demo", Methods: http.MethodGet, MimeType: "", Filename: "",
 		Body: asset("proxydemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
 	})
 	dao.AddEndpointID(process.Endpoint{
-		ID: f(), Endpoint: "/echo/:id", Methods: "ANY", MimeType: "", Filename: "",
+		ID: 0, Endpoint: "/echo/:id", Methods: "ANY", MimeType: "", Filename: "",
 		Body: asset("echo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
 	})
 	dao.AddEndpointID(process.Endpoint{
-		ID: f(), Endpoint: "/mockbin", Methods: "ANY", MimeType: "", Filename: "",
+		ID: 0, Endpoint: "/mockbin", Methods: "ANY", MimeType: "", Filename: "",
 		Body: asset("mockbin.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
 	})
 	dao.AddEndpointID(process.Endpoint{
-		ID: f(), Endpoint: "/eval", Methods: "ANY", MimeType: "", Filename: "",
+		ID: 0, Endpoint: "/eval", Methods: "ANY", MimeType: "", Filename: "",
 		Body: asset("evaldemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
 	})
 	//dao.AddEndpointID(process.Endpoint{
@@ -170,7 +202,7 @@ func SaveEndpoint(model process.APIDataModel) (*process.Endpoint, error) {
 	var ep *process.Endpoint
 
 	err := DBDo(func(dao *Dao) error {
-		old := dao.FindEndpoint(model.ID)
+		old := dao.FindEndpoint(model.ID.Int())
 		if old == nil {
 			old = dao.FindByEndpoint(model.Endpoint)
 		}
@@ -178,8 +210,7 @@ func SaveEndpoint(model process.APIDataModel) (*process.Endpoint, error) {
 		bean := CreateEndpoint(model, old)
 
 		if old == nil {
-			lastInsertRowID := dao.AddEndpoint(bean)
-			bean.ID = process.ID(fmt.Sprintf("%d", lastInsertRowID))
+			bean.ID = dao.AddEndpoint(bean)
 		} else {
 			dao.UpdateEndpoint(bean)
 		}
@@ -199,7 +230,7 @@ func CreateAPIDataModel(ep *process.Endpoint, query bool) *process.APIDataModel 
 	}
 
 	m := &process.APIDataModel{
-		ID:       ep.ID,
+		ID:       process.ID(fmt.Sprintf("%d", ep.ID)),
 		Endpoint: ep.Endpoint,
 		Method:   ep.Methods,
 		MimeType: ep.MimeType,
@@ -235,7 +266,7 @@ func CreateEndpoint(model process.APIDataModel, old *process.Endpoint) process.E
 	}
 
 	ep := process.Endpoint{
-		ID:         model.ID,
+		ID:         model.ID.Int(),
 		Endpoint:   model.Endpoint,
 		Methods:    model.Method,
 		MimeType:   model.MimeType,
@@ -251,7 +282,7 @@ func CreateEndpoint(model process.APIDataModel, old *process.Endpoint) process.E
 			ep.Body = old.Body
 		}
 
-		if old.ID != "" && ep.ID == "" {
+		if old.ID != 0 && ep.ID == 0 {
 			ep.ID = old.ID
 		}
 	}
@@ -265,7 +296,7 @@ func DeleteEndpoint(id string) error {
 
 	return DBDo(func(dao *Dao) error {
 		dao.DeleteEndpoint(process.Endpoint{
-			ID:        process.ID(id),
+			ID:        process.ID(id).Int(),
 			DeletedAt: util.TimeFmt(time.Now()),
 		})
 
@@ -278,7 +309,7 @@ func GetEndpoint(id process.ID) (*process.APIDataModel, error) {
 	var model *process.APIDataModel
 
 	err := DBDo(func(dao *Dao) error {
-		ep := dao.FindEndpoint(id)
+		ep := dao.FindEndpoint(id.Int())
 		model = CreateAPIDataModel(ep, true)
 
 		return nil

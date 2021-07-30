@@ -43,7 +43,7 @@ func (i *ID) UnmarshalJSON(b []byte) error {
 }
 
 // Int convert ID to integer.
-func (i ID) Int() int { return cast.ToInt(i) }
+func (i ID) Int() uint64 { return cast.ToUint64(string(i)) }
 
 // APIDataModel ...
 type APIDataModel struct {
@@ -77,8 +77,8 @@ type WsMessage struct {
 
 // Endpoint is the structure for table httplive_endpoint.
 type Endpoint struct {
-	ID         ID     `name:"id"`
-	Endpoint   string `name:"endpoint"`
+	ID         uint64 `name:"id" boltholdKey:"id"`
+	Endpoint   string `name:"endpoint" boltholdIndex:"endpoint"`
 	Methods    string `name:"methods"`
 	MimeType   string `name:"mime_type"`
 	Filename   string `name:"filename"`
@@ -149,7 +149,7 @@ func (a APIDataModel) getLabelByMethod() string {
 
 func (a APIDataModel) CreateJsTreeModel() JsTreeDataModel {
 	model := JsTreeDataModel{
-		ID:        a.ID.Int(),
+		ID:        int(a.ID.Int()),
 		OriginKey: util.JoinLowerKeys(a.Method, a.Endpoint),
 		Key:       a.Endpoint,
 		Text:      a.Endpoint,

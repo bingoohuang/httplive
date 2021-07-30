@@ -28,8 +28,8 @@ func main() {
 	app.Usage = "HTTP Request & Response Service, Mock HTTP"
 	app.Version = httplive.Version + " @ " + httplive.UpdateTime
 	app.Flags = []cli.Flag{
-		cli.StringFlag{Name: "ports, p", Value: "5003", Usage: "Hosting ports, eg. 5003,5004.", Destination: &env.Ports},
-		cli.StringFlag{Name: "dbpath, d", Value: "", Usage: "Full path of the httplive.db.", Destination: &env.DBFullPath},
+		cli.StringFlag{Name: "ports, p", Value: "5003", Usage: "Hosting ports, eg. 5003,5004", Destination: &env.Ports},
+		cli.StringFlag{Name: "dbpath, d", Value: "", Usage: "Full path of the httplive.db", Destination: &env.DBFullPath},
 		cli.StringFlag{Name: "context, c", Value: "", Usage: "context path of httplive service", Destination: &env.ContextPath},
 		cli.BoolFlag{Name: "log, l", Usage: "enable golog logging", Destination: &env.Logging},
 	}
@@ -49,13 +49,11 @@ func main() {
 
 func createDB(env *httplive.EnvVars) error {
 	fullPath, createDbRequired := fixDBPath(env)
-
 	env.DBFile = fullPath
-
 	return httplive.CreateDB(createDbRequired)
 }
 
-const defaultDb = "httplive.db"
+const defaultDb = "httplive.bolt"
 
 func fixDBPath(env *httplive.EnvVars) (string, bool) {
 	fullPath := env.DBFullPath
@@ -73,7 +71,7 @@ func fixDBPath(env *httplive.EnvVars) (string, bool) {
 	}
 
 	p := fullPath
-	if strings.HasSuffix(fullPath, ".db") {
+	if strings.HasSuffix(fullPath, ".bolt") {
 		p = filepath.Dir(p)
 	} else {
 		fullPath = path.Join(p, defaultDb)

@@ -14,7 +14,7 @@ import (
 
 const (
 	// Version is the version x.y.z.
-	Version = "1.2.0"
+	Version = "1.3.0"
 	// UpdateTime is the update time.
 	UpdateTime = "2021-01-13 14:25:21"
 )
