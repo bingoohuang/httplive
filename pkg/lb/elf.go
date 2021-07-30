@@ -15,7 +15,7 @@ const (
 	Retries
 )
 
-// GetAttempts returns the attempts for request
+// GetAttempts returns the attempts for request.
 func GetAttempts(r *http.Request) int {
 	if attempts, ok := r.Context().Value(Attempts).(int); ok {
 		return attempts
@@ -24,7 +24,7 @@ func GetAttempts(r *http.Request) int {
 	return 1
 }
 
-// GetRetry returns the retries for request
+// GetRetry returns the retries for request.
 func GetRetry(r *http.Request) int {
 	if retry, ok := r.Context().Value(Retries).(int); ok {
 		return retry

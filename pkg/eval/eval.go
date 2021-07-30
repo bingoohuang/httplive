@@ -5,9 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/patrickmn/go-cache"
-
 	"github.com/bingoohuang/jj"
+	"github.com/patrickmn/go-cache"
 )
 
 // Create a cache with a default expiration time of 5 minutes, and which
@@ -45,7 +44,7 @@ func evalInternal(endpoint string, body string) string {
 		return string(jj.Ugly([]byte(intervalEval(ctx, body, jj.Parse(body)))))
 	}
 
-	cacheTime := parseCacheTime(body, err)
+	cacheTime := parseCacheTime(body)
 	if cacheTime <= 0 {
 		return f0()
 	}
@@ -67,7 +66,8 @@ func evalInternal(endpoint string, body string) string {
 	return f1()
 }
 
-func parseCacheTime(body string, err error) time.Duration {
+func parseCacheTime(body string) time.Duration {
+	var err error
 	cacheTime := time.Duration(0)
 	if v := jj.Get(body, "_cache"); v.Type == jj.String {
 		if cacheTime, err = time.ParseDuration(v.String()); err != nil {

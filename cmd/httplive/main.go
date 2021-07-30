@@ -9,19 +9,13 @@ import (
 	"strings"
 
 	"github.com/bingoohuang/golog"
-
-	"github.com/bingoohuang/httplive/internal/process"
-
-	"github.com/bingoohuang/httplive/pkg/util"
-
-	"github.com/sirupsen/logrus"
-
 	"github.com/bingoohuang/gor/giu"
-
 	"github.com/bingoohuang/httplive"
-
+	"github.com/bingoohuang/httplive/internal/process"
+	"github.com/bingoohuang/httplive/pkg/util"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
 

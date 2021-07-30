@@ -73,7 +73,7 @@ func MakeTransport(t time.Duration, closeConnections bool) *http.Transport {
 		DisableKeepAlives:     closeConnections,
 		TLSHandshakeTimeout:   t,
 		ResponseHeaderTimeout: t,
-		TLSClientConfig:       &tls.Config{InsecureSkipVerify: true}, // nolint
+		TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
 	}
 }
 

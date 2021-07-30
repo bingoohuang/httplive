@@ -10,12 +10,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bingoohuang/goip"
 	"github.com/bingoohuang/httplive/pkg/util"
-
 	"github.com/gin-gonic/gin"
 	"github.com/gobars/cmd"
-
-	"github.com/bingoohuang/goip"
 )
 
 // ProcessIP process ip request.

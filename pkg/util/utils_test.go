@@ -6,9 +6,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/bingoohuang/jj"
-
 	"github.com/bingoohuang/govaluate"
+	"github.com/bingoohuang/jj"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )

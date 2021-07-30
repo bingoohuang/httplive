@@ -12,10 +12,9 @@ import (
 	"time"
 
 	"github.com/bingoohuang/gg/pkg/randx"
-	"github.com/skratchdot/open-golang/open"
-
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	"github.com/skratchdot/open-golang/open"
 )
 
 // Or returns or if s is empty.
@@ -106,7 +105,7 @@ func GetHeaders(c *gin.Context) map[string]string {
 
 // GetMultiPartFormValue ...
 func GetMultiPartFormValue(c *gin.Context) interface{} {
-	_ = c.Request.ParseMultipartForm(32 * 1024 * 1024) // nolint gomnd 32M
+	_ = c.Request.ParseMultipartForm(32 * 1024 * 1024) // 32M
 
 	if c.Request.MultipartForm != nil {
 		form := make(gin.H)

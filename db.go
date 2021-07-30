@@ -13,21 +13,18 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bingoohuang/httplive/pkg/http2curl"
-	"github.com/bingoohuang/sysinfo"
-	"github.com/mssola/user_agent"
-
 	"github.com/bingoohuang/golog/pkg/hlog"
-
-	"github.com/bingoohuang/sariaf"
-
 	"github.com/bingoohuang/httplive/internal/process"
+	"github.com/bingoohuang/httplive/pkg/http2curl"
 	"github.com/bingoohuang/httplive/pkg/util"
-
+	"github.com/bingoohuang/sariaf"
+	"github.com/bingoohuang/sqlx"
+	"github.com/bingoohuang/sysinfo"
 	"github.com/gin-gonic/gin"
 
-	"github.com/bingoohuang/sqlx"
-	_ "github.com/mattn/go-sqlite3" // import sqlite3
+	// import sqlite3
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/mssola/user_agent"
 )
 
 // Dao defines the api to access the database.
@@ -52,9 +49,11 @@ func CreateDao(db *sql.DB) (*Dao, error) {
 	return dao, err
 }
 
-//go:embed assets
-var assetsFS embed.FS
-var subAssets fs.FS
+var (
+	//go:embed assets
+	assetsFS  embed.FS
+	subAssets fs.FS
+)
 
 func init() {
 	subAssets, _ = fs.Sub(assetsFS, "assets")

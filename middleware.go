@@ -8,16 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mssola/user_agent"
-
 	"github.com/bingoohuang/httplive/internal/process"
-
 	"github.com/bingoohuang/httplive/internal/res"
 	"github.com/bingoohuang/httplive/pkg/util"
-
-	"github.com/sirupsen/logrus"
-
 	"github.com/gin-gonic/gin"
+	"github.com/mssola/user_agent"
+	"github.com/sirupsen/logrus"
 )
 
 //go:embed public

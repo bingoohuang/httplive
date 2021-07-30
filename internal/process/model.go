@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/bingoohuang/gg/pkg/cast"
 	"io/ioutil"
 	"log"
 	"mime"
@@ -16,19 +15,16 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mssola/user_agent"
-
+	"github.com/bingoohuang/gg/pkg/cast"
 	"github.com/bingoohuang/httplive/pkg/acl"
-	"github.com/bingoohuang/sariaf"
-	"github.com/casbin/casbin/v2"
-	"github.com/sirupsen/logrus"
-
-	"github.com/bingoohuang/sysinfo"
-
 	"github.com/bingoohuang/httplive/pkg/http2curl"
-
 	"github.com/bingoohuang/httplive/pkg/util"
+	"github.com/bingoohuang/sariaf"
+	"github.com/bingoohuang/sysinfo"
+	"github.com/casbin/casbin/v2"
 	"github.com/gin-gonic/gin"
+	"github.com/mssola/user_agent"
+	"github.com/sirupsen/logrus"
 )
 
 // ContextKey as context key type.

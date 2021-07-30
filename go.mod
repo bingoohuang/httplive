@@ -2,8 +2,6 @@ module github.com/bingoohuang/httplive
 
 go 1.16
 
-//replace github.com/bingoohuang/govaluate => ../govaluate
-
 require (
 	github.com/bingoohuang/gg v0.0.0-20210608031951-72884199b0ac
 	github.com/bingoohuang/goip v0.0.0-20210508064334-25b5f0ce3522

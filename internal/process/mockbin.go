@@ -2,12 +2,13 @@ package process
 
 import (
 	"encoding/json"
+	"net/http"
+	"strings"
+
 	"github.com/bingoohuang/gg/pkg/thinktime"
 	"github.com/bingoohuang/httplive/pkg/util"
 	"github.com/bingoohuang/jj"
 	"github.com/gin-gonic/gin"
-	"net/http"
-	"strings"
 )
 
 // MockbinCookie defines the cookie format.

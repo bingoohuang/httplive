@@ -5,12 +5,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/bingoohuang/jj"
-
-	"github.com/bingoohuang/httplive/pkg/eval"
-
 	"github.com/bingoohuang/govaluate"
+	"github.com/bingoohuang/httplive/pkg/eval"
 	"github.com/bingoohuang/httplive/pkg/util"
+	"github.com/bingoohuang/jj"
 	"github.com/gin-gonic/gin"
 )
 

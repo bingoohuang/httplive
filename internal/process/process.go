@@ -10,16 +10,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bingoohuang/jj"
-
-	"github.com/bingoohuang/httplive/pkg/eval"
-
-	"github.com/bingoohuang/httplive/pkg/httptee"
-
-	"github.com/bingoohuang/httplive/pkg/lb"
-
 	"github.com/bingoohuang/govaluate"
+	"github.com/bingoohuang/httplive/pkg/eval"
+	"github.com/bingoohuang/httplive/pkg/httptee"
+	"github.com/bingoohuang/httplive/pkg/lb"
 	"github.com/bingoohuang/httplive/pkg/util"
+	"github.com/bingoohuang/jj"
 	"github.com/gin-gonic/gin"
 )
 
@@ -52,9 +48,8 @@ func (ep Endpoint) CreateProxy(m *APIDataModel) {
 		httpteeHandler *httptee.Handler
 	)
 
-	tee := jj.Get(ep.Body, "_tee")
-	isTee := proxy.Type == jj.String && util.HasPrefix(proxy.String(), "http")
-	if isTee {
+	if isTee := proxy.Type == jj.String && util.HasPrefix(proxy.String(), "http"); isTee {
+		tee := jj.Get(ep.Body, "_tee")
 		if httpteeHandler, err = httptee.CreateHandler(tee.String()); err != nil {
 			log.Printf("E! tee server failed %v", err)
 		}

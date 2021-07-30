@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/bingoohuang/httplive/pkg/util"
-
 	"github.com/gorilla/websocket"
 )
 
@@ -28,9 +27,7 @@ var (
 
 // Init initializes the environments.
 func (r *EnvVars) Init() {
-	if strings.HasSuffix(r.ContextPath, "/") {
-		r.ContextPath = r.ContextPath[:len(r.ContextPath)-1]
-	}
+	r.ContextPath = strings.TrimPrefix(r.ContextPath, "/")
 
 	if !util.HasPrefix(r.ContextPath, "/") {
 		r.ContextPath = "/" + r.ContextPath

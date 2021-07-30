@@ -25,7 +25,7 @@ type AlternativeReq struct {
 	Handler *Handler
 }
 
-// Do do the request.
+// Run Do do the request.
 func (r AlternativeReq) Run() error {
 	r.Handler.handleAlterRequest(r, util.Transport)
 	return nil

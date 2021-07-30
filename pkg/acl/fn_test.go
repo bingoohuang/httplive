@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/bingoohuang/httplive/pkg/acl"
-
 	"github.com/stretchr/testify/assert"
 )
 
