@@ -3,7 +3,6 @@ package httplive
 import (
 	"context"
 	"embed"
-	"errors"
 	"fmt"
 	"github.com/asdine/storm/v3"
 	"io/fs"
@@ -32,8 +31,6 @@ type Dao struct {
 }
 
 func (d *Dao) CreateTable() {}
-
-var found = errors.New("found one")
 
 func (d *Dao) HasEndpoints() (has bool) {
 	var result []process.Endpoint
@@ -181,6 +178,14 @@ func createDB(dao *Dao) error {
 	dao.AddEndpointID(process.Endpoint{
 		ID: 0, Endpoint: "/eval", Methods: "ANY", MimeType: "", Filename: "",
 		Body: asset("evaldemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
+	})
+	dao.AddEndpointID(process.Endpoint{
+		ID: 0, Endpoint: "/health", Methods: http.MethodGet, MimeType: "", Filename: "",
+		Body: `{"Status": "OK"}`, CreateTime: now, UpdateTime: now, DeletedAt: "",
+	})
+	dao.AddEndpointID(process.Endpoint{
+		ID: 0, Endpoint: "/status", Methods: http.MethodGet, MimeType: "", Filename: "",
+		Body: `{"Status": "OK"}`, CreateTime: now, UpdateTime: now, DeletedAt: "",
 	})
 	//dao.AddEndpointID(process.Endpoint{
 	//	ID: f(), Endpoint: "/_internal/apiacl", Methods: "ANY", MimeType: "", Filename: "",
