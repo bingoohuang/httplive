@@ -30,11 +30,15 @@ fmt:
 	gci -w -local github.com/daixiang0/gci
 
 install: init
-	go install -ldflags="-s -w" ./...
-	ls -lh ~/go/bin/${app}
+	go install -trimpath -ldflags='-s -w'  ./...
+	upx ~/go/bin/httplive
 
-linux: init
-	GOOS=linux GOARCH=amd64 go install -ldflags="-s -w" ./...
+linux-amd64: init
+	GOOS=linux GOARCH=amd64 go install -trimpath -ldflags='-extldflags "-static" -s -w'  ./...
+	upx ~/go/bin/linux_amd64/httplive
+linux-arm64: init
+	GOOS=linux GOARCH=arm64 go install -trimpath -ldflags='-extldflags "-static" -s -w'  ./...
+	upx ~/go/bin/linux_arm64/httplive
 
 upx:
 	ls -lh ~/go/bin/${app}
@@ -79,5 +83,3 @@ targz:
 	find . -type f -name '\.*' -print
 	cd .. && rm -f ${app}.tar.gz && tar czvf ${app}.tar.gz --exclude .git --exclude .idea ${app}
 
-static:
-	CGO_ENABLED=1 go build -a -tags netgo -ldflags '-w -s -extldflags "-static"' .
