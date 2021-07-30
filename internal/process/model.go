@@ -77,8 +77,8 @@ type WsMessage struct {
 
 // Endpoint is the structure for table httplive_endpoint.
 type Endpoint struct {
-	ID         uint64 `name:"id" boltholdKey:"id"`
-	Endpoint   string `name:"endpoint" boltholdIndex:"endpoint"`
+	ID         uint64 `name:"id" storm:"id,increment"`
+	Endpoint   string `name:"endpoint" storm:"unique"`
 	Methods    string `name:"methods"`
 	MimeType   string `name:"mime_type"`
 	Filename   string `name:"filename"`

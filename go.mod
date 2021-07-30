@@ -3,6 +3,7 @@ module github.com/bingoohuang/httplive
 go 1.16
 
 require (
+	github.com/asdine/storm/v3 v3.2.1
 	github.com/bingoohuang/gg v0.0.0-20210608031951-72884199b0ac
 	github.com/bingoohuang/goip v0.0.0-20210508064334-25b5f0ce3522
 	github.com/bingoohuang/golog v0.0.0-20210518063956-b6bef02c2f30
@@ -28,9 +29,8 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/tidwall/pretty v1.0.2 // indirect
-	github.com/timshannon/bolthold v0.0.0-20210714195957-21d58def9701
 	github.com/urfave/cli v1.22.3
 	github.com/valyala/fasthttp v1.18.0
+	go.etcd.io/bbolt v1.3.6 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
-	google.golang.org/appengine v1.4.0 // indirect
 )

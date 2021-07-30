@@ -5,6 +5,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"github.com/asdine/storm/v3"
 	"io/fs"
 	"log"
 	"net/http"
@@ -13,8 +14,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/timshannon/bolthold"
 
 	"github.com/bingoohuang/golog/pkg/hlog"
 	"github.com/bingoohuang/httplive/internal/process"
@@ -29,7 +28,7 @@ import (
 
 // Dao defines the api to access the database.
 type Dao struct {
-	db *bolthold.Store
+	db *storm.DB
 }
 
 func (d *Dao) CreateTable() {}
@@ -37,21 +36,15 @@ func (d *Dao) CreateTable() {}
 var found = errors.New("found one")
 
 func (d *Dao) HasEndpoints() (has bool) {
-	err := d.db.ForEach(nil, func(record *process.Endpoint) error {
-		has = true
-		return found
-	})
-	if err != nil && err != found {
+	var result []process.Endpoint
+	if err := d.db.All(&result, storm.Limit(1)); err != nil {
 		log.Printf("ForEach error: %v", err)
 	}
-	return
+
+	return len(result) > 0
 }
 func (d *Dao) ListEndpoints() (result []process.Endpoint) {
-	err := d.db.ForEach(nil, func(record *process.Endpoint) error {
-		result = append(result, *record)
-		return nil
-	})
-	if err != nil {
+	if err := d.db.All(&result); err != nil {
 		log.Printf("ForEach error: %v", err)
 	}
 	return
@@ -59,8 +52,8 @@ func (d *Dao) ListEndpoints() (result []process.Endpoint) {
 
 func (d *Dao) FindEndpoint(ID uint64) *process.Endpoint {
 	result := &process.Endpoint{}
-	err := d.db.FindOne(result, bolthold.Where(bolthold.Key).Eq(ID))
-	if err == bolthold.ErrNotFound {
+	err := d.db.One("ID", ID, result)
+	if err == storm.ErrNotFound {
 		return nil
 	}
 
@@ -69,8 +62,8 @@ func (d *Dao) FindEndpoint(ID uint64) *process.Endpoint {
 
 func (d *Dao) FindByEndpoint(endpoint string) *process.Endpoint {
 	result := &process.Endpoint{}
-	err := d.db.FindOne(result, bolthold.Where("endpoint").Eq(endpoint).Index("endpoint"))
-	if err == bolthold.ErrNotFound {
+	err := d.db.One("Endpoint", endpoint, result)
+	if err == storm.ErrNotFound {
 		return nil
 	}
 
@@ -78,7 +71,7 @@ func (d *Dao) FindByEndpoint(endpoint string) *process.Endpoint {
 }
 
 func (d *Dao) AddEndpoint(ep process.Endpoint) uint64 {
-	if err := d.db.Insert(bolthold.NextSequence(), &ep); err != nil {
+	if err := d.db.Save(&ep); err != nil {
 		log.Printf("insert error: %v", err)
 	}
 
@@ -90,19 +83,19 @@ func (d *Dao) AddEndpointID(ep process.Endpoint) {
 }
 
 func (d *Dao) UpdateEndpoint(ep process.Endpoint) {
-	if err := d.db.Update(ep.ID, &ep); err != nil {
+	if err := d.db.Update(&ep); err != nil {
 		log.Printf("Update error: %v", err)
 	}
 }
 
 func (d *Dao) DeleteEndpoint(ep process.Endpoint) {
-	if err := d.db.Delete(ep.ID, &ep); err != nil {
+	if err := d.db.DeleteStruct(&ep); err != nil {
 		log.Printf("Delete error: %v", err)
 	}
 }
 
 // CreateDao creates a dao.
-func CreateDao(db *bolthold.Store) (*Dao, error) {
+func CreateDao(db *storm.DB) (*Dao, error) {
 	return &Dao{db: db}, nil
 }
 
@@ -133,7 +126,7 @@ func DBDo(f func(dao *Dao) error) error {
 	dbLock.Lock()
 	defer dbLock.Unlock()
 
-	db, err := bolthold.Open(Environments.DBFile, 0o666, nil)
+	db, err := storm.Open(Environments.DBFile)
 	defer db.Close()
 
 	dao, err := CreateDao(db)
