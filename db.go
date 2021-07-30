@@ -3,6 +3,7 @@ package httplive
 import (
 	"context"
 	"embed"
+	"errors"
 	"fmt"
 	"io/fs"
 	"log"
@@ -32,6 +33,19 @@ type Dao struct {
 }
 
 func (d *Dao) CreateTable() {}
+
+var found = errors.New("found one")
+
+func (d *Dao) HasEndpoints() (has bool) {
+	err := d.db.ForEach(nil, func(record *process.Endpoint) error {
+		has = true
+		return found
+	})
+	if err != nil && err != found {
+		log.Printf("ForEach error: %v", err)
+	}
+	return
+}
 func (d *Dao) ListEndpoints() (result []process.Endpoint) {
 	err := d.db.ForEach(nil, func(record *process.Endpoint) error {
 		result = append(result, *record)
@@ -146,7 +160,7 @@ func CreateDB(createDbRequired bool) error {
 func createDB(dao *Dao) error {
 	dao.CreateTable()
 
-	if len(dao.ListEndpoints()) > 0 {
+	if dao.HasEndpoints() {
 		return nil
 	}
 
