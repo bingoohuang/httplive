@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/bingoohuang/gg/pkg/ss"
 	"net/http"
 	"os"
 	"path"
@@ -47,30 +48,30 @@ func main() {
 }
 
 func createDB(env *httplive.EnvVars) error {
-	fullPath, createDbRequired := fixDBPath(env)
+	fullPath := fixDBPath(env)
 	env.DBFile = fullPath
-	return httplive.CreateDB(createDbRequired)
+	return httplive.CreateDB()
 }
 
 const defaultDb = "httplive.bolt"
 
-func fixDBPath(env *httplive.EnvVars) (string, bool) {
+func fixDBPath(env *httplive.EnvVars) string {
 	fullPath := env.DBFullPath
 	workingDir, _ := os.Getwd()
 	if fullPath == "" {
-		return path.Join(workingDir, defaultDb), true
+		return path.Join(workingDir, defaultDb)
 	}
 
 	if s, err := os.Stat(fullPath); err == nil {
 		if s.IsDir() {
-			return path.Join(fullPath, defaultDb), true
+			return path.Join(fullPath, defaultDb)
 		}
 
-		return fullPath, false
+		return fullPath
 	}
 
 	p := fullPath
-	if strings.HasSuffix(fullPath, ".bolt") {
+	if ss.HasSuffix(fullPath, ".bolt", ".db") {
 		p = filepath.Dir(p)
 	} else {
 		fullPath = path.Join(p, defaultDb)
@@ -82,7 +83,7 @@ func fixDBPath(env *httplive.EnvVars) (string, bool) {
 		}
 	}
 
-	return fullPath, true
+	return fullPath
 }
 
 func host(env *httplive.EnvVars) error {

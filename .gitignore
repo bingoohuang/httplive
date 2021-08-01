@@ -18,3 +18,4 @@ httplive.db
 .idea
 .history
 vendor
+/httplive.bolt

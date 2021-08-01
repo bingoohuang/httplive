@@ -20,7 +20,6 @@ func CreateProxyServerPool(serverList string) *BackendPool {
 		}
 
 		b := &Backend{alive: true}
-
 		if err := b.ParseAddress(tok); err != nil {
 			log.Printf("E! failed to parse %s, error", tok)
 			continue

@@ -30,8 +30,6 @@ type Dao struct {
 	db *storm.DB
 }
 
-func (d *Dao) CreateTable() {}
-
 func (d *Dao) HasEndpoints() (has bool) {
 	var result []process.Endpoint
 	if err := d.db.All(&result, storm.Limit(1)); err != nil {
@@ -53,7 +51,9 @@ func (d *Dao) FindEndpoint(ID uint64) *process.Endpoint {
 	if err == storm.ErrNotFound {
 		return nil
 	}
-
+	if err != nil {
+		log.Printf("find error: %v", err)
+	}
 	return result
 }
 
@@ -62,6 +62,9 @@ func (d *Dao) FindByEndpoint(endpoint string) *process.Endpoint {
 	err := d.db.One("Endpoint", endpoint, result)
 	if err == storm.ErrNotFound {
 		return nil
+	}
+	if err != nil {
+		log.Printf("find error: %v", err)
 	}
 
 	return result
@@ -73,10 +76,6 @@ func (d *Dao) AddEndpoint(ep process.Endpoint) uint64 {
 	}
 
 	return ep.ID
-}
-
-func (d *Dao) AddEndpointID(ep process.Endpoint) {
-	d.AddEndpoint(ep)
 }
 
 func (d *Dao) UpdateEndpoint(ep process.Endpoint) {
@@ -135,66 +134,31 @@ func DBDo(f func(dao *Dao) error) error {
 }
 
 // CreateDB ...
-func CreateDB(createDbRequired bool) error {
-	if createDbRequired {
-		if err := DBDo(createDB); err != nil {
-			return err
-		}
+func CreateDB() error {
+	if err := DBDo(createDB); err != nil {
+		return err
 	}
 
 	SyncAPIRouter()
-
 	return nil
 }
 
 func createDB(dao *Dao) error {
-	dao.CreateTable()
-
 	if dao.HasEndpoints() {
 		return nil
 	}
 
 	now := util.TimeFmt(time.Now())
-	dao.AddEndpointID(process.Endpoint{
-		ID: 0, Endpoint: "/api/demo", Methods: http.MethodGet, MimeType: "", Filename: "",
-		Body: asset("apidemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
-	})
-	dao.AddEndpointID(process.Endpoint{
-		ID: 0, Endpoint: "/dynamic/demo", Methods: http.MethodPost, MimeType: "", Filename: "",
-		Body: asset("dynamicdemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
-	})
-	dao.AddEndpointID(process.Endpoint{
-		ID: 0, Endpoint: "/proxy/demo", Methods: http.MethodGet, MimeType: "", Filename: "",
-		Body: asset("proxydemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
-	})
-	dao.AddEndpointID(process.Endpoint{
-		ID: 0, Endpoint: "/echo/:id", Methods: "ANY", MimeType: "", Filename: "",
-		Body: asset("echo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
-	})
-	dao.AddEndpointID(process.Endpoint{
-		ID: 0, Endpoint: "/mockbin", Methods: "ANY", MimeType: "", Filename: "",
-		Body: asset("mockbin.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
-	})
-	dao.AddEndpointID(process.Endpoint{
-		ID: 0, Endpoint: "/eval", Methods: "ANY", MimeType: "", Filename: "",
-		Body: asset("evaldemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: "",
-	})
-	dao.AddEndpointID(process.Endpoint{
-		ID: 0, Endpoint: "/health", Methods: http.MethodGet, MimeType: "", Filename: "",
-		Body: `{"Status": "OK"}`, CreateTime: now, UpdateTime: now, DeletedAt: "",
-	})
-	dao.AddEndpointID(process.Endpoint{
-		ID: 0, Endpoint: "/status", Methods: http.MethodGet, MimeType: "", Filename: "",
-		Body: `{"Status": "OK"}`, CreateTime: now, UpdateTime: now, DeletedAt: "",
-	})
-	//dao.AddEndpointID(process.Endpoint{
-	//	ID: f(), Endpoint: "/_internal/apiacl", Methods: "ANY", MimeType: "", Filename: "",
-	//	Body: asset("apiacl.casbin"), CreateTime: now, UpdateTime: now, DeletedAt: "",
-	//})
-	//dao.AddEndpointID(process.Endpoint{
-	//	ID: f(), Endpoint: "/_internal/adminacl", Methods: "ANY", MimeType: "", Filename: "",
-	//	Body: asset("adminacl.casbin"), CreateTime: now, UpdateTime: now, DeletedAt: "",
-	//})
+	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/api/demo", Methods: http.MethodGet, MimeType: "", Filename: "", Body: asset("apidemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
+	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/dynamic/demo", Methods: http.MethodPost, MimeType: "", Filename: "", Body: asset("dynamicdemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
+	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/proxy/demo", Methods: http.MethodGet, MimeType: "", Filename: "", Body: asset("proxydemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
+	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/echo/:id", Methods: "ANY", MimeType: "", Filename: "", Body: asset("echo.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
+	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/mockbin", Methods: "ANY", MimeType: "", Filename: "", Body: asset("mockbin.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
+	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/eval", Methods: "ANY", MimeType: "", Filename: "", Body: asset("evaldemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
+	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/health", Methods: http.MethodGet, MimeType: "", Filename: "", Body: `{"Status": "OK"}`, CreateTime: now, UpdateTime: now, DeletedAt: ""})
+	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/status", Methods: http.MethodGet, MimeType: "", Filename: "", Body: `{"Status": "OK"}`, CreateTime: now, UpdateTime: now, DeletedAt: ""})
+	//dao.AddEndpointID(process.Endpoint{ ID: f(), Endpoint: "/_internal/apiacl", Methods: "ANY", MimeType: "", Filename: "", Body: asset("apiacl.casbin"), CreateTime: now, UpdateTime: now, DeletedAt: "", })
+	//dao.AddEndpointID(process.Endpoint{ ID: f(), Endpoint: "/_internal/adminacl", Methods: "ANY", MimeType: "", Filename: "", Body: asset("adminacl.casbin"), CreateTime: now, UpdateTime: now, DeletedAt: "", })
 
 	return nil
 }
@@ -277,18 +241,7 @@ func CreateEndpoint(model process.APIDataModel, old *process.Endpoint) process.E
 		body = string(model.FileContent)
 	}
 
-	ep := process.Endpoint{
-		ID:         model.ID.Int(),
-		Endpoint:   model.Endpoint,
-		Methods:    model.Method,
-		MimeType:   model.MimeType,
-		Filename:   model.Filename,
-		Body:       body,
-		CreateTime: now,
-		UpdateTime: now,
-		DeletedAt:  "",
-	}
-
+	ep := process.Endpoint{ID: model.ID.Int(), Endpoint: model.Endpoint, Methods: model.Method, MimeType: model.MimeType, Filename: model.Filename, Body: body, CreateTime: now, UpdateTime: now, DeletedAt: ""}
 	if old != nil {
 		if old.Body != "" && ep.Body == "" {
 			ep.Body = old.Body
@@ -501,12 +454,10 @@ func EndpointList(query bool) []process.APIDataModel {
 
 	_ = DBDo(func(dao *Dao) error {
 		endPoints = dao.ListEndpoints()
-
 		return nil
 	})
 
 	items := make([]process.APIDataModel, len(endPoints))
-
 	for i, v := range endPoints {
 		v := v
 		items[i] = *CreateAPIDataModel(&v, query)
