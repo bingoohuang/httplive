@@ -16,7 +16,6 @@ type EnvVars struct {
 	Logging     bool
 }
 
-// nolint gochecknoglobals
 var (
 	// Environments ...
 	Environments = EnvVars{}

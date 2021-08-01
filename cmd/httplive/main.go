@@ -37,7 +37,6 @@ func main() {
 	app.Action = func(c *cli.Context) error {
 		if c.NArg() > 0 {
 			fmt.Println("Unknown args:", c.Args())
-			// cli.ShowAppHelp(c)
 			os.Exit(1)
 		}
 
@@ -88,7 +87,6 @@ func fixDBPath(env *httplive.EnvVars) (string, bool) {
 
 func host(env *httplive.EnvVars) error {
 	env.Init()
-	portsArr := strings.Split(env.Ports, ",")
 
 	if err := createDB(env); err != nil {
 		logrus.Warnf("failed to create DB %v", err)
@@ -112,10 +110,11 @@ func host(env *httplive.EnvVars) error {
 	group.Use(process.AdminAuth)
 	ga.Route(group).HandleFn(new(httplive.WebCliController))
 
+	portsArr := strings.Split(env.Ports, ",")
 	for _, p := range portsArr {
 		go func(port string) {
 			if err := r.Run(":" + port); err != nil {
-				panic(err)
+				fmt.Println(err)
 			}
 		}(p)
 	}
@@ -125,7 +124,6 @@ func host(env *httplive.EnvVars) error {
 	select {}
 }
 
-// nolint gochecknoglobals
 var wsupgrader = websocket.Upgrader{
 	CheckOrigin:     func(r *http.Request) bool { return true },
 	ReadBufferSize:  1024, // nolint gomnd

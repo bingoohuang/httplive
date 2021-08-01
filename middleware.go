@@ -85,9 +85,7 @@ func broadcast(c *gin.Context, rr process.RouterResult) {
 	for id, conn := range Clients {
 		if err := conn.WriteJSON(msg); err != nil {
 			logrus.Warnf("conn WriteJSON error: %v", err)
-
 			conn.Close()
-
 			delete(Clients, id)
 		}
 	}
