@@ -1,22 +1,21 @@
 package httplive
 
 import (
+	"github.com/bingoohuang/gor/giu"
+	"github.com/bingoohuang/httplive/internal/process"
+	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"mime"
 	"net/http"
 	"path"
 	"path/filepath"
-
-	"github.com/bingoohuang/gor/giu"
-	"github.com/bingoohuang/httplive/internal/process"
-	"github.com/gin-gonic/gin"
 )
 
 const (
 	// Version is the version x.y.z.
-	Version = "1.3.1"
+	Version = "1.3.2"
 	// UpdateTime is the update time.
-	UpdateTime = "2021-07-30 15:56:40"
+	UpdateTime = "2021-08-02 11:28:40"
 )
 
 type versionT struct {
@@ -50,9 +49,10 @@ type backupT struct {
 
 // Backup ...
 func (ctrl WebCliController) Backup(c *gin.Context, _ backupT) {
-	c.Header("Content-Disposition", `attachment; filename="`+filepath.Base(Environments.DBFile)+`"`)
-
-	http.ServeFile(c.Writer, c.Request, Environments.DBFile)
+	_ = DBDo(func(dao *Dao) error {
+		dao.Backup(c.Writer, filepath.Base(Environments.DBFile))
+		return nil
+	})
 }
 
 type downloadFileT struct {
@@ -67,7 +67,7 @@ func (ctrl WebCliController) DownloadFile(c *gin.Context, _ downloadFileT) error
 	}
 
 	if model != nil {
-		c.Header("Content-Disposition", `attachment; filename="`+model.Filename+`"`)
+		c.Header("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": model.Filename}))
 		c.Data(http.StatusOK, model.MimeType, model.FileContent)
 	} else {
 		c.Status(http.StatusNotFound)
@@ -119,7 +119,7 @@ func (ctrl WebCliController) SaveEndpoint(model process.APIDataModel, c *gin.Con
 	if filename != "" {
 		model.MimeType = mimeType
 		model.Filename = filename
-		model.Body = string(fileContent)
+		model.FileContent = fileContent
 	}
 
 	if dp, err := SaveEndpoint(model); err != nil {

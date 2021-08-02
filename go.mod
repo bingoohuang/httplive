@@ -26,4 +26,5 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/urfave/cli v1.22.5
 	github.com/valyala/fasthttp v1.28.0
+	go.etcd.io/bbolt v1.3.4
 )

@@ -5,11 +5,14 @@ import (
 	"embed"
 	"fmt"
 	"github.com/asdine/storm/v3"
+	"go.etcd.io/bbolt"
 	"io/fs"
 	"log"
+	"mime"
 	"net/http"
 	"net/http/httputil"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -87,6 +90,19 @@ func (d *Dao) UpdateEndpoint(ep process.Endpoint) {
 func (d *Dao) DeleteEndpoint(ep process.Endpoint) {
 	if err := d.db.DeleteStruct(&ep); err != nil {
 		log.Printf("Delete error: %v", err)
+	}
+}
+
+func (d *Dao) Backup(w http.ResponseWriter, name string) {
+	err := d.db.Bolt.View(func(tx *bbolt.Tx) error {
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.Header().Set("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": name}))
+		w.Header().Set("Content-Length", strconv.Itoa(int(tx.Size())))
+		_, err := tx.WriteTo(w)
+		return err
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
@@ -206,17 +222,13 @@ func CreateAPIDataModel(ep *process.Endpoint, query bool) *process.APIDataModel 
 	}
 
 	m := &process.APIDataModel{
-		ID:       process.ID(fmt.Sprintf("%d", ep.ID)),
-		Endpoint: ep.Endpoint,
-		Method:   ep.Methods,
-		MimeType: ep.MimeType,
-		Filename: ep.Filename,
-	}
-
-	if ep.Filename != "" {
-		m.FileContent = []byte(ep.Body)
-	} else {
-		m.Body = ep.Body
+		ID:          process.ID(fmt.Sprintf("%d", ep.ID)),
+		Endpoint:    ep.Endpoint,
+		Method:      ep.Methods,
+		MimeType:    ep.MimeType,
+		Filename:    ep.Filename,
+		FileContent: ep.FileContent,
+		Body:        ep.Body,
 	}
 
 	if query {
@@ -235,13 +247,10 @@ func CreateAPIDataModel(ep *process.Endpoint, query bool) *process.APIDataModel 
 // CreateEndpoint creates an endpoint from APIDataModel.
 func CreateEndpoint(model process.APIDataModel, old *process.Endpoint) process.Endpoint {
 	now := util.TimeFmt(time.Now())
-	body := model.Body
 
-	if body == "" {
-		body = string(model.FileContent)
-	}
-
-	ep := process.Endpoint{ID: model.ID.Int(), Endpoint: model.Endpoint, Methods: model.Method, MimeType: model.MimeType, Filename: model.Filename, Body: body, CreateTime: now, UpdateTime: now, DeletedAt: ""}
+	ep := process.Endpoint{ID: model.ID.Int(), Endpoint: model.Endpoint, Methods: model.Method, MimeType: model.MimeType,
+		Filename: model.Filename, FileContent: model.FileContent,
+		Body: model.Body, CreateTime: now, UpdateTime: now, DeletedAt: ""}
 	if old != nil {
 		if old.Body != "" && ep.Body == "" {
 			ep.Body = old.Body

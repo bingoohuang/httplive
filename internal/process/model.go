@@ -77,15 +77,16 @@ type WsMessage struct {
 
 // Endpoint is the structure for table httplive_endpoint.
 type Endpoint struct {
-	ID         uint64 `name:"id" storm:"id,increment"`
-	Endpoint   string `name:"endpoint" storm:"unique"`
-	Methods    string `name:"methods"`
-	MimeType   string `name:"mime_type"`
-	Filename   string `name:"filename"`
-	Body       string `name:"body"`
-	CreateTime string `name:"create_time"`
-	UpdateTime string `name:"update_time"`
-	DeletedAt  string `name:"deleted_at"`
+	ID          uint64 `name:"id" storm:"id,increment"`
+	Endpoint    string `name:"endpoint" storm:"unique"`
+	Methods     string `name:"methods"`
+	MimeType    string `name:"mime_type"`
+	Filename    string `name:"filename"`
+	Body        string `name:"body"`
+	FileContent []byte `name:"file_content"`
+	CreateTime  string `name:"create_time"`
+	UpdateTime  string `name:"update_time"`
+	DeletedAt   string `name:"deleted_at"`
 }
 
 func (a APIDataModel) HandleFileDownload(c *gin.Context) {
