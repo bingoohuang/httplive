@@ -13,9 +13,9 @@ import (
 
 const (
 	// Version is the version x.y.z.
-	Version = "1.3.2"
+	Version = "1.3.3"
 	// UpdateTime is the update time.
-	UpdateTime = "2021-08-02 11:28:40"
+	UpdateTime = "2021-08-03 11:40:24"
 )
 
 type versionT struct {

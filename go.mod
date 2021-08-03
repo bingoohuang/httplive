@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/asdine/storm/v3 v3.2.1
-	github.com/bingoohuang/gg v0.0.0-20210728092147-05aa63098dcc
+	github.com/bingoohuang/gg v0.0.0-20210803035611-4b19a79c206f
 	github.com/bingoohuang/goip v0.0.0-20210508064334-25b5f0ce3522
 	github.com/bingoohuang/golog v0.0.0-20210727011701-2319aa8459ec
 	github.com/bingoohuang/gor v0.0.0-20200628053500-ec6cb95c0e1b

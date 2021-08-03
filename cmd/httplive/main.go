@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/bingoohuang/gg/pkg/sigx"
 	"github.com/bingoohuang/gg/pkg/ss"
 	"net/http"
 	"os"
@@ -44,6 +45,7 @@ func main() {
 		return host(env)
 	}
 
+	sigx.RegisterSignalProfile(nil)
 	_ = app.Run(os.Args)
 }
 
