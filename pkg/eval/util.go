@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/bingoohuang/govaluate"
 	"github.com/bingoohuang/jj"
 )
 
@@ -71,7 +70,9 @@ func purifyColumnName(col string) string {
 	return xx[:p]
 }
 
-var exprFns = map[string]govaluate.ExpressionFunction{
+type ExpressionFunction func(arguments ...interface{}) (interface{}, error)
+
+var exprFns = map[string]ExpressionFunction{
 	"toInt": func(args ...interface{}) (interface{}, error) {
 		arg0 := args[0]
 		switch v := arg0.(type) {

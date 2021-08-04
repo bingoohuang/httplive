@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/antonmedv/expr"
 	"io/ioutil"
 	"log"
 	"mime"
@@ -459,9 +460,9 @@ func dynamicProcess(c *gin.Context, ep APIDataModel) bool {
 			parameters[k] = valuer(reqBody, c)
 		}
 
-		evaluateResult, err := v.Expr.Evaluate(parameters)
+		evaluateResult, err := expr.Run(v.Expr, parameters)
 		if err != nil {
-			log.Printf("E! Evaluate %s error %v", v.Expr.String(), err)
+			log.Printf("E! Evaluate  error %v", err)
 			return false
 		}
 

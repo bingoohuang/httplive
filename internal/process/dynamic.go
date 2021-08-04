@@ -2,10 +2,10 @@ package process
 
 import (
 	"encoding/json"
+	"github.com/antonmedv/expr/vm"
 	"net/http"
 	"strings"
 
-	"github.com/bingoohuang/govaluate"
 	"github.com/bingoohuang/httplive/pkg/eval"
 	"github.com/bingoohuang/httplive/pkg/util"
 	"github.com/bingoohuang/jj"
@@ -21,7 +21,7 @@ type DynamicValue struct {
 	Status    int               `json:"status"`
 	Headers   map[string]string `json:"headers"`
 
-	Expr                *govaluate.EvaluableExpression
+	Expr                *vm.Program
 	ParametersEvaluator map[string]Valuer
 }
 
@@ -48,9 +48,9 @@ func (v DynamicValue) responseDynamic(ep APIDataModel, c *gin.Context) {
 	c.Data(statusCode, contentType, payload)
 }
 
-func MakeParamValuer(jsonConfig string, expr *govaluate.EvaluableExpression) map[string]Valuer {
+func MakeParamValuer(jsonConfig string, vars []string) map[string]Valuer {
 	parameters := make(map[string]Valuer)
-	for _, va := range expr.Vars() {
+	for _, va := range vars {
 		parameters[va] = makeParameter(va, jsonConfig)
 	}
 

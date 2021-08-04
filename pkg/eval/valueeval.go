@@ -1,9 +1,8 @@
 package eval
 
 import (
+	"github.com/antonmedv/expr"
 	"strings"
-
-	"github.com/bingoohuang/govaluate"
 )
 
 type ValEvalEvaluator struct{}
@@ -16,12 +15,16 @@ func (d ValEvalEvaluator) Eval(ctx *Context, key, param string) EvaluatorResult 
 	if param == "" {
 		param = key
 	}
-	expr, err := govaluate.NewEvaluableExpressionWithFunctions(strings.TrimSpace(param), exprFns)
-	if err != nil {
-		return EvaluatorResult{Err: err}
+
+	vars := make(map[string]interface{})
+	for k, v := range exprFns {
+		vars[k] = v
+	}
+	for k, v := range ctx.Vars {
+		vars[k] = v
 	}
 
-	result, err := expr.Eval(govaluate.MapParameters(ctx.Vars))
+	result, err := expr.Eval(strings.TrimSpace(param), vars)
 	if err != nil {
 		return EvaluatorResult{Err: err}
 	}

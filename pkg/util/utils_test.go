@@ -3,10 +3,12 @@ package util
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/antonmedv/expr"
+	"github.com/antonmedv/expr/ast"
+	"github.com/antonmedv/expr/parser"
 	"net/http"
 	"testing"
 
-	"github.com/bingoohuang/govaluate"
 	"github.com/bingoohuang/jj"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -78,19 +80,22 @@ func TestGson(t *testing.T) {
 		}
 
 		for _, v := range dynamicValues {
-			expr, err := govaluate.NewEvaluableExpression(v.Condition)
+			tree, err := parser.Parse(v.Condition)
 			if err != nil {
 				fmt.Println(err)
 			}
 
+			visitor := &visitor{}
+			ast.Walk(&tree.Node, visitor)
+
 			parameters := make(gin.H)
-			for _, va := range expr.Vars() {
+			for _, va := range visitor.identifiers {
 				if HasPrefix(va, "json_") {
 					parameters[va] = jj.GetBytes(reqBody, va[5:]).Value()
 				}
 			}
 
-			evaluateResult, err := expr.Evaluate(parameters)
+			evaluateResult, err := expr.Eval(v.Condition, parameters)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -99,5 +104,16 @@ func TestGson(t *testing.T) {
 				fmt.Println(string(v.Response))
 			}
 		}
+	}
+}
+
+type visitor struct {
+	identifiers []string
+}
+
+func (v *visitor) Enter(_ *ast.Node) {}
+func (v *visitor) Exit(node *ast.Node) {
+	if n, ok := (*node).(*ast.IdentifierNode); ok {
+		v.identifiers = append(v.identifiers, n.Value)
 	}
 }

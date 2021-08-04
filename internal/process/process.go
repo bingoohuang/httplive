@@ -3,6 +3,9 @@ package process
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/antonmedv/expr"
+	"github.com/antonmedv/expr/ast"
+	"github.com/antonmedv/expr/parser"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -10,7 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bingoohuang/govaluate"
 	"github.com/bingoohuang/httplive/pkg/eval"
 	"github.com/bingoohuang/httplive/pkg/httptee"
 	"github.com/bingoohuang/httplive/pkg/lb"
@@ -186,6 +188,17 @@ func fulfilPayload(r *http.Request, m map[string]interface{}) {
 	}
 }
 
+type visitor struct {
+	identifiers []string
+}
+
+func (v *visitor) Enter(_ *ast.Node) {}
+func (v *visitor) Exit(node *ast.Node) {
+	if n, ok := (*node).(*ast.IdentifierNode); ok {
+		v.identifiers = append(v.identifiers, n.Value)
+	}
+}
+
 func createDynamics(epBody string, dynamicRaw []byte) (dynamicValues []DynamicValue) {
 	if err := json.Unmarshal(dynamicRaw, &dynamicValues); err != nil {
 		fmt.Println(err)
@@ -193,14 +206,23 @@ func createDynamics(epBody string, dynamicRaw []byte) (dynamicValues []DynamicVa
 	}
 
 	for i, v := range dynamicValues {
-		expr, err := govaluate.NewEvaluableExpression(v.Condition)
+		tree, err := parser.Parse(v.Condition)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 
+		expr, err := expr.Compile(v.Condition)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		visitor := &visitor{}
+		ast.Walk(&tree.Node, visitor)
+
 		dynamicValues[i].Expr = expr
-		dynamicValues[i].ParametersEvaluator = MakeParamValuer(epBody, expr)
+		dynamicValues[i].ParametersEvaluator = MakeParamValuer(epBody, visitor.identifiers)
 	}
 
 	return
