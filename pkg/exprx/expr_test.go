@@ -15,6 +15,38 @@ import (
 
 type H map[string]interface{}
 
+func TestExampleExpr(t *testing.T) {
+	type Segment struct {
+		Origin string
+	}
+	type Passengers struct {
+		Adults int
+	}
+	type Meta struct {
+		Tags map[string]string
+	}
+	type Env struct {
+		Meta
+		Segments   []*Segment
+		Passengers *Passengers
+		Marker     string
+	}
+
+	code := `all(Segments, {.Origin == "MOW"}) && Passengers.Adults > 0 && Tags["foo"] startsWith "bar"`
+	program, err := expr.Compile(code, expr.Env(Env{}))
+	assert.Nil(t, err)
+
+	env := Env{
+		Meta:       Meta{Tags: map[string]string{"foo": "bar"}},
+		Segments:   []*Segment{{Origin: "MOW"}},
+		Passengers: &Passengers{Adults: 2},
+		Marker:     "test",
+	}
+	output, err := expr.Run(program, env)
+	assert.Nil(t, err)
+	assert.Equal(t, true, output)
+}
+
 func TestEvaluate(t *testing.T) {
 	out, err := expr.Eval("foo + bar", H{"foo": 1, "bar": 2})
 	assert.Nil(t, err)
