@@ -20,7 +20,8 @@ func (d DbQueryEvaluator) Eval(ctx *Context, key, param string) EvaluatorResult 
 	resultType := JSONStr(jparam, "resultType")
 	maxRows := JSONInt(jparam, "maxRows")
 
-	db, _ := ctx.Var(instance).(*sql.DB)
+	dbInstance := ctx.Var(instance)
+	db, _ := dbInstance.(*DbReuse)
 	if db == nil {
 		return EvaluatorResult{
 			Err: fmt.Errorf("unable to find DB instance %s", instance),

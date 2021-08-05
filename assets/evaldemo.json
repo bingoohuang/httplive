@@ -10,6 +10,7 @@
   },
   "name": "@redis redis1 name",
   "db1@db-instance": {
+    "global": true,
     "dsn": "user:pass@tcp(127.0.0.1:3306)/api_statistical?charset=utf8mb4&parseTime=true&loc=Local&timeout=10s&writeTimeout=10s&readTimeout=10s"
   },
   "monthStart@time": {
