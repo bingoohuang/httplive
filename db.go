@@ -415,7 +415,7 @@ func noRouteHandler(c *gin.Context) (processed bool) {
 
 	switch {
 	case hl == "v" || p == "/v":
-		c.PureJSON(http.StatusOK, gin.H{"version": Version, "updateTime": UpdateTime})
+		c.PureJSON(http.StatusOK, gin.H{"version": appVersion, "build": buildTime, "go": goVersion, "git": gitCommit})
 	case hl == "curl" || p == "/curl":
 		values := c.Request.URL.Query()
 		delete(values, "_hl")

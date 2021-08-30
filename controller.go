@@ -1,6 +1,7 @@
 package httplive
 
 import (
+	"fmt"
 	"github.com/bingoohuang/gor/giu"
 	"github.com/bingoohuang/httplive/internal/process"
 	"github.com/gin-gonic/gin"
@@ -11,12 +12,19 @@ import (
 	"path/filepath"
 )
 
-const (
-	// Version is the version x.y.z.
-	Version = "1.3.3"
-	// UpdateTime is the update time.
-	UpdateTime = "2021-08-03 11:40:24"
+var (
+	gitCommit  = ""
+	buildTime  = ""
+	goVersion  = ""
+	appVersion = "1.3.4"
 )
+
+func Version() string {
+	return fmt.Sprintf("version: %s\n", appVersion) +
+		fmt.Sprintf("build:\t%s\n", buildTime) +
+		fmt.Sprintf("git:\t%s\n", gitCommit) +
+		fmt.Sprintf("go:\t%s\n", goVersion)
+}
 
 type versionT struct {
 	giu.T `url:"GET /version"`
@@ -24,7 +32,7 @@ type versionT struct {
 
 // Version returns version information.
 func (ctrl WebCliController) Version(_ versionT) gin.H {
-	return gin.H{"version": Version, "updateTime": UpdateTime}
+	return gin.H{"version": appVersion, "build": buildTime, "go": goVersion, "git": gitCommit}
 }
 
 type treeT struct {

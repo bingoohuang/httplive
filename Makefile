@@ -2,6 +2,24 @@
 all: default test install
 
 app=$(notdir $(shell pwd))
+goVersion := $(shell go version)
+# echo ${goVersion#go version }
+# strip prefix "go version " from output "go version go1.16.7 darwin/amd64"
+goVersion2 := $(subst go version ,,$(goVersion))
+buildTime := $(shell date '+%Y-%m-%d %H:%M:%S')
+gitCommit := $(shell git rev-list -1 HEAD)
+app := $(notdir $(shell pwd))
+goVersion := $(shell go version)
+# echo ${goVersion#go version }
+# strip prefix "go version " from output "go version go1.16.7 darwin/amd64"
+goVersion2 := $(subst go version ,,$(goVersion))
+buildTime := $(shell date '+%Y-%m-%d %H:%M:%S')
+gitCommit := $(shell git rev-list -1 HEAD)
+# https://stackoverflow.com/a/47510909
+pkg := github.com/bingoohuang/httplive
+#static := -static
+# https://ms2008.github.io/2018/10/08/golang-build-version/
+flags = "-extldflags $(static) -s -w -X '$(pkg).buildTime=$(buildTime)' -X $(pkg).gitCommit=$(gitCommit) -X '$(pkg).goVersion=$(goVersion2)'"
 
 tool:
 	go get github.com/securego/gosec/cmd/gosec
@@ -30,14 +48,14 @@ fmt:
 	gci -w -local github.com/daixiang0/gci
 
 install: init
-	go install -trimpath -ldflags='-s -w'  ./...
+	go install -trimpath -ldflags=${flags}  ./...
 	upx ~/go/bin/httplive
 
 linux-amd64: init
-	GOOS=linux GOARCH=amd64 go install -trimpath -ldflags='-extldflags "-static" -s -w'  ./...
+	GOOS=linux GOARCH=amd64 go install -trimpath -ldflags=${flags}  ./...
 	upx ~/go/bin/linux_amd64/httplive
 linux-arm64: init
-	GOOS=linux GOARCH=arm64 go install -trimpath -ldflags='-extldflags "-static" -s -w'  ./...
+	GOOS=linux GOARCH=arm64 go install -trimpath -ldflags=${flags}  ./...
 	upx ~/go/bin/linux_arm64/httplive
 
 upx:
@@ -76,7 +94,7 @@ docker:
 	gzip -f ~/dockergo/bin/${app}
 
 dockerinstall:
-	go install -v -x -a -ldflags '-extldflags "-static"' ./...
+	go install -v -x -a -ldflags=${flags} ./...
 
 targz:
 	find . -name ".DS_Store" -delete
