@@ -51,10 +51,10 @@ install: init
 	go install -trimpath -ldflags=${flags}  ./...
 	upx ~/go/bin/httplive
 
-linux-amd64: init
+linux: init
 	GOOS=linux GOARCH=amd64 go install -trimpath -ldflags=${flags}  ./...
 	upx ~/go/bin/linux_amd64/httplive
-linux-arm64: init
+arm: init
 	GOOS=linux GOARCH=arm64 go install -trimpath -ldflags=${flags}  ./...
 	upx ~/go/bin/linux_arm64/httplive
 
