@@ -3,14 +3,15 @@ package exprx
 import (
 	"errors"
 	"fmt"
+	"reflect"
+	"testing"
+	"time"
+
 	"github.com/antonmedv/expr"
 	"github.com/antonmedv/expr/ast"
 	"github.com/antonmedv/expr/parser"
 	"github.com/antonmedv/expr/vm"
 	"github.com/stretchr/testify/assert"
-	"reflect"
-	"testing"
-	"time"
 )
 
 type H map[string]interface{}

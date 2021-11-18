@@ -2,21 +2,22 @@ package httplive
 
 import (
 	"fmt"
-	"github.com/bingoohuang/gor/giu"
-	"github.com/bingoohuang/httplive/internal/process"
-	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"mime"
 	"net/http"
 	"path"
 	"path/filepath"
+
+	"github.com/bingoohuang/gor/giu"
+	"github.com/bingoohuang/httplive/internal/process"
+	"github.com/gin-gonic/gin"
 )
 
 var (
 	gitCommit  = ""
 	buildTime  = ""
 	goVersion  = ""
-	appVersion = "1.3.4"
+	appVersion = "1.3.5"
 )
 
 func Version() string {

@@ -1,8 +1,9 @@
 package eval
 
 import (
-	"github.com/antonmedv/expr"
 	"strings"
+
+	"github.com/antonmedv/expr"
 )
 
 type ValEvalEvaluator struct{}

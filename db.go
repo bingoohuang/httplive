@@ -4,8 +4,6 @@ import (
 	"context"
 	"embed"
 	"fmt"
-	"github.com/asdine/storm/v3"
-	"go.etcd.io/bbolt"
 	"io/fs"
 	"log"
 	"mime"
@@ -16,6 +14,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/asdine/storm/v3"
+	"go.etcd.io/bbolt"
 
 	"github.com/bingoohuang/golog/pkg/hlog"
 	"github.com/bingoohuang/httplive/internal/process"
@@ -41,6 +42,7 @@ func (d *Dao) HasEndpoints() (has bool) {
 
 	return len(result) > 0
 }
+
 func (d *Dao) ListEndpoints() (result []process.Endpoint) {
 	if err := d.db.All(&result); err != nil {
 		log.Printf("ForEach error: %v", err)
@@ -173,8 +175,8 @@ func createDB(dao *Dao) error {
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/eval", Methods: "ANY", MimeType: "", Filename: "", Body: asset("evaldemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/health", Methods: http.MethodGet, MimeType: "", Filename: "", Body: `{"Status": "OK"}`, CreateTime: now, UpdateTime: now, DeletedAt: ""})
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/status", Methods: http.MethodGet, MimeType: "", Filename: "", Body: `{"Status": "OK"}`, CreateTime: now, UpdateTime: now, DeletedAt: ""})
-	//dao.AddEndpointID(process.Endpoint{ ID: f(), Endpoint: "/_internal/apiacl", Methods: "ANY", MimeType: "", Filename: "", Body: asset("apiacl.casbin"), CreateTime: now, UpdateTime: now, DeletedAt: "", })
-	//dao.AddEndpointID(process.Endpoint{ ID: f(), Endpoint: "/_internal/adminacl", Methods: "ANY", MimeType: "", Filename: "", Body: asset("adminacl.casbin"), CreateTime: now, UpdateTime: now, DeletedAt: "", })
+	// dao.AddEndpointID(process.Endpoint{ ID: f(), Endpoint: "/_internal/apiacl", Methods: "ANY", MimeType: "", Filename: "", Body: asset("apiacl.casbin"), CreateTime: now, UpdateTime: now, DeletedAt: "", })
+	// dao.AddEndpointID(process.Endpoint{ ID: f(), Endpoint: "/_internal/adminacl", Methods: "ANY", MimeType: "", Filename: "", Body: asset("adminacl.casbin"), CreateTime: now, UpdateTime: now, DeletedAt: "", })
 
 	return nil
 }
@@ -248,9 +250,11 @@ func CreateAPIDataModel(ep *process.Endpoint, query bool) *process.APIDataModel 
 func CreateEndpoint(model process.APIDataModel, old *process.Endpoint) process.Endpoint {
 	now := util.TimeFmt(time.Now())
 
-	ep := process.Endpoint{ID: model.ID.Int(), Endpoint: model.Endpoint, Methods: model.Method, MimeType: model.MimeType,
+	ep := process.Endpoint{
+		ID: model.ID.Int(), Endpoint: model.Endpoint, Methods: model.Method, MimeType: model.MimeType,
 		Filename: model.Filename, FileContent: model.FileContent,
-		Body: model.Body, CreateTime: now, UpdateTime: now, DeletedAt: ""}
+		Body: model.Body, CreateTime: now, UpdateTime: now, DeletedAt: "",
+	}
 	if old != nil {
 		if old.Body != "" && ep.Body == "" {
 			ep.Body = old.Body

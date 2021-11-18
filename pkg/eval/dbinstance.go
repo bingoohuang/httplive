@@ -7,8 +7,7 @@ import (
 	"github.com/bingoohuang/jj"
 )
 
-type DbInstance struct {
-}
+type DbInstance struct{}
 
 func init() { registerEvaluator("@db-instance", &DbInstance{}) }
 

@@ -3,15 +3,17 @@ package process
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/antonmedv/expr"
-	"github.com/antonmedv/expr/ast"
-	"github.com/antonmedv/expr/parser"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"strings"
 	"time"
+
+	"github.com/antonmedv/expr"
+	"github.com/antonmedv/expr/ast"
+	"github.com/antonmedv/expr/parser"
+	"github.com/mssola/user_agent"
 
 	"github.com/bingoohuang/httplive/pkg/eval"
 	"github.com/bingoohuang/httplive/pkg/httptee"
@@ -142,6 +144,7 @@ func CreateRequestMap(c *gin.Context, model *APIDataModel) map[string]interface{
 		fulfilRouter(c, model, m)
 	}
 	fulfilQuery(r, m)
+	fulfilUserAgent(r, m)
 	fulfilOther(r, m)
 	fulfilPayload(r, m)
 
@@ -169,6 +172,25 @@ func fulfilRouter(c *gin.Context, model *APIDataModel, m map[string]interface{})
 
 		m["routerParams"] = p
 	}
+}
+
+func fulfilUserAgent(r *http.Request, m map[string]interface{}) {
+	userAgent := r.UserAgent()
+	ua := user_agent.New(userAgent)
+	m["User-Agent-OS"] = ua.OS()
+	browser, browserVersion := ua.Browser()
+	m["User-Agent-Browser"] = browser
+	m["User-Agent-BrowserVersion"] = browserVersion
+	m["User-Agent-Bot"] = ua.Bot()
+	m["User-Agent-Mobile"] = ua.Mobile()
+	engine, engineVersion := ua.Engine()
+	m["User-Agent-Engine"] = engine
+	m["User-Agent-EngineVersion"] = engineVersion
+	m["User-Agent-Mozilla"] = ua.Mozilla()
+	m["User-Agent-OSInfo"] = ua.OSInfo()
+	m["User-Agent-Platform"] = ua.Platform()
+	m["User-Agent-Localization"] = ua.Localization()
+	m["User-Agent-OS"] = ua.OS()
 }
 
 func fulfilQuery(r *http.Request, m map[string]interface{}) {

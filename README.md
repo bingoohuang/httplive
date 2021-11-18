@@ -1,6 +1,6 @@
 ---
 title: "Rest API designer"
-version: 1.3.1
+version: 1.3.5
 ---
 
 # HttpLive
@@ -21,6 +21,10 @@ Load balancing, Round-robin operations can be operated easily with multi-port mo
 
 With the support of HttpLive you; we can make it more useful without compromising on simple usage
 and increase the productivity of our development and testing environments.
+
+## Features
+
+1. 2021-11-18 `http://127.0.0.1:5003/echo.json` returns user agent string's parsing results[^1]
 
 ## Installation
 
@@ -161,3 +165,9 @@ sleep in mockbin format demo:
                                         starttransfer:1102ms           |
                                                                     total:1103ms
     ```
+
+
+
+[^1]: 
+
+![img.png](_imgs/img.png)
