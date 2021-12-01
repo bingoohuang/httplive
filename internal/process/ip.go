@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bingoohuang/goip"
+	"github.com/bingoohuang/gg/pkg/goip"
 	"github.com/bingoohuang/httplive/pkg/util"
 	"github.com/gin-gonic/gin"
 	"github.com/gobars/cmd"

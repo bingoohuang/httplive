@@ -17,8 +17,8 @@ type EnvVars struct {
 }
 
 var (
-	// Environments ...
-	Environments = EnvVars{}
+	// Envs ...
+	Envs = EnvVars{}
 
 	// Clients ...
 	Clients = make(map[string]*websocket.Conn)

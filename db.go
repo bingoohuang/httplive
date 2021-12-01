@@ -15,6 +15,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bingoohuang/gg/pkg/v"
+
 	"github.com/asdine/storm/v3"
 	"go.etcd.io/bbolt"
 
@@ -33,6 +35,7 @@ type Dao struct {
 	db *storm.DB
 }
 
+// HasEndpoints test if any endpoint exits already.
 func (d *Dao) HasEndpoints() (has bool) {
 	var result []process.Endpoint
 	if err := d.db.All(&result, storm.Limit(1)); err != nil {
@@ -139,7 +142,7 @@ func DBDo(f func(dao *Dao) error) error {
 	dbLock.Lock()
 	defer dbLock.Unlock()
 
-	db, err := storm.Open(Environments.DBFile)
+	db, err := storm.Open(Envs.DBFile)
 	defer db.Close()
 
 	dao, err := CreateDao(db)
@@ -316,11 +319,11 @@ func serveAPI(w http.ResponseWriter, r *http.Request) (v process.RouterResult) {
 
 // JoinContextPath joins the context path to elem.
 func JoinContextPath(elem string) string {
-	if Environments.ContextPath == "/" {
+	if Envs.ContextPath == "/" {
 		return elem
 	}
 
-	return filepath.Join(Environments.ContextPath, elem)
+	return filepath.Join(Envs.ContextPath, elem)
 }
 
 // TestAPIRouter ...
@@ -418,7 +421,7 @@ func noRouteHandler(c *gin.Context) (processed bool) {
 
 	switch {
 	case hl == "v" || p == "/v":
-		c.PureJSON(http.StatusOK, gin.H{"version": appVersion, "build": buildTime, "go": goVersion, "git": gitCommit})
+		c.PureJSON(http.StatusOK, gin.H{"version": v.AppVersion, "build": v.BuildTime, "go": v.GoVersion, "git": v.GitCommit})
 	case hl == "curl" || p == "/curl":
 		values := c.Request.URL.Query()
 		delete(values, "_hl")

@@ -1,26 +1,30 @@
-.PHONY: default test install
-all: default test install
+.PHONY: test install git.commit
+all: test install
 
 app=$(notdir $(shell pwd))
-goVersion := $(shell go version)
-# echo ${goVersion#go version }
-# strip prefix "go version " from output "go version go1.16.7 darwin/amd64"
-goVersion2 := $(subst go version ,,$(goVersion))
-buildTime := $(shell date '+%Y-%m-%d %H:%M:%S')
-gitCommit := $(shell git rev-list -1 HEAD)
-app := $(notdir $(shell pwd))
-goVersion := $(shell go version)
-# echo ${goVersion#go version }
-# strip prefix "go version " from output "go version go1.16.7 darwin/amd64"
-goVersion2 := $(subst go version ,,$(goVersion))
-buildTime := $(shell date '+%Y-%m-%d %H:%M:%S')
-gitCommit := $(shell git rev-list -1 HEAD)
+appVersion := 1.3.5
+goVersion := $(shell go version | sed 's/go version //'|sed 's/ /_/')
+# e.g. 2021-10-28T11:49:52+0800
+buildTime := $(shell date +%FT%T%z)
+# https://git-scm.com/docs/git-rev-list#Documentation/git-rev-list.txt-emaIem
+gitCommit := $(shell [ -f git.commit ] && cat git.commit || git rev-list --oneline --format=format:'%h@%aI' --max-count=1 `git rev-parse HEAD` | tail -1)
+#gitCommit := $(shell git rev-list -1 HEAD)
 # https://stackoverflow.com/a/47510909
-pkg := github.com/bingoohuang/httplive
-#static := -static
-# https://ms2008.github.io/2018/10/08/golang-build-version/
-flags = "-extldflags $(static) -s -w -X '$(pkg).buildTime=$(buildTime)' -X $(pkg).gitCommit=$(gitCommit) -X '$(pkg).goVersion=$(goVersion2)'"
+pkg := github.com/bingoohuang/gg/pkg/v
 
+extldflags := -extldflags -static
+# https://ms2008.github.io/2018/10/08/golang-build-version/
+# https://github.com/kubermatic/kubeone/blob/master/Makefile
+flags1 = -s -w -X $(pkg).BuildTime=$(buildTime) -X $(pkg).AppVersion=$(appVersion) -X $(pkg).GitCommit=$(gitCommit) -X $(pkg).GoVersion=$(goVersion)
+flags2 = ${extldflags} ${flags1}
+goinstall1 = go install -trimpath -ldflags='${flags2}' ./...
+goinstall2 = go install -trimpath -ldflags='${flags2}' ./...
+gobin := $(shell go env GOBIN)
+# try $GOPATN/bin if $gobin is empty
+gobin := $(if $(gobin),$(gobin),$(shell go env GOPATH)/bin)
+
+git.commit:
+	echo ${gitCommit} > git.commit
 tool:
 	go get github.com/securego/gosec/cmd/gosec
 
@@ -47,26 +51,18 @@ fmt:
 	gci -w -local github.com/daixiang0/gci
 
 install: init
-	go install -trimpath -ldflags=${flags}  ./...
+	${goinstall1}
 	upx ~/go/bin/httplive
 
 linux: init
-	GOOS=linux GOARCH=amd64 go install -trimpath -ldflags=${flags}  ./...
+	GOOS=linux GOARCH=amd64 ${goinstall1}
 	upx ~/go/bin/linux_amd64/httplive
 arm: init
-	GOOS=linux GOARCH=arm64 go install -trimpath -ldflags=${flags}  ./...
+	GOOS=linux GOARCH=arm64  ${goinstall1}
 	upx ~/go/bin/linux_arm64/httplive
 windows:
-	GOOS=windows GOARCH=amd64 go install -ldflags="-s -w" ./...
+	GOOS=windows GOARCH=amd64 ${goinstall1}
 	upx ~/go/bin/windows_amd64/httplive.exe
-
-upx:
-	ls -lh ~/go/bin/${app}
-	upx ~/go/bin/${app}
-	ls -lh ~/go/bin/${app}
-	ls -lh ~/go/bin/linux_amd64/${app}
-	upx ~/go/bin/linux_amd64/${app}
-	ls -lh ~/go/bin/linux_amd64/${app}
 
 test: init
 	#go test -v ./...

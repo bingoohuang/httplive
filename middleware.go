@@ -33,7 +33,7 @@ func StaticFileMiddleware(c *gin.Context) {
 		assetPath = "/public/index.html"
 	}
 
-	if res.TryGetFile(publicFS, c, assetPath, Environments.ContextPath) {
+	if res.TryGetFile(publicFS, c, assetPath, Envs.ContextPath) {
 		c.Abort()
 		return
 	}
@@ -93,8 +93,8 @@ func broadcast(c *gin.Context, rr process.RouterResult) {
 
 func trimContextPath(c *gin.Context) string {
 	p := c.Request.URL.Path
-	if Environments.ContextPath != "/" {
-		p = strings.TrimPrefix(p, Environments.ContextPath)
+	if Envs.ContextPath != "/" {
+		p = strings.TrimPrefix(p, Envs.ContextPath)
 	}
 
 	return util.Or(p, "/")
@@ -116,7 +116,7 @@ define('httplive/config', {
 	deletePath: '${ContextPath}/httplive/webcli/api/deleteendpoint',
 	treePath: '${ContextPath}/httplive/webcli/api/tree',
 	componentId: ''
-});`, Environments.Ports)), Environments.ContextPath)
+});`, Envs.Ports)), Envs.ContextPath)
 	c.Data(http.StatusOK, "application/javascript", fileContent)
 	c.Abort()
 }

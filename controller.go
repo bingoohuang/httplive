@@ -2,8 +2,6 @@ package httplive
 
 import (
 	"encoding/json"
-	"fmt"
-	"github.com/gin-gonic/gin/binding"
 	"io"
 	"io/ioutil"
 	"mime"
@@ -12,24 +10,13 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gin-gonic/gin/binding"
+
+	"github.com/bingoohuang/gg/pkg/v"
 	"github.com/bingoohuang/gor/giu"
 	"github.com/bingoohuang/httplive/internal/process"
 	"github.com/gin-gonic/gin"
 )
-
-var (
-	gitCommit  = ""
-	buildTime  = ""
-	goVersion  = ""
-	appVersion = "1.3.5"
-)
-
-func Version() string {
-	return fmt.Sprintf("version: %s\n", appVersion) +
-		fmt.Sprintf("build:\t%s\n", buildTime) +
-		fmt.Sprintf("git:\t%s\n", gitCommit) +
-		fmt.Sprintf("go:\t%s\n", goVersion)
-}
 
 type versionT struct {
 	giu.T `url:"GET /version"`
@@ -37,7 +24,7 @@ type versionT struct {
 
 // Version returns version information.
 func (ctrl WebCliController) Version(_ versionT) gin.H {
-	return gin.H{"version": appVersion, "build": buildTime, "go": goVersion, "git": gitCommit}
+	return gin.H{"version": v.AppVersion, "build": v.BuildTime, "go": v.GoVersion, "git": v.GitCommit}
 }
 
 type treeT struct {
@@ -63,7 +50,7 @@ type backupT struct {
 // Backup ...
 func (ctrl WebCliController) Backup(c *gin.Context, _ backupT) {
 	_ = DBDo(func(dao *Dao) error {
-		dao.Backup(c.Writer, filepath.Base(Environments.DBFile))
+		dao.Backup(c.Writer, filepath.Base(Envs.DBFile))
 		return nil
 	})
 }
@@ -125,6 +112,7 @@ func decodeJSON(r io.Reader, obj interface{}) error {
 	}
 	return validate(obj)
 }
+
 func validate(obj interface{}) error {
 	if binding.Validator == nil {
 		return nil

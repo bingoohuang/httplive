@@ -8,6 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/bingoohuang/gg/pkg/ctl"
+	"github.com/bingoohuang/gg/pkg/fla9"
+
 	"github.com/bingoohuang/gg/pkg/sigx"
 	"github.com/bingoohuang/gg/pkg/ss"
 
@@ -19,35 +22,31 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli"
 )
 
 func main() {
 	gin.SetMode(gin.ReleaseMode)
-	app := cli.NewApp()
-	env := &httplive.Environments
+	env := &httplive.Envs
 
-	app.Name = "httplive"
-	app.Usage = "HTTP Request & Response Service, Mock HTTP"
-	app.Version = httplive.Version()
-	app.Flags = []cli.Flag{
-		cli.StringFlag{Name: "ports, p", Value: "5003", Usage: "Hosting ports, eg. 5003,5004", Destination: &env.Ports},
-		cli.StringFlag{Name: "dbpath, d", Value: "", Usage: "Full path of the httplive.db", Destination: &env.DBFullPath},
-		cli.StringFlag{Name: "context, c", Value: "", Usage: "context path of httplive service", Destination: &env.ContextPath},
-		cli.BoolFlag{Name: "log, l", Usage: "enable golog logging", Destination: &env.Logging},
+	fla := fla9.NewFlagSet(os.Args[0]+" (HTTP Request & Response Service, Mock HTTP)", fla9.ExitOnError)
+	fla.StringVar(&env.Ports, "ports,p", "5003", "Hosting ports, eg. 5003,5004")
+	fla.StringVar(&env.DBFullPath, "dbpath,d", "", "Full path of the httplive.bolt")
+	fla.StringVar(&env.ContextPath, "context,c", "", "Context path of httplive http service")
+	fla.BoolVar(&env.Logging, "log,l", false, "Enable golog logging")
+	pInit := fla.Bool("init", false, "Create initial ctl and exit")
+	fla.Parse(os.Args[1:])
+	ctl.Config{Initing: *pInit}.ProcessInit()
+
+	// "HTTP Request & Response Service, Mock HTTP"
+
+	sigx.RegisterSignalProfile()
+
+	if fla.NArg() > 0 {
+		fmt.Println("Unknown args:", fla.Args())
+		os.Exit(1)
 	}
 
-	app.Action = func(c *cli.Context) error {
-		if c.NArg() > 0 {
-			fmt.Println("Unknown args:", c.Args())
-			os.Exit(1)
-		}
-
-		return host(env)
-	}
-
-	sigx.RegisterSignalProfile(nil)
-	_ = app.Run(os.Args)
+	host(env)
 }
 
 func createDB(env *httplive.EnvVars) error {
@@ -89,12 +88,12 @@ func fixDBPath(env *httplive.EnvVars) string {
 	return fullPath
 }
 
-func host(env *httplive.EnvVars) error {
+func host(env *httplive.EnvVars) {
 	env.Init()
 
 	if err := createDB(env); err != nil {
 		logrus.Warnf("failed to create DB %v", err)
-		return err
+		return
 	}
 
 	if env.Logging {
