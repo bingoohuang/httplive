@@ -70,7 +70,7 @@ func (m Mockbin) IsValid() bool {
 		countIf(m.ContentType != "")+
 		countIf(len(m.Payload) > 0)+
 		countIf(len(m.Headers) > 0)+
-		countIf(len(m.Cookies) > 0) >= 3
+		countIf(len(m.Cookies) > 0) >= 1
 }
 
 func (m Mockbin) Redirect(c *gin.Context) {

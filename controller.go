@@ -1,12 +1,16 @@
 package httplive
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/gin-gonic/gin/binding"
+	"io"
 	"io/ioutil"
 	"mime"
 	"net/http"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/bingoohuang/gor/giu"
 	"github.com/bingoohuang/httplive/internal/process"
@@ -108,8 +112,49 @@ type saveT struct {
 	giu.T `url:"POST /api/save"`
 }
 
+func decodeJSON(r io.Reader, obj interface{}) error {
+	decoder := json.NewDecoder(r)
+	if binding.EnableDecoderUseNumber {
+		decoder.UseNumber()
+	}
+	if binding.EnableDecoderDisallowUnknownFields {
+		decoder.DisallowUnknownFields()
+	}
+	if err := decoder.Decode(obj); err != nil {
+		return err
+	}
+	return validate(obj)
+}
+func validate(obj interface{}) error {
+	if binding.Validator == nil {
+		return nil
+	}
+	return binding.Validator.ValidateStruct(obj)
+}
+
 // Save 保存body.
-func (ctrl WebCliController) Save(model process.APIDataModel, _ saveT) (giu.HTTPStatus, interface{}) {
+func (ctrl WebCliController) Save(c *gin.Context, _ saveT) (giu.HTTPStatus, interface{}) {
+	endpoint := c.Query("endpoint")
+	method := c.Query("method")
+	body := c.Query("body")
+	if body == "" {
+		v, _ := ioutil.ReadAll(c.Request.Body)
+		body = string(v)
+	}
+	var model process.APIDataModel
+	if endpoint == "" {
+		if err := decodeJSON(strings.NewReader(body), &model); err != nil {
+			return giu.HTTPStatus(http.StatusBadRequest), gin.H{"error": err.Error()}
+		}
+	} else {
+		model.Endpoint = endpoint
+		if method == "" {
+			method = "ANY"
+		}
+		model.Method = method
+		model.Body = body
+	}
+
 	dp, err := SaveEndpoint(model)
 	if err != nil {
 		return giu.HTTPStatus(http.StatusBadRequest), gin.H{"error": err.Error()}
