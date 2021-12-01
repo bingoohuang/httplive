@@ -67,10 +67,12 @@ func (m Mockbin) IsValid() bool {
 	return countIf(m.Status >= 100)+
 		countIf(m.Method != "")+
 		countIf(m.RedirectURL != "")+
+		countIf(len(m.Headers) > 0)+
+		countIf(len(m.Cookies) > 0)+
+		countIf(m.Close)+
 		countIf(m.ContentType != "")+
 		countIf(len(m.Payload) > 0)+
-		countIf(len(m.Headers) > 0)+
-		countIf(len(m.Cookies) > 0) >= 1
+		countIf(m.Sleep != "") >= 1
 }
 
 func (m Mockbin) Redirect(c *gin.Context) {

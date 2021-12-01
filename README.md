@@ -25,9 +25,9 @@ and increase the productivity of our development and testing environments.
 ## Features
 
 1. 2021-12-01 admin api made more easy
-    - `curl 'http://127.0.0.1:5003/httplive/webcli/api/save?endpoint=/x1'  -d '{"close": true}}'` 
-    - `curl 'http://127.0.0.1:5003/httplive/webcli/api/save?endpoint=/x1'  -d '@a.json` 
-    - `curl 'http://127.0.0.1:5003/httplive/webcli/api/save?endpoint=/x2&method=GET'  -d '{"Status": true}'`
+    - `curl 'http://127.0.0.1:5003/httplive/webcli/api/save?endpoint=/x1' -d '{"close": true}}'` 
+    - `curl 'http://127.0.0.1:5003/httplive/webcli/api/save?endpoint=/x1' -d '@a.json` 
+    - `curl 'http://127.0.0.1:5003/httplive/webcli/api/save?endpoint=/x2&method=GET' -d '{"Status": true}'`
 2. 2021-11-18 `http://127.0.0.1:5003/echo.json` returns user agent string's parsing results[^1]
 
 ## Installation
