@@ -22,7 +22,6 @@ import (
 	"github.com/bingoohuang/httplive/pkg/http2curl"
 	"github.com/bingoohuang/httplive/pkg/util"
 	"github.com/bingoohuang/sariaf"
-	"github.com/bingoohuang/sysinfo"
 	"github.com/casbin/casbin/v2"
 	"github.com/gin-gonic/gin"
 	"github.com/mssola/user_agent"
@@ -409,18 +408,6 @@ func dealHl(c *gin.Context, ep APIDataModel) (bool, gin.HandlerFunc) {
 		}
 	case "conf":
 		util.GinData(c, []byte(ep.Body))
-	case "sysinfo":
-		showsMap := make(map[string]bool)
-		for _, p := range strings.Split("host,mem,cpu,disk,interf,ps", ",") {
-			showsMap[p] = true
-		}
-		if useJSON {
-			c.PureJSON(http.StatusOK, sysinfo.GetSysInfo(showsMap))
-		} else {
-			c.Status(http.StatusOK)
-			c.Header("Content-Type", util.ContentTypeText)
-			sysinfo.PrintTable(showsMap, "~", c.Writer)
-		}
 	default:
 		return dealMore(hl)
 	}

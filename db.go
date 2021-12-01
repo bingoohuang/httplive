@@ -23,7 +23,6 @@ import (
 	"github.com/bingoohuang/httplive/pkg/http2curl"
 	"github.com/bingoohuang/httplive/pkg/util"
 	"github.com/bingoohuang/sariaf"
-	"github.com/bingoohuang/sysinfo"
 	"github.com/gin-gonic/gin"
 
 	"github.com/mssola/user_agent"
@@ -433,18 +432,6 @@ func noRouteHandler(c *gin.Context) (processed bool) {
 			c.PureJSON(http.StatusOK, gin.H{"time": util.TimeFmt(time.Now())})
 		} else {
 			c.Data(http.StatusOK, util.ContentTypeText, []byte(util.TimeFmt(time.Now())))
-		}
-	case hl == "sysinfo" || p == "/sysinfo":
-		showsMap := make(map[string]bool)
-		for _, p := range strings.Split("host,mem,cpu,disk,interf,ps", ",") {
-			showsMap[p] = true
-		}
-		if useJSON {
-			c.PureJSON(http.StatusOK, sysinfo.GetSysInfo(showsMap))
-		} else {
-			c.Status(http.StatusOK)
-			c.Header("Content-Type", util.ContentTypeText)
-			sysinfo.PrintTable(showsMap, "~", c.Writer)
 		}
 	case (hl == "" && p == "/") || hl == "echo" || p == "/echo":
 		if useJSON {

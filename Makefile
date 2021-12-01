@@ -56,6 +56,9 @@ linux: init
 arm: init
 	GOOS=linux GOARCH=arm64 go install -trimpath -ldflags=${flags}  ./...
 	upx ~/go/bin/linux_arm64/httplive
+windows:
+	GOOS=windows GOARCH=amd64 go install -ldflags="-s -w" ./...
+	upx ~/go/bin/windows_amd64/httplive.exe
 
 upx:
 	ls -lh ~/go/bin/${app}
