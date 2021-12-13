@@ -1,4 +1,5 @@
 {
+  "_mockbin": true,
   "status": 200,
   "method": "GET",
   "redirectURL": "",
