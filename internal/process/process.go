@@ -98,6 +98,11 @@ func (ep *Endpoint) CreateDefault(m *APIDataModel) {
 }
 
 func (ep *Endpoint) CreateMockbin(m *APIDataModel) {
+	echoType := jj.Get(ep.Body, "_mockbin")
+	if !echoType.Bool() {
+		return
+	}
+
 	var b Mockbin
 
 	if err := json.Unmarshal([]byte(ep.Body), &b); err != nil || !b.IsValid() {
