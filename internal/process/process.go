@@ -146,7 +146,7 @@ func CreateRequestMap(c *gin.Context, model *APIDataModel) map[string]interface{
 	fulfilQuery(r, m)
 	fulfilUserAgent(r, m)
 	fulfilOther(r, m)
-	fulfilPayload(r, m)
+	fulfilPayload(r, m, c.Query("body"))
 
 	m["timeTo"] = util.TimeFmt(time.Now())
 	return m
@@ -199,7 +199,11 @@ func fulfilQuery(r *http.Request, m map[string]interface{}) {
 	}
 }
 
-func fulfilPayload(r *http.Request, m map[string]interface{}) {
+func fulfilPayload(r *http.Request, m map[string]interface{}, body string) {
+	if body == "no" {
+		return
+	}
+
 	payload, _ := ioutil.ReadAll(r.Body)
 	if len(payload) > 0 {
 		if util.HasContentType(r, "application/json") {
