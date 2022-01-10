@@ -182,20 +182,20 @@ func fulfilRouter(c *gin.Context, model *APIDataModel, m map[string]interface{})
 func fulfilUserAgent(r *http.Request, m map[string]interface{}) {
 	userAgent := r.UserAgent()
 	ua := user_agent.New(userAgent)
-	m["User-Agent-OS"] = ua.OS()
+	m["Ua-OS"] = ua.OS()
 	browser, browserVersion := ua.Browser()
-	m["User-Agent-Browser"] = browser
-	m["User-Agent-BrowserVersion"] = browserVersion
-	m["User-Agent-Bot"] = ua.Bot()
-	m["User-Agent-Mobile"] = ua.Mobile()
+	m["Ua-Browser"] = browser
+	m["Ua-BrowserVersion"] = browserVersion
+	m["Ua-Bot"] = ua.Bot()
+	m["Ua-Mobile"] = ua.Mobile()
 	engine, engineVersion := ua.Engine()
-	m["User-Agent-Engine"] = engine
-	m["User-Agent-EngineVersion"] = engineVersion
-	m["User-Agent-Mozilla"] = ua.Mozilla()
-	m["User-Agent-OSInfo"] = ua.OSInfo()
-	m["User-Agent-Platform"] = ua.Platform()
-	m["User-Agent-Localization"] = ua.Localization()
-	m["User-Agent-OS"] = ua.OS()
+	m["Ua-Engine"] = engine
+	m["Ua-EngineVersion"] = engineVersion
+	m["Ua-Mozilla"] = ua.Mozilla()
+	m["Ua-OSInfo"] = ua.OSInfo()
+	m["Ua-Platform"] = ua.Platform()
+	m["Ua-Localization"] = ua.Localization()
+	m["Ua-OS"] = ua.OS()
 }
 
 func fulfilQuery(r *http.Request, m map[string]interface{}) {
