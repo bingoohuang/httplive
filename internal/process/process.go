@@ -48,20 +48,20 @@ func (ep Endpoint) CreateProxy(m *APIDataModel) {
 	}
 
 	var (
-		err            error
-		httpteeHandler *httptee.Handler
+		err        error
+		teeHandler *httptee.Handler
 	)
 
 	if isTee := proxy.Type == jj.String && util.HasPrefix(proxy.String(), "http"); isTee {
 		tee := jj.Get(ep.Body, "_tee")
-		if httpteeHandler, err = httptee.CreateHandler(tee.String()); err != nil {
+		if teeHandler, err = httptee.CreateHandler(tee.String()); err != nil {
 			log.Printf("E! tee server failed %v", err)
 		}
 	}
 
 	m.ServeFn = func(c *gin.Context) {
-		if httpteeHandler != nil {
-			httpteeHandler.Tee(c.Request)
+		if teeHandler != nil {
+			teeHandler.Tee(c.Request)
 		}
 
 		p := pool.GetNextPeer()
