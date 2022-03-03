@@ -4,7 +4,7 @@ import (
 	"embed"
 	"fmt"
 	"net/http"
-	"path/filepath"
+	"path"
 	"strings"
 	"time"
 
@@ -28,7 +28,7 @@ func StaticFileMiddleware(c *gin.Context) {
 	}
 
 	uriPath := strings.TrimPrefix(p, "/httplive")
-	assetPath := filepath.Join("/public", uriPath)
+	assetPath := path.Join("/public", uriPath)
 	if c.Request.Method == http.MethodGet && uriPath == "/" {
 		assetPath = "/public/index.html"
 	}

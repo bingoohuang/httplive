@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"encoding/csv"
 	"net/http"
-	"path/filepath"
+	"path"
 	"strings"
 	"time"
 
@@ -173,7 +173,7 @@ func WildcardMatch(request, policy string) bool {
 	}
 
 	for _, p := range strings.Split(policy, "/") {
-		if matched, err := filepath.Match(p, request); err != nil {
+		if matched, err := path.Match(p, request); err != nil {
 			logrus.Errorf("wildcardMatch pattern %s error %v", p, err)
 		} else if matched {
 			return true

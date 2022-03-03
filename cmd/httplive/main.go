@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"path/filepath"
 	"strings"
 
 	"github.com/bingoohuang/gg/pkg/ctl"
@@ -74,7 +73,7 @@ func fixDBPath(env *httplive.EnvVars) string {
 
 	p := fullPath
 	if ss.HasSuffix(fullPath, ".bolt", ".db") {
-		p = filepath.Dir(p)
+		p = path.Dir(p)
 	} else {
 		fullPath = path.Join(p, defaultDb)
 	}

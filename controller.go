@@ -7,7 +7,6 @@ import (
 	"mime"
 	"net/http"
 	"path"
-	"path/filepath"
 	"strings"
 
 	"github.com/gin-gonic/gin/binding"
@@ -50,7 +49,7 @@ type backupT struct {
 // Backup ...
 func (ctrl WebCliController) Backup(c *gin.Context, _ backupT) {
 	_ = DBDo(func(dao *Dao) error {
-		dao.Backup(c.Writer, filepath.Base(Envs.DBFile))
+		dao.Backup(c.Writer, path.Base(Envs.DBFile))
 		return nil
 	})
 }

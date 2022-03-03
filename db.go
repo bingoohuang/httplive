@@ -9,7 +9,7 @@ import (
 	"mime"
 	"net/http"
 	"net/http/httputil"
-	"path/filepath"
+	"path"
 	"strconv"
 	"strings"
 	"sync"
@@ -323,7 +323,7 @@ func JoinContextPath(elem string) string {
 		return elem
 	}
 
-	return filepath.Join(Envs.ContextPath, elem)
+	return path.Join(Envs.ContextPath, elem)
 }
 
 // TestAPIRouter ...
