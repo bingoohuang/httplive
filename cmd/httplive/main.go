@@ -2,10 +2,14 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path"
 	"strings"
+
+	"github.com/bingoohuang/gg/pkg/netx"
+	"github.com/bingoohuang/golog"
 
 	"github.com/bingoohuang/gg/pkg/ctl"
 	"github.com/bingoohuang/gg/pkg/fla9"
@@ -13,7 +17,6 @@ import (
 	"github.com/bingoohuang/gg/pkg/sigx"
 	"github.com/bingoohuang/gg/pkg/ss"
 
-	"github.com/bingoohuang/golog"
 	"github.com/bingoohuang/gor/giu"
 	"github.com/bingoohuang/httplive"
 	"github.com/bingoohuang/httplive/internal/process"
@@ -31,12 +34,21 @@ func main() {
 	fla.StringVar(&env.Ports, "ports,p", "5003", "Hosting ports, eg. 5003,5004")
 	fla.StringVar(&env.DBFullPath, "dbpath,d", "", "Full path of the httplive.bolt")
 	fla.StringVar(&env.ContextPath, "context,c", "", "Context path of httplive http service")
+	fla.StringVar(&env.CaRoot, "caRoot,C", ".cert", "Cert root path of x.key and x.pem")
+	fla.BoolVar(&env.DisableHTTPS, "disableHttps", false, "Disable tls cert, using http other than https")
 	fla.BoolVar(&env.Logging, "log,l", false, "Enable golog logging")
 	pInit := fla.Bool("init", false, "Create initial ctl and exit")
-	fla.Parse(os.Args[1:])
-	ctl.Config{Initing: *pInit}.ProcessInit()
+	pVersion := fla.Bool("version,v", false, "Create initial ctl and exit")
+	_ = fla.Parse(os.Args[1:])
+	ctl.Config{Initing: *pInit, PrintVersion: *pVersion}.ProcessInit()
 
-	// "HTTP Request & Response Service, Mock HTTP"
+	if env.Logging {
+		golog.Setup(golog.Spec("stdout"))
+	} else {
+		golog.DisableLogging()
+	}
+
+	certFile := mkdirCerts(env)
 
 	sigx.RegisterSignalProfile()
 
@@ -45,7 +57,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	host(env)
+	host(env, certFile)
+}
+
+func mkdirCerts(env *httplive.EnvVars) *netx.CertFiles {
+	if env.DisableHTTPS {
+		return nil
+	}
+
+	return netx.LoadCerts(env.CaRoot)
 }
 
 func createDB(env *httplive.EnvVars) error {
@@ -87,18 +107,12 @@ func fixDBPath(env *httplive.EnvVars) string {
 	return fullPath
 }
 
-func host(env *httplive.EnvVars) {
+func host(env *httplive.EnvVars, certFiles *netx.CertFiles) {
 	env.Init()
 
 	if err := createDB(env); err != nil {
 		logrus.Warnf("failed to create DB %v", err)
 		return
-	}
-
-	if env.Logging {
-		golog.Setup(golog.Spec("stdout"))
-	} else {
-		golog.DisableLogging()
 	}
 
 	r := gin.New()
@@ -115,13 +129,19 @@ func host(env *httplive.EnvVars) {
 	portsArr := strings.Split(env.Ports, ",")
 	for _, p := range portsArr {
 		go func(port string) {
-			if err := r.Run(":" + port); err != nil {
-				fmt.Println(err)
+			var err error
+			if certFiles != nil {
+				err = r.RunTLS(":"+port, certFiles.Cert, certFiles.Key)
+			} else {
+				err = r.Run(":" + port)
+			}
+			if err != nil {
+				log.Printf("run on port %s failed: %v", port, err)
 			}
 		}(p)
 	}
 
-	go util.OpenExplorerWithContext(env.ContextPath, portsArr[0])
+	go util.OpenExplorer(certFiles != nil, ss.ParseInt(portsArr[0]), env.ContextPath)
 
 	select {}
 }

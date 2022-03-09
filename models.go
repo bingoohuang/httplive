@@ -13,7 +13,10 @@ type EnvVars struct {
 	DBFullPath  string
 	Ports       string // Hosting ports, eg. 5003,5004.
 	ContextPath string
-	Logging     bool
+	CaRoot      string
+
+	Logging      bool
+	DisableHTTPS bool
 }
 
 var (

@@ -35,7 +35,7 @@ type Dao struct {
 	db *storm.DB
 }
 
-// HasEndpoints test if any endpoint exits already.
+// HasEndpoints tests if any endpoint exits already.
 func (d *Dao) HasEndpoints() (has bool) {
 	var result []process.Endpoint
 	if err := d.db.All(&result, storm.Limit(1)); err != nil {
@@ -45,6 +45,7 @@ func (d *Dao) HasEndpoints() (has bool) {
 	return len(result) > 0
 }
 
+// ListEndpoints lists endpoints.
 func (d *Dao) ListEndpoints() (result []process.Endpoint) {
 	if err := d.db.All(&result); err != nil {
 		log.Printf("ForEach error: %v", err)
@@ -52,6 +53,7 @@ func (d *Dao) ListEndpoints() (result []process.Endpoint) {
 	return
 }
 
+// FindEndpoint finds endpoint with specified ID.
 func (d *Dao) FindEndpoint(ID uint64) *process.Endpoint {
 	result := &process.Endpoint{}
 	err := d.db.One("ID", ID, result)
@@ -64,6 +66,7 @@ func (d *Dao) FindEndpoint(ID uint64) *process.Endpoint {
 	return result
 }
 
+// FindByEndpoint finds endpoint by its value.
 func (d *Dao) FindByEndpoint(endpoint string) *process.Endpoint {
 	result := &process.Endpoint{}
 	err := d.db.One("Endpoint", endpoint, result)
@@ -77,6 +80,7 @@ func (d *Dao) FindByEndpoint(endpoint string) *process.Endpoint {
 	return result
 }
 
+// AddEndpoint adds a endpoint.
 func (d *Dao) AddEndpoint(ep process.Endpoint) uint64 {
 	if err := d.db.Save(&ep); err != nil {
 		log.Printf("insert error: %v", err)
@@ -85,18 +89,21 @@ func (d *Dao) AddEndpoint(ep process.Endpoint) uint64 {
 	return ep.ID
 }
 
+// UpdateEndpoint updates a endpoint.
 func (d *Dao) UpdateEndpoint(ep process.Endpoint) {
 	if err := d.db.Update(&ep); err != nil {
 		log.Printf("Update error: %v", err)
 	}
 }
 
+// DeleteEndpoint delete a endpoint.
 func (d *Dao) DeleteEndpoint(ep process.Endpoint) {
 	if err := d.db.DeleteStruct(&ep); err != nil {
 		log.Printf("Delete error: %v", err)
 	}
 }
 
+// Backup backups a bolt db file.
 func (d *Dao) Backup(w http.ResponseWriter, name string) {
 	err := d.db.Bolt.View(func(tx *bbolt.Tx) error {
 		w.Header().Set("Content-Type", "application/octet-stream")

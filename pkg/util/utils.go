@@ -209,15 +209,21 @@ func DetectContentType(b []byte) string {
 	return ContentTypeText
 }
 
-// OpenExplorerWithContext ...
-func OpenExplorerWithContext(contextPath, port string) {
+// OpenExplorer ...
+func OpenExplorer(https bool, port int, contextPath string) {
 	switch runtime.GOOS {
 	case "windows", "darwin":
 		if contextPath == "/" {
 			contextPath = ""
 		}
 
-		_ = open.Run("http://127.0.0.1:" + port + contextPath + "?" + randx.String(10))
+		schema := "http"
+		if https {
+			schema = "https"
+		}
+
+		addr := fmt.Sprintf("%s://127.0.0.1:%d/%s?%s", schema, port, contextPath, randx.String(10))
+		_ = open.Run(addr)
 	}
 }
 
