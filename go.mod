@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/antonmedv/expr v1.9.0
 	github.com/asdine/storm/v3 v3.2.1
-	github.com/bingoohuang/gg v0.0.0-20220309092446-e70bb5fa7e4f
+	github.com/bingoohuang/gg v0.0.0-20220309145025-158d2222a9c7
 	github.com/bingoohuang/golog v0.0.0-20220128074652-9b69ca183cea
 	github.com/bingoohuang/gor v0.0.0-20200628053500-ec6cb95c0e1b
 	github.com/bingoohuang/jj v0.0.0-20220223101833-5e5b441b6f72
