@@ -15,6 +15,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bingoohuang/gg/pkg/iox"
+
 	"github.com/bingoohuang/gg/pkg/v"
 
 	"github.com/asdine/storm/v3"
@@ -141,7 +143,6 @@ func asset(name string) string {
 	return string(data)
 }
 
-// nolint gochecknoglobals
 var dbLock sync.Mutex
 
 // DBDo executes the f.
@@ -150,7 +151,7 @@ func DBDo(f func(dao *Dao) error) error {
 	defer dbLock.Unlock()
 
 	db, err := storm.Open(Envs.DBFile)
-	defer db.Close()
+	defer iox.Close(db)
 
 	dao, err := CreateDao(db)
 	if err != nil {
@@ -428,7 +429,7 @@ func noRouteHandler(c *gin.Context) (processed bool) {
 
 	switch {
 	case hl == "v" || p == "/v":
-		c.PureJSON(http.StatusOK, gin.H{"version": v.AppVersion, "build": v.BuildTime, "go": v.GoVersion, "git": v.GitCommit})
+		c.IndentedJSON(http.StatusOK, gin.H{"version": v.AppVersion, "build": v.BuildTime, "go": v.GoVersion, "git": v.GitCommit})
 	case hl == "curl" || p == "/curl":
 		values := c.Request.URL.Query()
 		delete(values, "_hl")
@@ -439,13 +440,13 @@ func noRouteHandler(c *gin.Context) (processed bool) {
 		process.ProcessIP(c, useJSON)
 	case hl == "time" || p == "/time":
 		if useJSON {
-			c.PureJSON(http.StatusOK, gin.H{"time": util.TimeFmt(time.Now())})
+			c.IndentedJSON(http.StatusOK, gin.H{"time": util.TimeFmt(time.Now())})
 		} else {
 			c.Data(http.StatusOK, util.ContentTypeText, []byte(util.TimeFmt(time.Now())))
 		}
 	case (hl == "" && p == "/") || hl == "echo" || p == "/echo":
 		if useJSON {
-			c.PureJSON(http.StatusOK, process.CreateRequestMap(c, nil))
+			c.IndentedJSON(http.StatusOK, process.CreateRequestMap(c, nil))
 		} else {
 			d, _ := httputil.DumpRequest(c.Request, true)
 			c.Data(http.StatusOK, util.ContentTypeText, d)
@@ -468,9 +469,9 @@ func EndpointList(query bool) []process.APIDataModel {
 	})
 
 	items := make([]process.APIDataModel, len(endPoints))
-	for i, v := range endPoints {
-		v := v
-		items[i] = *CreateAPIDataModel(&v, query)
+	for i, val := range endPoints {
+		val := val
+		items[i] = *CreateAPIDataModel(&val, query)
 	}
 
 	return items

@@ -164,9 +164,9 @@ func (ctrl WebCliController) SaveEndpoint(model process.APIDataModel, c *gin.Con
 	}
 
 	if dp, err := SaveEndpoint(model); err != nil {
-		c.PureJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	} else {
-		c.PureJSON(http.StatusOK, gin.H{"data": dp})
+		c.IndentedJSON(http.StatusOK, gin.H{"data": dp})
 	}
 }
 
@@ -192,5 +192,5 @@ type deleteEndpointT struct {
 func (ctrl WebCliController) DeleteEndpoint(c *gin.Context, _ deleteEndpointT) {
 	_ = DeleteEndpoint(c.Query("id"))
 
-	c.PureJSON(http.StatusOK, gin.H{"success": "ok"})
+	c.IndentedJSON(http.StatusOK, gin.H{"success": "ok"})
 }

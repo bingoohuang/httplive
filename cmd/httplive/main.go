@@ -34,7 +34,7 @@ func main() {
 	fla.StringVar(&env.Ports, "ports,p", "5003", "Hosting ports, eg. 5003,5004")
 	fla.StringVar(&env.DBFullPath, "dbpath,d", "", "Full path of the httplive.bolt")
 	fla.StringVar(&env.ContextPath, "context,c", "", "Context path of httplive http service")
-	fla.StringVar(&env.CaRoot, "caRoot,C", ".cert", "Cert root path of x.key and x.pem")
+	fla.StringVar(&env.CaRoot, "ca", ".cert", "Cert root path of x.key and x.pem")
 	fla.BoolVar(&env.DisableHTTPS, "disableHttps", false, "Disable tls cert, using http other than https")
 	fla.BoolVar(&env.Logging, "log,l", false, "Enable golog logging")
 	pInit := fla.Bool("init", false, "Create initial ctl and exit")
