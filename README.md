@@ -24,11 +24,14 @@ and increase the productivity of our development and testing environments.
 
 ## Features
 
-1. 2021-12-01 admin api made more easy
+1. 2022-04-07 counter api 
+   1. `gurl :5003/counter -pb -r`  => `{"counter":23}`
+   2. `gurl :5003/counter reset==1 -pb -r` => `{"counter":0}`
+2. 2021-12-01 admin api made more easy
     - `curl 'http://127.0.0.1:5003/httplive/webcli/api/save?endpoint=/x1' -d '{"close": true}'` 
     - `curl 'http://127.0.0.1:5003/httplive/webcli/api/save?endpoint=/x1' -d '@a.json` 
     - `curl 'http://127.0.0.1:5003/httplive/webcli/api/save?endpoint=/x2&method=GET' -d '{"Status": true}'`
-2. 2021-11-18 `http://127.0.0.1:5003/echo.json` returns user agent string's parsing results[^1]
+3. 2021-11-18 `http://127.0.0.1:5003/echo.json` returns user agent string's parsing results[^1]
 
 ## Installation
 

@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/bingoohuang/gg/pkg/iox"
@@ -409,6 +410,8 @@ func noRouteHandlerWrap(c *gin.Context) {
 	rr.ResponseHeader = util.ConvertHeader(cw.Header())
 }
 
+var counter uint64 = 0
+
 func noRouteHandler(c *gin.Context) (processed bool) {
 	processed = true
 	p := c.Request.URL.Path
@@ -436,6 +439,13 @@ func noRouteHandler(c *gin.Context) (processed bool) {
 		c.Request.URL.RawQuery = values.Encode()
 		cmd, _ := http2curl.GetCurlCmd(c.Request)
 		c.Data(http.StatusOK, util.ContentTypeText, []byte(cmd.String()))
+	case hl == "counter" || p == "/counter":
+		if strings.ToLower(c.Query("reset")) != "" {
+			atomic.StoreUint64(&counter, 0)
+			c.IndentedJSON(http.StatusOK, gin.H{"counter": 0})
+		} else {
+			c.IndentedJSON(http.StatusOK, gin.H{"counter": atomic.AddUint64(&counter, 1)})
+		}
 	case hl == "ip" || p == "/ip":
 		process.ProcessIP(c, useJSON)
 	case hl == "time" || p == "/time":
