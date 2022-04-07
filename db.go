@@ -440,10 +440,15 @@ func noRouteHandler(c *gin.Context) (processed bool) {
 		cmd, _ := http2curl.GetCurlCmd(c.Request)
 		c.Data(http.StatusOK, util.ContentTypeText, []byte(cmd.String()))
 	case hl == "counter" || p == "/counter":
-		if strings.ToLower(c.Query("reset")) != "" {
+		switch op := strings.ToLower(c.Query("op")); op {
+		case "deduct", "d":
+			c.IndentedJSON(http.StatusOK, gin.H{"counter": atomic.AddUint64(&counter, -1)})
+		case "query", "q":
+			c.IndentedJSON(http.StatusOK, gin.H{"counter": atomic.LoadUint64(&counter)})
+		case "reset", "r":
 			atomic.StoreUint64(&counter, 0)
 			c.IndentedJSON(http.StatusOK, gin.H{"counter": 0})
-		} else {
+		default:
 			c.IndentedJSON(http.StatusOK, gin.H{"counter": atomic.AddUint64(&counter, 1)})
 		}
 	case hl == "ip" || p == "/ip":

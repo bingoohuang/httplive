@@ -26,7 +26,9 @@ and increase the productivity of our development and testing environments.
 
 1. 2022-04-07 counter api 
    1. `gurl :5003/counter -pb -r`  => `{"counter":23}`
-   2. `gurl :5003/counter reset==1 -pb -r` => `{"counter":0}`
+   2. `gurl :5003/counter op==query -pb -r` => `{"counter":23}`
+   2. `gurl :5003/counter op==deduct -pb -r` => `{"counter":22}`
+   2. `gurl :5003/counter op==reset -pb -r` => `{"counter":0}`
 2. 2021-12-01 admin api made more easy
     - `curl 'http://127.0.0.1:5003/httplive/webcli/api/save?endpoint=/x1' -d '{"close": true}'` 
     - `curl 'http://127.0.0.1:5003/httplive/webcli/api/save?endpoint=/x1' -d '@a.json` 
