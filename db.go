@@ -410,7 +410,7 @@ func noRouteHandlerWrap(c *gin.Context) {
 	rr.ResponseHeader = util.ConvertHeader(cw.Header())
 }
 
-var counter uint64 = 0
+var counter int64 = 0
 
 func noRouteHandler(c *gin.Context) (processed bool) {
 	processed = true
@@ -442,14 +442,14 @@ func noRouteHandler(c *gin.Context) (processed bool) {
 	case hl == "counter" || p == "/counter":
 		switch op := strings.ToLower(c.Query("op")); op {
 		case "deduct", "d":
-			c.IndentedJSON(http.StatusOK, gin.H{"counter": atomic.AddUint64(&counter, -1)})
+			c.IndentedJSON(http.StatusOK, gin.H{"counter": atomic.AddInt64(&counter, -1)})
 		case "query", "q":
-			c.IndentedJSON(http.StatusOK, gin.H{"counter": atomic.LoadUint64(&counter)})
+			c.IndentedJSON(http.StatusOK, gin.H{"counter": atomic.LoadInt64(&counter)})
 		case "reset", "r":
-			atomic.StoreUint64(&counter, 0)
+			atomic.StoreInt64(&counter, 0)
 			c.IndentedJSON(http.StatusOK, gin.H{"counter": 0})
 		default:
-			c.IndentedJSON(http.StatusOK, gin.H{"counter": atomic.AddUint64(&counter, 1)})
+			c.IndentedJSON(http.StatusOK, gin.H{"counter": atomic.AddInt64(&counter, 1)})
 		}
 	case hl == "ip" || p == "/ip":
 		process.ProcessIP(c, useJSON)
