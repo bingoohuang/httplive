@@ -5,6 +5,7 @@ import (
 	"embed"
 	"fmt"
 	"github.com/bingoohuang/jj"
+	"html/template"
 	"io/fs"
 	"log"
 	"mime"
@@ -136,6 +137,29 @@ var (
 
 func init() {
 	subAssets, _ = fs.Sub(assetsFS, "assets")
+	process.DirListTemplate = func() *template.Template {
+		t, err := template.New("dirlist").
+			Funcs(template.FuncMap{
+				"t2s": timeToString,
+			}).
+			Parse(asset("dirlist.html"))
+		if err != nil {
+			log.Fatalf("Directory list template init error: %v", err)
+		}
+		return t
+	}()
+
+	process.GridTemplate = func() *template.Template {
+		t, err := template.New("grid").
+			Funcs(template.FuncMap{
+				"mod": func(i, j, target int) bool { return i%j == target },
+			}).
+			Parse(asset("grid.html"))
+		if err != nil {
+			log.Fatalf("Directory grid template init error: %v", err)
+		}
+		return t
+	}()
 }
 
 func asset(name string) string {
@@ -145,6 +169,14 @@ func asset(name string) string {
 	}
 
 	return string(data)
+}
+
+func timeToString(t time.Time, format ...string) string {
+	f := "2006-01-02 15:04:05"
+	if len(format) > 0 && format[0] != "" {
+		f = format[0]
+	}
+	return t.Format(f)
 }
 
 var dbLock sync.Mutex

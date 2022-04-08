@@ -2,6 +2,7 @@ package process
 
 import (
 	"fmt"
+	"html/template"
 	"net/http"
 	"os"
 	"path"
@@ -18,8 +19,12 @@ const (
 type ServeStatic struct {
 	Root      string `json:"root"`
 	AutoIndex bool   `json:"auto_index"`
+	Grid      bool   `json:"grid"`
 	Index     string `json:"index"`
 }
+
+var DirListTemplate *template.Template
+var GridTemplate *template.Template
 
 func (m ServeStatic) Handle(c *gin.Context, apiModel *APIDataModel) error {
 	rootStat, err := os.Stat(m.Root)
@@ -39,7 +44,7 @@ func (m ServeStatic) Handle(c *gin.Context, apiModel *APIDataModel) error {
 		if m.Index != "" {
 			c.File(path.Join(m.Root, m.Index))
 		} else if m.AutoIndex {
-			return ListDir(c.Writer, m.Root, 1000)
+			return m.listPage(c, m.Root)
 		} else {
 			c.Status(http.StatusNotFound)
 		}
@@ -50,12 +55,37 @@ func (m ServeStatic) Handle(c *gin.Context, apiModel *APIDataModel) error {
 	if fstat, err := os.Stat(f); err != nil {
 		return fmt.Errorf("root directory: %w", err)
 	} else if fstat.IsDir() {
-		return ListDir(c.Writer, f, 1000)
+		return m.listPage(c, f)
 	} else {
 		c.File(f)
 	}
 
 	return nil
+}
+
+func (m ServeStatic) listPage(c *gin.Context, dir string) error {
+	data, err := ListDir(dir, 1000)
+	if err != nil {
+		return err
+	}
+	c.Header("Content-Type", "text/html; charset=utf-8")
+
+	if m.Grid {
+		var imageFiles []File
+		for _, d := range data.Files {
+			name := strings.ToLower(d.Name)
+			if ss.HasSuffix(name, ".jpg", ".jpeg", ".png") {
+				imageFiles = append(imageFiles, d)
+			}
+		}
+
+		if len(imageFiles) > 0 {
+			data.Files = imageFiles
+			return GridTemplate.Execute(c.Writer, data)
+		}
+
+	}
+	return DirListTemplate.Execute(c.Writer, data)
 }
 
 func ParsePathParams(apiModel *APIDataModel) (prefix string, hasParams bool) {

@@ -2,12 +2,13 @@ package process
 
 import (
 	"fmt"
+	"github.com/bingoohuang/gg/pkg/mathx"
+	"github.com/bingoohuang/gg/pkg/ss"
 	"html"
-	"html/template"
-	"log"
-	"net/http"
 	"os"
 	"path"
+	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -17,7 +18,8 @@ import (
 
 // code from https://github.com/m3ng9i/ran/blob/master/server/dirlist.go
 
-type dirListFiles struct {
+type File struct {
+	weight  int
 	Seq     int
 	Name    string
 	Url     string
@@ -25,98 +27,28 @@ type dirListFiles struct {
 	ModTime time.Time
 }
 
-type dirList struct {
+type DirList struct {
 	Title string
-	Files []dirListFiles
-}
-
-const dirListTpl = `<!DOCTYPE HTML>
-<html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="initial-scale=1,width=device-width">
-<title>{{.Title}}</title>
-<style type="text/css">
-body {
-    background-color:white;
-    color: #333333;
-}
-table {
-    border-collapse: collapse;
-}
-table tr:nth-child(1) {
-    background-color: #f0f0f0;
-}
-table th, table td {
-    padding: 8px 10px;
-    border:1px #dddddd solid;
-    font-size: 14px;
-}
-table a {
-    text-decoration: none;
-}
-table tr:hover {
-    border:1px red solid;
-}
-table tr > td:nth-child(2), table tr > td:nth-child(3) {
-    font-size: 13px;
-}
-</style>
-</head>
-<body>
-<table>
-<tr><th>#</th><th>Name</th><th>Size</th><th>Modification time</th></tr>
-{{range $files := .Files}}
-    <tr>
-        <td>{{.Seq}}</td>
-        <td><a href="{{.Url}}">{{.Name}}</a></td>
-        <td>{{.Size}}</td>
-        {{/* t2s example: {{ t2s .ModTime "2006-01-02 15:04"}} */}}
-        <td>{{t2s .ModTime}}</td>
-    </tr>
-{{end}}
-</table>
-</body>
-</html>`
-
-var tplDirList = func() *template.Template {
-	t, err := template.New("dirlist").
-		Funcs(template.FuncMap{
-			"t2s": timeToString,
-		}).
-		Parse(dirListTpl)
-	if err != nil {
-		log.Fatalf("Directory list template init error: %v", err)
-	}
-	return t
-}()
-
-func timeToString(t time.Time, format ...string) string {
-	f := "2006-01-02 15:04:05"
-	if len(format) > 0 && format[0] != "" {
-		f = format[0]
-	}
-	return t.Format(f)
+	Files []File
 }
 
 // ListDir lists content of a directory.
 // If error occurs, this function will return an error and won't write anything to ResponseWriter.
-func ListDir(w http.ResponseWriter, dir string, max int) error {
+func ListDir(dir string, max int) (*DirList, error) {
 	f, err := os.Open(dir)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer iox.Close(f)
 
 	info, err := f.Readdir(max)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	title := html.EscapeString(path.Base(dir))
 
-	var files []dirListFiles
+	var files []File
 
 	for n, i := range info {
 		name := i.Name()
@@ -130,7 +62,8 @@ func ListDir(w http.ResponseWriter, dir string, max int) error {
 		}
 
 		files = append(files,
-			dirListFiles{
+			File{
+				weight:  ss.Ifi(i.IsDir(), 0, 1),
 				Seq:     n + 1,
 				Name:    name,
 				Url:     name,
@@ -140,6 +73,42 @@ func ListDir(w http.ResponseWriter, dir string, max int) error {
 		)
 	}
 
-	data := dirList{Title: title, Files: files}
-	return tplDirList.Execute(w, data)
+	sort.SliceStable(files, func(i, j int) bool {
+		ii, jj := files[i], files[j]
+		if ii.weight != jj.weight {
+			return ii.weight < jj.weight
+		}
+
+		return fileNameLess(ii, jj)
+	})
+
+	for i := range files {
+		files[i].Seq = i + 1
+	}
+
+	return &DirList{Title: title, Files: files}, nil
+}
+
+var numReg = regexp.MustCompile(`\d+`)
+
+func fileNameLess(a, b File) bool {
+	na := numReg.FindAllString(a.Name, -1)
+	nb := numReg.FindAllString(b.Name, -1)
+
+	l := mathx.Min(len(na), len(nb))
+	for i := 0; i < l; i++ {
+		ia := ss.ParseInt(strings.TrimLeft(na[i], "0"))
+		ib := ss.ParseInt(strings.TrimLeft(nb[i], "0"))
+		if ia == ib {
+			continue
+		}
+
+		return ia < ib
+	}
+
+	if !a.ModTime.Equal(b.ModTime) {
+		return a.ModTime.After(b.ModTime)
+	}
+
+	return a.Size < b.Size
 }

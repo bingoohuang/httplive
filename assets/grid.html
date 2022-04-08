@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+        }
+
+        .row {
+            display: -ms-flexbox; /* IE 10 */
+            display: flex;
+            -ms-flex-wrap: wrap; /* IE 10 */
+            flex-wrap: wrap;
+            padding: 0 4px;
+        }
+
+        .grid {
+            -ms-flex: 25%; /* IE 10 */
+            flex: 25%;
+            padding: 0 4px;
+        }
+
+        .grid img {
+            margin-top: 8px;
+            vertical-align: middle;
+        }
+    </style>
+    <title>Image Grid</title>
+</head>
+<body>
+
+<!-- Photo Grid -->
+<div class="row">
+    {{ range .Files -}}
+    <div class="grid">
+        <img src="{{.Url}}" style="width:100%">
+    </div>
+    {{- end }}
+</div>
+
+</body>
+</html>

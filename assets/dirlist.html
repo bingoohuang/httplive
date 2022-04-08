@@ -1,0 +1,59 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1,width=device-width">
+    <title>{{.Title}}</title>
+    <style>
+        body {
+            background-color: white;
+            color: #333333;
+        }
+
+        table {
+            border-collapse: collapse;
+        }
+
+        table tr:nth-child(1) {
+            background-color: #f0f0f0;
+        }
+
+        table th, table td {
+            padding: 8px 10px;
+            border: 1px #dddddd solid;
+            font-size: 14px;
+        }
+
+        table a {
+            text-decoration: none;
+        }
+
+        table tr:hover {
+            border: 1px red solid;
+        }
+
+        table tr > td:nth-child(2), table tr > td:nth-child(3) {
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+<table>
+    <tr>
+        <th>#</th>
+        <th>Name</th>
+        <th>Size</th>
+        <th>Modification time</th>
+    </tr>
+    {{range $files := .Files}}
+    <tr>
+        <td>{{.Seq}}</td>
+        <td><a href="{{.Url}}">{{.Name}}</a></td>
+        <td>{{.Size}}</td>
+        {{/* t2s example: {{ t2s .ModTime "2006-01-02 15:04"}} */}}
+        <td>{{t2s .ModTime}}</td>
+    </tr>
+    {{end}}
+</table>
+</body>
+</html>
