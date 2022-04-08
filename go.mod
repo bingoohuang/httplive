@@ -1,20 +1,20 @@
 module github.com/bingoohuang/httplive
 
-go 1.17
+go 1.18
 
 //replace github.com/bingoohuang/gg => ../gg
 
 require (
 	github.com/antonmedv/expr v1.9.0
 	github.com/asdine/storm/v3 v3.2.1
-	github.com/bingoohuang/gg v0.0.0-20220310042448-c7510a355c4f
-	github.com/bingoohuang/golog v0.0.0-20220128074652-9b69ca183cea
+	github.com/bingoohuang/gg v0.0.0-20220407015830-93e63d3f812c
+	github.com/bingoohuang/golog v0.0.0-20220324084844-762621e53cfb
 	github.com/bingoohuang/gor v0.0.0-20200628053500-ec6cb95c0e1b
-	github.com/bingoohuang/jj v0.0.0-20220223101833-5e5b441b6f72
+	github.com/bingoohuang/jj v0.0.0-20220403155614-6febd5a6974b
 	github.com/bingoohuang/sariaf v0.0.0-20210118074537-bac7a178cb89
-	github.com/casbin/casbin/v2 v2.42.0
+	github.com/casbin/casbin/v2 v2.43.2
 	github.com/gin-gonic/gin v1.7.7
-	github.com/go-redis/redis/v8 v8.11.4
+	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gobars/cmd v0.0.0-20210215022658-cd78beda9673
 	github.com/gorilla/websocket v1.5.0
@@ -23,8 +23,8 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
-	github.com/stretchr/testify v1.7.0
-	github.com/valyala/fasthttp v1.34.0
+	github.com/stretchr/testify v1.7.1
+	github.com/valyala/fasthttp v1.35.0
 	go.etcd.io/bbolt v1.3.6
 )
 
@@ -41,7 +41,8 @@ require (
 	github.com/go-playground/locales v0.13.0 // indirect
 	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/go-playground/validator/v10 v10.4.1 // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/go-resty/resty/v2 v2.7.0 // indirect
+	github.com/golang/protobuf v1.3.3 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/juju/errors v0.0.0-20200330140219-3fe23663418f // indirect
 	github.com/julienschmidt/httprouter v1.3.0 // indirect
@@ -55,11 +56,10 @@ require (
 	github.com/thoas/go-funk v0.9.0 // indirect
 	github.com/ugorji/go/codec v1.1.7 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	golang.org/x/crypto v0.0.0-20220214200702-86341886e292 // indirect
+	golang.org/x/crypto v0.0.0-20220321153916-2c7772ba3064 // indirect
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
-	golang.org/x/sys v0.0.0-20220227234510-4e6760a101f9 // indirect
+	golang.org/x/sys v0.0.0-20220319134239-a9b59b0215f8 // indirect
 	golang.org/x/text v0.3.7 // indirect
-	google.golang.org/protobuf v1.26.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
 	software.sslmate.com/src/go-pkcs12 v0.0.0-20210415151418-c5206de65a78 // indirect

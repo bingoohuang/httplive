@@ -13,8 +13,10 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
+
+	"github.com/bingoohuang/gg/pkg/ss"
+	"github.com/bingoohuang/httplive/pkg/countable"
 
 	"github.com/bingoohuang/gg/pkg/iox"
 
@@ -410,7 +412,7 @@ func noRouteHandlerWrap(c *gin.Context) {
 	rr.ResponseHeader = util.ConvertHeader(cw.Header())
 }
 
-var counter int64 = 0
+var counter countable.Counter
 
 func noRouteHandler(c *gin.Context) (processed bool) {
 	processed = true
@@ -440,17 +442,7 @@ func noRouteHandler(c *gin.Context) (processed bool) {
 		cmd, _ := http2curl.GetCurlCmd(c.Request)
 		c.Data(http.StatusOK, util.ContentTypeText, []byte(cmd.String()))
 	case hl == "counter" || p == "/counter":
-		switch op := strings.ToLower(c.Query("op")); op {
-		case "deduct", "d":
-			c.IndentedJSON(http.StatusOK, gin.H{"counter": atomic.AddInt64(&counter, -1)})
-		case "query", "q":
-			c.IndentedJSON(http.StatusOK, gin.H{"counter": atomic.LoadInt64(&counter)})
-		case "reset", "r":
-			atomic.StoreInt64(&counter, 0)
-			c.IndentedJSON(http.StatusOK, gin.H{"counter": 0})
-		default:
-			c.IndentedJSON(http.StatusOK, gin.H{"counter": atomic.AddInt64(&counter, 1)})
-		}
+		c.IndentedJSON(http.StatusOK, counterDeal(c.Query))
 	case hl == "ip" || p == "/ip":
 		process.ProcessIP(c, useJSON)
 	case hl == "time" || p == "/time":
@@ -472,6 +464,49 @@ func noRouteHandler(c *gin.Context) (processed bool) {
 	}
 
 	return
+}
+
+func multiQuery(query func(key string) string, keys ...string) string {
+	for _, k := range keys {
+		if value := query(k); value != "" {
+			return value
+		}
+	}
+
+	return ""
+}
+
+func counterDeal(query func(key string) string) gin.H {
+	key := strings.ToLower(multiQuery(query, "key", "k"))
+	key = ss.Or(key, "default")
+	switch op := strings.ToLower(query("op")); op {
+	case "increment", "incr", "inc", "i":
+		value := int64(1)
+		if val, err := ss.ParseInt64E(multiQuery(query, "value", "val", "v")); err == nil {
+			value = val
+		}
+		return gin.H{"counter": counter.Add(key, value)}
+	case "deduct", "dede", "ded", "d":
+		value := int64(-1)
+		if val, err := ss.ParseInt64E(multiQuery(query, "value", "val", "v")); err == nil {
+			value = val
+		}
+		return gin.H{"counter": counter.Add(key, value)}
+	case "all", "a":
+		h := gin.H{}
+		counter.Range(func(key string, value int64) bool {
+			h[key] = value
+			return true
+		})
+		return gin.H{"counter": h}
+	case "query", "q":
+		return gin.H{"counter": counter.GetValue(key)}
+	case "reset", "r", "delete", "del":
+		lastValue, loaded := counter.DeleteAndGetLastValue(key)
+		return gin.H{"counter": 0, "last": lastValue, "loaded": loaded}
+	default:
+		return gin.H{"counter": counter.Add(key, 1)}
+	}
 }
 
 // EndpointList ...
