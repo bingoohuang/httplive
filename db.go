@@ -185,6 +185,7 @@ func createDB(dao *Dao) error {
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/proxy/demo", Methods: http.MethodGet, MimeType: "", Filename: "", Body: asset("proxydemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/echo/:id", Methods: "ANY", MimeType: "", Filename: "", Body: asset("echo.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/mockbin", Methods: "ANY", MimeType: "", Filename: "", Body: asset("mockbin.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
+	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/serveStatic/*file", Methods: http.MethodGet, MimeType: "", Filename: "", Body: asset("servestatic.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/eval", Methods: "ANY", MimeType: "", Filename: "", Body: asset("evaldemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/health", Methods: http.MethodGet, MimeType: "", Filename: "", Body: `{"Status": "OK"}`, CreateTime: now, UpdateTime: now, DeletedAt: ""})
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/status", Methods: http.MethodGet, MimeType: "", Filename: "", Body: `{"Status": "OK"}`, CreateTime: now, UpdateTime: now, DeletedAt: ""})
@@ -250,6 +251,7 @@ func CreateAPIDataModel(ep *process.Endpoint, query bool) *process.APIDataModel 
 		return m
 	}
 
+	m.TryDo(ep.CreateServiceStatic)
 	m.TryDo(ep.CreateMockbin)
 	m.TryDo(ep.CreateEcho)
 	m.TryDo(ep.CreateProxy)
@@ -380,8 +382,9 @@ func SyncAPIRouter() {
 }
 
 func routing(r *gin.Engine, ep process.APIDataModel) {
-	if strings.HasPrefix(ep.Endpoint, "/_internal") {
-		ep.InternalProcess(ep.Endpoint[10:])
+	endpoint := ep.Endpoint
+	if strings.HasPrefix(endpoint, "/_internal") {
+		ep.InternalProcess(endpoint[10:])
 		return
 	}
 
@@ -391,14 +394,14 @@ func routing(r *gin.Engine, ep process.APIDataModel) {
 	}
 
 	if strings.EqualFold(ep.Method, "ANY") {
-		r.Any(JoinContextPath(ep.Endpoint), h)
+		r.Any(JoinContextPath(endpoint), h)
 	} else {
-		r.Handle(ep.Method, JoinContextPath(ep.Endpoint), h)
+		r.Handle(ep.Method, JoinContextPath(endpoint), h)
 	}
 }
 
 func noRouteHandlerWrap(c *gin.Context) {
-	cw := util.NewGinCopyWriter(c.Writer)
+	cw := util.NewGinCopyWriter(c.Writer, c)
 	c.Writer = cw
 
 	processed := noRouteHandler(c)

@@ -2,6 +2,7 @@ package util
 
 import (
 	"bytes"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -9,15 +10,19 @@ import (
 type GinCopyWriter struct {
 	gin.ResponseWriter
 	Buf bytes.Buffer
+	c   *gin.Context
 }
 
 // NewGinCopyWriter creates a new GinCopyWriter.
-func NewGinCopyWriter(w gin.ResponseWriter) *GinCopyWriter {
-	return &GinCopyWriter{ResponseWriter: w}
+func NewGinCopyWriter(w gin.ResponseWriter, c *gin.Context) *GinCopyWriter {
+	return &GinCopyWriter{ResponseWriter: w, c: c}
 }
 
 func (w *GinCopyWriter) Write(data []byte) (n int, err error) {
-	w.Buf.Write(data)
+	if ct := w.c.GetHeader("Content-Type"); strings.Contains(ct, "json") {
+		w.Buf.Write(data)
+	}
+
 	return w.ResponseWriter.Write(data)
 }
 

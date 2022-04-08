@@ -170,7 +170,7 @@ func (a APIDataModel) HandleJSON(c *gin.Context) {
 		return
 	}
 
-	cw := util.NewGinCopyWriter(c.Writer)
+	cw := util.NewGinCopyWriter(c.Writer, c)
 	c.Writer = cw
 
 	a.ServeFn(c)

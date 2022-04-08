@@ -24,6 +24,7 @@ and increase the productivity of our development and testing environments.
 
 ## Features
 
+1. 2022-04-08 support serve static files, see demo config [servestatic.json](assets/servestatic.json)
 1. 2022-04-07 counter api op==all/query/incr/deduct/reset key/k==counterName value/val/v=1/-1/incremental 
    1. `gurl :5003/counter -pb -r`  => `{"counter":23}`
    2. `gurl :5003/counter op==query -pb -r` => `{"counter":23}`
