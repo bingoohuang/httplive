@@ -98,7 +98,7 @@ func (ep *Endpoint) CreateDefault(m *APIDataModel) {
 }
 
 func (ep *Endpoint) CreateServiceStatic(m *APIDataModel) {
-	if h := jj.Get(ep.Body, "_hl"); h.String() != "serverStatic" {
+	if h := jj.Get(ep.Body, "_hl"); h.String() != HlServerStatic {
 		return
 	}
 

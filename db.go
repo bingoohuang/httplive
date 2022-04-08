@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 	"fmt"
+	"github.com/bingoohuang/jj"
 	"io/fs"
 	"log"
 	"mime"
@@ -185,7 +186,7 @@ func createDB(dao *Dao) error {
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/proxy/demo", Methods: http.MethodGet, MimeType: "", Filename: "", Body: asset("proxydemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/echo/:id", Methods: "ANY", MimeType: "", Filename: "", Body: asset("echo.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/mockbin", Methods: "ANY", MimeType: "", Filename: "", Body: asset("mockbin.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
-	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/serveStatic/*file", Methods: http.MethodGet, MimeType: "", Filename: "", Body: asset("servestatic.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
+	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/serveStatic", Methods: http.MethodGet, MimeType: "", Filename: "", Body: asset("servestatic.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/eval", Methods: "ANY", MimeType: "", Filename: "", Body: asset("evaldemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/health", Methods: http.MethodGet, MimeType: "", Filename: "", Body: `{"Status": "OK"}`, CreateTime: now, UpdateTime: now, DeletedAt: ""})
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/status", Methods: http.MethodGet, MimeType: "", Filename: "", Body: `{"Status": "OK"}`, CreateTime: now, UpdateTime: now, DeletedAt: ""})
@@ -331,7 +332,15 @@ func serveAPI(w http.ResponseWriter, r *http.Request) (v process.RouterResult) {
 }
 
 // JoinContextPath joins the context path to elem.
-func JoinContextPath(elem string) string {
+func JoinContextPath(elem string, p *process.APIDataModel) string {
+	if p != nil {
+		if h := jj.Get(p.Body, "_hl"); h.String() == process.HlServerStatic {
+			if prefix, hasParams := process.ParsePathParams(p); !hasParams {
+				elem = path.Join(prefix, "/*file")
+			}
+		}
+	}
+
 	if Envs.ContextPath == "/" {
 		return elem
 	}
@@ -348,12 +357,12 @@ func TestAPIRouter(p process.APIDataModel) error {
 			continue
 		}
 
-		if err := router.Handle(http.MethodGet, JoinContextPath(ep.Endpoint), nil); err != nil {
+		if err := router.Handle(http.MethodGet, JoinContextPath(ep.Endpoint, &ep), nil); err != nil {
 			return err
 		}
 	}
 
-	return router.Handle(http.MethodGet, JoinContextPath(p.Endpoint), nil)
+	return router.Handle(http.MethodGet, JoinContextPath(p.Endpoint, &p), nil)
 }
 
 func echoXHeaders(c *gin.Context) {
@@ -394,9 +403,9 @@ func routing(r *gin.Engine, ep process.APIDataModel) {
 	}
 
 	if strings.EqualFold(ep.Method, "ANY") {
-		r.Any(JoinContextPath(endpoint), h)
+		r.Any(JoinContextPath(endpoint, &ep), h)
 	} else {
-		r.Handle(ep.Method, JoinContextPath(endpoint), h)
+		r.Handle(ep.Method, JoinContextPath(endpoint, &ep), h)
 	}
 }
 

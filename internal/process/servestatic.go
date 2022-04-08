@@ -11,6 +11,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	HlServerStatic = "serverStatic"
+)
+
 type ServeStatic struct {
 	Root      string `json:"root"`
 	AutoIndex bool   `json:"auto_index"`
@@ -29,15 +33,7 @@ func (m ServeStatic) Handle(c *gin.Context, apiModel *APIDataModel) error {
 	}
 
 	urlPath := c.Request.URL.Path
-	endpoint := apiModel.Endpoint
-	segments := strings.Split(endpoint, "/")
-	for i, seg := range segments {
-		if ss.HasPrefix(seg, "*", ":") {
-			segments = segments[:i]
-			break
-		}
-	}
-	fixPath := strings.Join(segments, "/")
+	fixPath, _ := ParsePathParams(apiModel)
 	urlPath = strings.TrimPrefix(urlPath, fixPath)
 	if urlPath == "" || urlPath == "/" {
 		if m.Index != "" {
@@ -60,4 +56,15 @@ func (m ServeStatic) Handle(c *gin.Context, apiModel *APIDataModel) error {
 	}
 
 	return nil
+}
+
+func ParsePathParams(apiModel *APIDataModel) (prefix string, hasParams bool) {
+	segments := strings.Split(apiModel.Endpoint, "/")
+	for i, seg := range segments {
+		if ss.HasPrefix(seg, "*", ":") {
+			return strings.Join(segments[:i], "/"), true
+		}
+	}
+	prefix = strings.Join(segments, "/")
+	return apiModel.Endpoint, false
 }

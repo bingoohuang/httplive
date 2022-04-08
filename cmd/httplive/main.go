@@ -119,10 +119,10 @@ func host(env *httplive.EnvVars, certFiles *netx.CertFiles) {
 	r.Use(httplive.APIMiddleware, httplive.StaticFileMiddleware,
 		util.CORSMiddleware, httplive.ConfigJsMiddleware)
 
-	r.GET(httplive.JoinContextPath("/httplive/ws"), wshandler)
+	r.GET(httplive.JoinContextPath("/httplive/ws", nil), wshandler)
 
 	ga := giu.NewAdaptor()
-	group := r.Group(httplive.JoinContextPath("/httplive/webcli"))
+	group := r.Group(httplive.JoinContextPath("/httplive/webcli", nil))
 	group.Use(process.AdminAuth)
 	ga.Route(group).HandleFn(new(httplive.WebCliController))
 
