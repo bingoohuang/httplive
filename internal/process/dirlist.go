@@ -48,7 +48,7 @@ func DirSize(path string) (size, files int64, err error) {
 
 // ListDir lists content of a directory.
 // If error occurs, this function will return an error and won't write anything to ResponseWriter.
-func ListDir(dir string, max int) (*DirList, error) {
+func ListDir(dir, rawQuery string, max int) (*DirList, error) {
 	f, err := os.Open(dir)
 	if err != nil {
 		return nil, err
@@ -63,6 +63,10 @@ func ListDir(dir string, max int) (*DirList, error) {
 	title := html.EscapeString(path.Base(dir))
 
 	var files []File
+
+	if rawQuery != "" {
+		rawQuery = "?" + rawQuery
+	}
 
 	for n, i := range info {
 		name := i.Name()
@@ -79,12 +83,17 @@ func ListDir(dir string, max int) (*DirList, error) {
 			dirFiles = fmt.Sprintf("%d", totalFiles)
 		}
 
+		fileLink := name
+		if i.IsDir() {
+			fileLink += rawQuery
+		}
+
 		files = append(files,
 			File{
 				weight:    ss.Ifi(i.IsDir(), 0, 1),
 				Seq:       n + 1,
 				Name:      name,
-				Url:       name,
+				Url:       fileLink,
 				Size:      size,
 				HumanSize: man.Bytes(uint64(size)),
 				DirFiles:  dirFiles,

@@ -37,14 +37,27 @@ func (m ServeStatic) Handle(c *gin.Context, apiModel *APIDataModel) error {
 		return nil
 	}
 
+	format := c.Query("format")
+	grid := format == "grid"
+	if format == "list" && m.AutoIndex {
+		m.Grid = false
+	}
+
 	urlPath := c.Request.URL.Path
 	fixPath, _ := ParsePathParams(apiModel)
 	urlPath = strings.TrimPrefix(urlPath, fixPath)
 	if urlPath == "" || urlPath == "/" {
+		if grid && m.AutoIndex {
+			return m.listPage(c, m.Root, grid)
+		}
+		if format == "list" && m.AutoIndex {
+			return m.listPage(c, m.Root, false)
+		}
+
 		if m.Index != "" {
 			c.File(path.Join(m.Root, m.Index))
 		} else if m.AutoIndex {
-			return m.listPage(c, m.Root)
+			return m.listPage(c, m.Root, grid)
 		} else {
 			c.Status(http.StatusNotFound)
 		}
@@ -55,7 +68,7 @@ func (m ServeStatic) Handle(c *gin.Context, apiModel *APIDataModel) error {
 	if fstat, err := os.Stat(f); err != nil {
 		return fmt.Errorf("root directory: %w", err)
 	} else if fstat.IsDir() {
-		return m.listPage(c, f)
+		return m.listPage(c, f, grid)
 	} else {
 		c.File(f)
 	}
@@ -63,14 +76,14 @@ func (m ServeStatic) Handle(c *gin.Context, apiModel *APIDataModel) error {
 	return nil
 }
 
-func (m ServeStatic) listPage(c *gin.Context, dir string) error {
-	data, err := ListDir(dir, 1000)
+func (m ServeStatic) listPage(c *gin.Context, dir string, grid bool) error {
+	data, err := ListDir(dir, c.Request.URL.RawQuery, 1000)
 	if err != nil {
 		return err
 	}
 	c.Header("Content-Type", "text/html; charset=utf-8")
 
-	if m.Grid {
+	if m.Grid || grid {
 		var imageFiles []File
 		for _, d := range data.Files {
 			name := strings.ToLower(d.Name)
