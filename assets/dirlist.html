@@ -43,13 +43,17 @@
         <th>#</th>
         <th>Name</th>
         <th>Size</th>
-        <th>Modification time</th>
+        <th>Human size</th>
+        <th>Dir files</th>
+        <th>Modification</th>
     </tr>
     {{range $files := .Files}}
     <tr>
         <td>{{.Seq}}</td>
         <td><a href="{{.Url}}">{{.Name}}</a></td>
         <td>{{.Size}}</td>
+        <td>{{.HumanSize}}</td>
+        <td>{{.DirFiles}}</td>
         {{/* t2s example: {{ t2s .ModTime "2006-01-02 15:04"}} */}}
         <td>{{t2s .ModTime}}</td>
     </tr>

@@ -7,6 +7,7 @@ import (
 	"html"
 	"os"
 	"path"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -19,17 +20,30 @@ import (
 // code from https://github.com/m3ng9i/ran/blob/master/server/dirlist.go
 
 type File struct {
-	weight  int
-	Seq     int
-	Name    string
-	Url     string
-	Size    string
-	ModTime time.Time
+	weight    int
+	Seq       int
+	Name      string
+	Url       string
+	Size      int64
+	DirFiles  string
+	HumanSize string
+	ModTime   time.Time
 }
 
 type DirList struct {
 	Title string
 	Files []File
+}
+
+func DirSize(path string) (size, files int64, err error) {
+	err = filepath.Walk(path, func(_ string, info os.FileInfo, err error) error {
+		if err == nil && !info.IsDir() {
+			size += info.Size()
+			files++
+		}
+		return err
+	})
+	return
 }
 
 // ListDir lists content of a directory.
@@ -52,23 +66,29 @@ func ListDir(dir string, max int) (*DirList, error) {
 
 	for n, i := range info {
 		name := i.Name()
-		if i.IsDir() {
-			name += "/"
+		if strings.HasPrefix(name, ".") { // skip hidden path
+			continue
 		}
 
-		// skip hidden path
-		if strings.HasPrefix(name, ".") {
-			continue
+		size := i.Size()
+		dirFiles := "-"
+		if i.IsDir() {
+			name += "/"
+			var totalFiles int64
+			size, totalFiles, _ = DirSize(path.Join(dir, name))
+			dirFiles = fmt.Sprintf("%d", totalFiles)
 		}
 
 		files = append(files,
 			File{
-				weight:  ss.Ifi(i.IsDir(), 0, 1),
-				Seq:     n + 1,
-				Name:    name,
-				Url:     name,
-				Size:    fmt.Sprintf("%d / %s", i.Size(), man.Bytes(uint64(i.Size()))),
-				ModTime: i.ModTime(),
+				weight:    ss.Ifi(i.IsDir(), 0, 1),
+				Seq:       n + 1,
+				Name:      name,
+				Url:       name,
+				Size:      size,
+				HumanSize: man.Bytes(uint64(size)),
+				DirFiles:  dirFiles,
+				ModTime:   i.ModTime(),
 			},
 		)
 	}
