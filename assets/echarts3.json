@@ -1,0 +1,54 @@
+{
+  "_hl": "echarts",
+  "title": "数据库表大小",
+  "tooltip": {
+    "prefix": "'表 ' + params[0].data.name"
+  },
+  "series": [
+    {
+      "name": "行数",
+      "x": "_seq",
+      "y": "rows",
+      "selected": true,
+      "tooltip": "v.tableSize + ' / ' + humanSize(v.tableSize)"
+    },
+    {
+      "name": "空间",
+      "x": "_seq",
+      "y": "tableSize",
+      "selected": false,
+      "tooltip": "v.rows + ' /' + humanNum(v.rows)"
+    }
+  ],
+  "dataRows": [
+    {"schema": "lb", "name":"s_script_record", "rows": 45, "dataLen":16384, "indexLen": 0, "dataFree": 0 },
+    {"schema": "lb", "name":"s_script_record", "rows": 45, "dataLen":16384,"indexLen": 0,"dataFree":0},
+    {"schema": "lb", "name":"abolish_context", "rows": 204458016, "dataLen":162261532672, "indexLen": 20443037696,"dataFree":7340032},
+    {"schema": "lb", "name":"annotate_context", "rows": 2, "dataLen":16384, "indexLen": 16384,"dataFree":0},
+    {"schema": "lb", "name":"auth_code_qr_verify_log", "rows": 0, "dataLen":16384, "indexLen": 0,"dataFree":0},
+    {"schema": "lb", "name":"authorization_context", "rows": 70, "indexLen": 49152, "dataLen":16384,"dataFree":0},
+    {"schema": "lb", "name":"b_abolish_context", "rows": 0, "dataLen":16384, "indexLen": 16384,"dataFree":0},
+    {"schema": "lb", "name":"b_create_context", "rows": 32377, "dataLen":582975488, "indexLen": 5816320,"dataFree":0},
+    {"schema": "ld", "name":"delete_log", "rows": 0, "dataLen":16384, "indexLen": 0,"dataFree":0},
+    {"schema": "ld", "name":"network_change_audit", "rows": 0, "dataLen":16384, "indexLen": 0,"dataFree":0},
+    {"schema": "ld", "name":"network_interconn_apply", "rows": 0, "dataLen":16384, "indexLen": 0,"dataFree":0},
+    {"schema": "ld", "name":"network_interconn_change", "rows": 0, "dataLen":16384, "indexLen": 0,"dataFree":0},
+    {"schema": "ld", "name":"sign_context", "rows": 0, "dataLen":16384, "indexLen": 16384,"dataFree":0},
+    {"schema": "ld", "name":"signing_key", "rows": 74, "dataLen":262144, "indexLen": 0,"dataFree":0},
+    {"schema": "meta_ps", "name":"webpart", "rows": 0, "dataLen":16384, "indexLen": 0,"dataFree":0},
+    {"schema": "meta_ps", "name":"webpart_resource", "rows": 0, "dataLen":16384, "indexLen": 0,"dataFree":0},
+    {"schema": "meta_ps", "name":"webpart_style", "rows": 0, "dataLen":16384, "indexLen": 0,"dataFree":0},
+    {"schema": "sb", "name":"fj_100000101110000", "rows": 67, "dataLen":13123584, "indexLen": 32768,"dataFree":0},
+    {"schema": "sb", "name":"fj_100000601742603767110000", "rows": 0, "dataLen":16384, "indexLen": 0,"dataFree":0},
+    {"schema": "sb", "name":"fj_10000780100011776x110119", "rows": 0, "dataLen":16384, "indexLen": 0,"dataFree":0},
+    {"schema": "sb", "name":"fj_100008101000021135110000", "rows": 29815, "dataLen":67308683264, "indexLen": 5275648,"dataFree":0},
+    {"schema": "sb", "name":"fj_100008301000029209110000", "rows": 69602, "dataLen":17327292416, "indexLen": 9469952,"dataFree":0},
+    {"schema": "sb", "name":"fj_100008401000029209110000", "rows": 4860, "dataLen":1049116672, "indexLen": 589824,"dataFree":6},
+    {"schema": "sb", "name":"zz20190803", "rows": 280, "dataLen":65536, "indexLen": 0,"dataFree":0},
+    {"schema": "sb", "name":"zz_100000101110000", "rows": 76, "dataLen":147456, "indexLen": 32768,"dataFree":0}
+  ],
+  "afterCsvLoad": [
+    "v.name = v.schema + '.' + v.name",
+    "v.tableSize = tryParseInt(v.dataLen) + tryParseInt(v.indexLen)"
+  ]
+}

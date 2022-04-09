@@ -1,0 +1,27 @@
+{
+  "_hl": "echarts",
+  "title": "zz table rows and size",
+  "tooltip": {
+    "prefix": "'表 ' + params[0].data.TABLE_NAME"
+  },
+  "series": [
+    {
+      "name": "行数",
+      "x": "_seq",
+      "y": "TABLE_ROWS",
+      "selected": true,
+      "tooltip": "v.TABLE_SIZE + ' / ' + humanSize(v.TABLE_SIZE)"
+    },
+    {
+      "name": "空间",
+      "x": "_seq",
+      "y": "TABLE_SIZE",
+      "selected": false,
+      "tooltip": "v.TABLE_ROWS + ' /' + humanNum(v.TABLE_ROWS)"
+    }
+  ],
+  "afterCsvLoad": [
+    "v.TABLE_NAME = v.TABLE_SCHEMA + '.' + v.TABLE_NAME",
+    "v.TABLE_SIZE = tryParseInt(v.DATA_LENGTH) + tryParseInt(v.INDEX_LENGTH)"
+  ]
+}

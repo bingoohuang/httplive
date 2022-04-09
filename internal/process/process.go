@@ -111,6 +111,20 @@ func (ep *Endpoint) CreateServiceStatic(m *APIDataModel) {
 	m.ServeFn = wrap(b.Handle, m)
 }
 
+func (ep *Endpoint) CreateEcharts(m *APIDataModel) {
+	if h := jj.Get(ep.Body, "_hl"); h.String() != HlEcharts {
+		return
+	}
+
+	var b EchartConfig
+
+	if err := json.Unmarshal([]byte(ep.Body), &b); err != nil {
+		return
+	}
+
+	m.ServeFn = wrap(b.Handle, m)
+}
+
 func wrap(handle func(*gin.Context, *APIDataModel) error, apiModel *APIDataModel) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		if err := handle(ctx, apiModel); err != nil {
