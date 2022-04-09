@@ -17,10 +17,10 @@ const (
 )
 
 type ServeStatic struct {
-	Root      string `json:"root"`
-	AutoIndex bool   `json:"auto_index"`
-	Grid      bool   `json:"grid"`
-	Index     string `json:"index"`
+	Root     string `json:"root"`
+	Dir      string `json:"dir"` // (empty) / list / grid
+	Index    string `json:"index"`
+	dirFirst bool
 }
 
 var DirListTemplate *template.Template
@@ -37,27 +37,36 @@ func (m ServeStatic) Handle(c *gin.Context, apiModel *APIDataModel) error {
 		return nil
 	}
 
-	format := c.Query("format")
-	grid := format == "grid"
-	if format == "list" && m.AutoIndex {
-		m.Grid = false
+	if dir := c.Query("dir"); dir != "" {
+		m.dirFirst = true
+		m.Dir = dir
 	}
 
 	urlPath := c.Request.URL.Path
 	fixPath, _ := ParsePathParams(apiModel)
 	urlPath = strings.TrimPrefix(urlPath, fixPath)
 	if urlPath == "" || urlPath == "/" {
-		if grid && m.AutoIndex {
-			return m.listPage(c, m.Root, grid)
+		if m.Index != "" {
+			indexFile := path.Join(m.Root, m.Index)
+			if indexFileStat, err := os.Stat(indexFile); err != nil || indexFileStat.IsDir() {
+				m.Index = ""
+			}
 		}
-		if format == "list" && m.AutoIndex {
-			return m.listPage(c, m.Root, false)
+
+		if !m.dirFirst && m.Index != "" {
+			c.File(path.Join(m.Root, m.Index))
+			return nil
+		}
+
+		switch m.Dir {
+		case "grid":
+			return m.listPage(c, m.Root)
+		case "list":
+			return m.listPage(c, m.Root)
 		}
 
 		if m.Index != "" {
 			c.File(path.Join(m.Root, m.Index))
-		} else if m.AutoIndex {
-			return m.listPage(c, m.Root, grid)
 		} else {
 			c.Status(http.StatusNotFound)
 		}
@@ -68,7 +77,7 @@ func (m ServeStatic) Handle(c *gin.Context, apiModel *APIDataModel) error {
 	if fstat, err := os.Stat(f); err != nil {
 		return fmt.Errorf("root directory: %w", err)
 	} else if fstat.IsDir() {
-		return m.listPage(c, f, grid)
+		return m.listPage(c, f)
 	} else {
 		c.File(f)
 	}
@@ -76,14 +85,14 @@ func (m ServeStatic) Handle(c *gin.Context, apiModel *APIDataModel) error {
 	return nil
 }
 
-func (m ServeStatic) listPage(c *gin.Context, dir string, grid bool) error {
+func (m ServeStatic) listPage(c *gin.Context, dir string) error {
 	data, err := ListDir(dir, c.Request.URL.RawQuery, 1000)
 	if err != nil {
 		return err
 	}
 	c.Header("Content-Type", "text/html; charset=utf-8")
 
-	if m.Grid || grid {
+	if m.Dir == "grid" {
 		var imageFiles []File
 		for _, d := range data.Files {
 			name := strings.ToLower(d.Name)

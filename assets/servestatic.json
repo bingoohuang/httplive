@@ -1,7 +1,6 @@
 {
   "_hl": "serverStatic",
   "root": "/Users/bingoobjca/500px",
-  "auto_index": true,
-  "grid": true,
+  "dir": "grid",
   "index": "3.jpg"
 }
