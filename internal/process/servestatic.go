@@ -1,6 +1,7 @@
 package process
 
 import (
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -75,6 +76,10 @@ func (m ServeStatic) Handle(c *gin.Context, apiModel *APIDataModel) error {
 
 	f := path.Join(m.Root, urlPath)
 	if fstat, err := os.Stat(f); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			c.Status(http.StatusNotFound)
+			return nil
+		}
 		return fmt.Errorf("root directory: %w", err)
 	} else if fstat.IsDir() {
 		return m.listPage(c, f)
