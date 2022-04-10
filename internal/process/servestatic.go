@@ -30,6 +30,11 @@ var GridTemplate *template.Template
 func (m ServeStatic) Handle(c *gin.Context, apiModel *APIDataModel) error {
 	rootStat, err := os.Stat(m.Root)
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			c.Status(http.StatusNotFound)
+			return nil
+		}
+
 		return fmt.Errorf("root directory: %w", err)
 	}
 
