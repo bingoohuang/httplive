@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"os"
 	"path"
@@ -43,56 +44,70 @@ func (m ServeStatic) Handle(c *gin.Context, apiModel *APIDataModel) error {
 		return nil
 	}
 
+	urlPath := c.Request.URL.Path
+	fixPath, _ := ParsePathParams(apiModel)
+	urlPath = strings.TrimPrefix(urlPath, fixPath)
+	dirPath := path.Join(m.Root, urlPath)
+	fstat, err := os.Stat(dirPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			c.Status(http.StatusNotFound)
+		}
+		log.Printf("stat %s failed: %v", dirPath, err)
+		return nil
+	}
+
+	if !fstat.IsDir() {
+		c.File(dirPath)
+		return nil
+	}
+
+	if m.Index != "" {
+		indexFile := path.Join(dirPath, m.Index)
+		if indexFileStat, err := os.Stat(indexFile); err != nil || indexFileStat.IsDir() {
+			m.Index = ""
+		}
+	}
+
 	if dir := c.Query("dir"); dir != "" {
 		m.dirFirst = true
 		m.Dir = dir
 	}
 
-	urlPath := c.Request.URL.Path
-	fixPath, _ := ParsePathParams(apiModel)
-	urlPath = strings.TrimPrefix(urlPath, fixPath)
-	if urlPath == "" || urlPath == "/" {
-		if m.Index != "" {
-			indexFile := path.Join(m.Root, m.Index)
-			if indexFileStat, err := os.Stat(indexFile); err != nil || indexFileStat.IsDir() {
-				m.Index = ""
-			}
-		}
-
-		if !m.dirFirst && m.Index != "" {
-			c.File(path.Join(m.Root, m.Index))
-			return nil
-		}
-
-		switch m.Dir {
-		case "grid":
-			return m.listPage(c, m.Root)
-		case "list":
-			return m.listPage(c, m.Root)
-		}
-
-		if m.Index != "" {
-			c.File(path.Join(m.Root, m.Index))
-		} else {
-			c.Status(http.StatusNotFound)
-		}
+	if !m.dirFirst && m.Index != "" {
+		c.File(path.Join(dirPath, m.Index))
 		return nil
 	}
 
-	f := path.Join(m.Root, urlPath)
-	if fstat, err := os.Stat(f); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			c.Status(http.StatusNotFound)
-			return nil
-		}
-		return fmt.Errorf("root directory: %w", err)
-	} else if fstat.IsDir() {
-		return m.listPage(c, f)
+	switch m.Dir {
+	case "grid":
+		return m.listPage(c, dirPath)
+	case "list":
+		return m.listPage(c, dirPath)
+	}
+
+	if m.Index != "" {
+		c.File(path.Join(dirPath, m.Index))
 	} else {
-		c.File(f)
+		m.tryIndexHtml(c)
 	}
 
 	return nil
+}
+
+func (m ServeStatic) tryIndexHtml(c *gin.Context) {
+	f := path.Join(m.Root, "index.html")
+	if stat, err := os.Stat(f); err == nil && !stat.IsDir() {
+		c.File(f)
+		return
+	}
+	f = path.Join(m.Root, "index.htm")
+	if stat, err := os.Stat(f); err == nil && !stat.IsDir() {
+		c.File(f)
+		return
+	}
+
+	c.Status(http.StatusNotFound)
 }
 
 func (m ServeStatic) listPage(c *gin.Context, dir string) error {
