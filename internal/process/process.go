@@ -41,7 +41,7 @@ func (ep Endpoint) CreateProxy(m *APIDataModel) {
 		return
 	}
 
-	pool := lb.CreateProxyServerPool(proxy.String())
+	pool := lb.CreateProxyServerPool(proxy.String(), ep.Methods+" "+ep.Endpoint)
 	if err := pool.CheckBackends(); err != nil {
 		log.Printf("E! proxy server check failed %v", err)
 		return

@@ -10,7 +10,7 @@ import (
 )
 
 // CreateProxyServerPool creates a server pool by serverList
-func CreateProxyServerPool(serverList string) *BackendPool {
+func CreateProxyServerPool(serverList string, endpointPath string) *BackendPool {
 	var serverPool BackendPool
 
 	for _, tok := range strings.Split(serverList, ",") {
@@ -27,7 +27,7 @@ func CreateProxyServerPool(serverList string) *BackendPool {
 
 		serverPool.Add(b)
 
-		log.Printf("Configured proxy server: %s", tok)
+		log.Printf("Configured proxy server: %s for %s", tok, endpointPath)
 	}
 
 	return &serverPool
