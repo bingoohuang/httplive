@@ -337,12 +337,12 @@ func (a APIDataModel) createCasbin() (*casbin.Enforcer, *sariaf.Router, map[stri
 	return e, sariafRouter, authMap
 }
 
-func (a *APIDataModel) TryDo(f func(m *APIDataModel)) {
+func (a *APIDataModel) TryDo(f func(*APIDataModel, func(name string) string), asset func(name string) string) {
 	if a.ServeFn != nil {
 		return
 	}
 
-	f(a)
+	f(a, asset)
 }
 
 func AdminAuth(c *gin.Context) {

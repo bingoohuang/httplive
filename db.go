@@ -5,7 +5,6 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
-	"github.com/bingoohuang/jj"
 	"html/template"
 	"io/fs"
 	"log"
@@ -18,6 +17,8 @@ import (
 	"sync"
 	textTemplate "text/template"
 	"time"
+
+	"github.com/bingoohuang/jj"
 
 	"github.com/bingoohuang/gg/pkg/ss"
 	"github.com/bingoohuang/httplive/pkg/countable"
@@ -166,8 +167,8 @@ func init() {
 	process.EchartsTemplate = func() *textTemplate.Template {
 		t, err := textTemplate.New("echarts").
 			Funcs(textTemplate.FuncMap{
-				"ToString":  ToString,
-				"JoinLines": JoinLines,
+				"ToString":  toString,
+				"JoinLines": joinLiteralLines,
 			}).
 			Parse(asset("echarts.html"))
 		if err != nil {
@@ -177,11 +178,11 @@ func init() {
 	}()
 }
 
-func JoinLines(lines []string) string {
+func joinLiteralLines(lines []string) string {
 	return strings.Join(lines, `\n`)
 }
 
-func ToString(value interface{}) string {
+func toString(value interface{}) string {
 	switch val := value.(type) {
 	case string:
 		return val
@@ -253,6 +254,7 @@ func createDB(dao *Dao) error {
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/echo/:id", Methods: "ANY", MimeType: "", Filename: "", Body: asset("echo.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/mockbin", Methods: "ANY", MimeType: "", Filename: "", Body: asset("mockbin.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/serveStatic", Methods: http.MethodGet, MimeType: "", Filename: "", Body: asset("servestatic.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
+	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/upload", Methods: "ANY", MimeType: "", Filename: "", Body: asset("upload.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/echarts1", Methods: http.MethodGet, MimeType: "", Filename: "", Body: asset("echarts1.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/echarts2", Methods: http.MethodGet, MimeType: "", Filename: "", Body: asset("echarts2.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/echarts3", Methods: http.MethodGet, MimeType: "", Filename: "", Body: asset("echarts3.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
@@ -321,12 +323,12 @@ func CreateAPIDataModel(ep *process.Endpoint, query bool) *process.APIDataModel 
 		return m
 	}
 
-	m.TryDo(ep.CreateHlHandlers)
-	m.TryDo(ep.CreateMockbin)
-	m.TryDo(ep.CreateEcho)
-	m.TryDo(ep.CreateProxy)
-	m.TryDo(ep.CreateDirect)
-	m.TryDo(ep.CreateDefault)
+	m.TryDo(ep.CreateHlHandlers, asset)
+	m.TryDo(ep.CreateMockbin, nil)
+	m.TryDo(ep.CreateEcho, nil)
+	m.TryDo(ep.CreateProxy, nil)
+	m.TryDo(ep.CreateDirect, nil)
+	m.TryDo(ep.CreateDefault, nil)
 
 	return m
 }

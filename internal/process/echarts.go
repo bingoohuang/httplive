@@ -2,8 +2,9 @@ package process
 
 import (
 	"encoding/json"
-	"github.com/gin-gonic/gin"
 	"text/template"
+
+	"github.com/gin-gonic/gin"
 )
 
 const (
@@ -33,7 +34,7 @@ type EchartConfig struct {
 
 var EchartsTemplate *template.Template
 
-func (m EchartConfig) HlHandle(c *gin.Context, _ *APIDataModel) error {
+func (m EchartConfig) HlHandle(c *gin.Context, _ *APIDataModel, _ func(name string) string) error {
 	c.Header("Content-Type", "text/html; charset=utf-8")
 	return EchartsTemplate.Execute(c.Writer, m)
 }

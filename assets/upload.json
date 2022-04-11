@@ -1,0 +1,10 @@
+{
+  "_hl": "serverStatic",
+  "root": "/Users/bingoobjca/500px",
+  "dir": "grid",
+  "downloadRateLimit": "",
+  "upload": true,
+  "uploadMaxSize": "10MiB",
+  "uploadRateLimit": "",
+  "uploadMaxMemory": "16MiB"
+}

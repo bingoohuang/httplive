@@ -11,6 +11,7 @@ require (
 	github.com/bingoohuang/jj v0.0.0-20220403155614-6febd5a6974b
 	github.com/bingoohuang/sariaf v0.0.0-20210118074537-bac7a178cb89
 	github.com/casbin/casbin/v2 v2.43.2
+	github.com/dustin/go-humanize v1.0.0
 	github.com/gin-gonic/gin v1.7.7
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-sql-driver/mysql v1.6.0
@@ -24,6 +25,7 @@ require (
 	github.com/stretchr/testify v1.7.1
 	github.com/valyala/fasthttp v1.35.0
 	go.etcd.io/bbolt v1.3.6
+	golang.org/x/time v0.0.0-20220224211638-0e9765cccd65
 )
 
 require (
@@ -54,7 +56,7 @@ require (
 	github.com/thoas/go-funk v0.9.0 // indirect
 	github.com/ugorji/go/codec v1.1.7 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	golang.org/x/crypto v0.0.0-20220321153916-2c7772ba3064 // indirect
+	golang.org/x/crypto v0.0.0-20220331220935-ae2d96664a29 // indirect
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
 	golang.org/x/sys v0.0.0-20220319134239-a9b59b0215f8 // indirect
 	golang.org/x/text v0.3.7 // indirect

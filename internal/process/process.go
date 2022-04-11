@@ -34,7 +34,7 @@ type RouterResult struct {
 	RemoteAddr     string
 }
 
-func (ep Endpoint) CreateProxy(m *APIDataModel) {
+func (ep Endpoint) CreateProxy(m *APIDataModel, _ func(name string) string) {
 	proxy := jj.Get(ep.Body, "_proxy")
 	isProxy := proxy.Type == jj.String && util.HasPrefix(proxy.String(), "http")
 	if !isProxy {
@@ -70,7 +70,7 @@ func (ep Endpoint) CreateProxy(m *APIDataModel) {
 	}
 }
 
-func (ep *Endpoint) CreateDirect(m *APIDataModel) {
+func (ep *Endpoint) CreateDirect(m *APIDataModel, _ func(name string) string) {
 	direct := jj.Get(ep.Body, "_direct")
 	if direct.Type == jj.Null {
 		return
@@ -81,7 +81,7 @@ func (ep *Endpoint) CreateDirect(m *APIDataModel) {
 	}
 }
 
-func (ep *Endpoint) CreateDefault(m *APIDataModel) {
+func (ep *Endpoint) CreateDefault(m *APIDataModel, _ func(name string) string) {
 	dynamic := jj.Get(ep.Body, "_dynamic")
 	if dynamic.Type == jj.JSON && dynamic.IsArray() {
 		m.dynamicValuers = createDynamics(ep.Body, []byte(dynamic.Raw))
@@ -98,7 +98,7 @@ func (ep *Endpoint) CreateDefault(m *APIDataModel) {
 }
 
 type HlHandler interface {
-	HlHandle(c *gin.Context, apiModel *APIDataModel) error
+	HlHandle(c *gin.Context, apiModel *APIDataModel, asset func(name string) string) error
 }
 
 type HlHandlerFn func(c *gin.Context, apiModel *APIDataModel) error
@@ -115,7 +115,7 @@ func registerHlHandlers(k string, creator HlHandlerCreator) {
 	hlHandlers[k] = creator
 }
 
-func (ep *Endpoint) CreateHlHandlers(m *APIDataModel) {
+func (ep *Endpoint) CreateHlHandlers(m *APIDataModel, asset func(name string) string) {
 	for k, v := range hlHandlers {
 		if h := jj.Get(ep.Body, "_hl"); h.String() == k {
 			b := v()
@@ -126,21 +126,24 @@ func (ep *Endpoint) CreateHlHandlers(m *APIDataModel) {
 				bb.AfterUnmashal()
 			}
 
-			m.ServeFn = wrap(b.HlHandle, m)
+			m.ServeFn = func(ctx *gin.Context) {
+				if a, ok := b.(MethodsAllowed); ok {
+					if !a.AllowMethods(ctx.Request.Method) {
+						ctx.Status(http.StatusMethodNotAllowed)
+						return
+					}
+				}
+
+				if err := b.HlHandle(ctx, m, asset); err != nil {
+					log.Printf("E! %v", err)
+					_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+				}
+			}
 		}
 	}
 }
 
-func wrap(handle func(*gin.Context, *APIDataModel) error, apiModel *APIDataModel) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		if err := handle(ctx, apiModel); err != nil {
-			log.Printf("E! %v", err)
-			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
-		}
-	}
-}
-
-func (ep *Endpoint) CreateMockbin(m *APIDataModel) {
+func (ep *Endpoint) CreateMockbin(m *APIDataModel, _ func(name string) string) {
 	echoType := jj.Get(ep.Body, "_mockbin")
 	if !echoType.Bool() {
 		return
@@ -155,7 +158,7 @@ func (ep *Endpoint) CreateMockbin(m *APIDataModel) {
 	m.ServeFn = b.Handle
 }
 
-func (ep *Endpoint) CreateEcho(m *APIDataModel) {
+func (ep *Endpoint) CreateEcho(m *APIDataModel, _ func(name string) string) {
 	echoType := jj.Get(ep.Body, "_echo")
 	if echoType.Type != jj.String {
 		return

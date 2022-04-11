@@ -2,8 +2,6 @@ package process
 
 import (
 	"fmt"
-	"github.com/bingoohuang/gg/pkg/mathx"
-	"github.com/bingoohuang/gg/pkg/ss"
 	"html"
 	"os"
 	"path"
@@ -12,6 +10,9 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/bingoohuang/gg/pkg/mathx"
+	"github.com/bingoohuang/gg/pkg/ss"
 
 	"github.com/bingoohuang/gg/pkg/iox"
 	"github.com/bingoohuang/gg/pkg/man"
