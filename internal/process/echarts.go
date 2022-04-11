@@ -10,6 +10,10 @@ const (
 	HlEcharts = "echarts"
 )
 
+func init() {
+	registerHlHandlers(HlEcharts, func() HlHandler { return &EchartConfig{} })
+}
+
 type EchartConfig struct {
 	Title   string `json:"title"`
 	Tooltip struct {
@@ -29,7 +33,7 @@ type EchartConfig struct {
 
 var EchartsTemplate *template.Template
 
-func (m EchartConfig) Handle(c *gin.Context, _ *APIDataModel) error {
+func (m EchartConfig) HlHandle(c *gin.Context, _ *APIDataModel) error {
 	c.Header("Content-Type", "text/html; charset=utf-8")
 	return EchartsTemplate.Execute(c.Writer, m)
 }

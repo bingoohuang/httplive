@@ -10,6 +10,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/bingoohuang/gg/pkg/man"
 	"github.com/bingoohuang/gg/pkg/ss"
 	"github.com/gin-gonic/gin"
 )
@@ -18,17 +19,63 @@ const (
 	HlServerStatic = "serverStatic"
 )
 
+func init() {
+	registerHlHandlers(HlServerStatic, func() HlHandler { return &ServeStatic{} })
+}
+
 type ServeStatic struct {
-	Root     string `json:"root"`
-	Dir      string `json:"dir"` // (empty) / list / grid
-	Index    string `json:"index"`
-	dirFirst bool
+	Root  string `json:"root"`
+	Dir   string `json:"dir"` // (empty) / list / grid
+	Index string `json:"index"`
+
+	DownloadRateLimit string `json:"downloadRateLimit"` // rate limit per second for downloading, empty for no limit
+
+	Upload          bool   `json:"upload"`          // allow upload or not
+	UploadMaxSize   string `json:"uploadMaxSize"`   // max size like 10M to allow uploading, empty for no limit
+	UploadRateLimit string `json:"uploadRateLimit"` // rate limit per second for uploading, empty for no limit
+	UploadMaxMemory string `json:"uploadMaxMemory"` // max memory usage for uploading, default 16MiB
+
+	dirFirst          bool
+	downloadRateLimit uint64
+	uploadMaxSize     uint64
+	uploadRateLimit   uint64
+	uploadMaxMemory   uint64
+}
+
+func (s *ServeStatic) AfterUnmashal() {
+	var err error
+	s.downloadRateLimit, err = man.ParseBytes(s.DownloadRateLimit)
+	if err != nil {
+		log.Printf("parse downloadRateLimit %s failed: %v", s.DownloadRateLimit, err)
+	}
+
+	s.uploadMaxSize, err = man.ParseBytes(s.UploadMaxSize)
+	if err != nil {
+		log.Printf("parse uploadMaxSize %s failed: %v", s.UploadMaxSize, err)
+	}
+
+	s.uploadRateLimit, err = man.ParseBytes(s.UploadRateLimit)
+	if err != nil {
+		log.Printf("parse uploadRateLimit %s failed: %v", s.UploadRateLimit, err)
+	}
+
+	s.uploadMaxMemory, err = man.ParseBytes(s.UploadMaxMemory)
+	if err != nil {
+		log.Printf("parse uploadMaxMemory %s failed: %v", s.UploadMaxMemory, err)
+	}
+	if s.uploadMaxMemory <= 0 {
+		s.uploadMaxMemory = 16 /*16 MiB */ << 20
+	}
+}
+
+type AfterUnmashaler interface {
+	AfterUnmashal()
 }
 
 var DirListTemplate *template.Template
 var GridTemplate *template.Template
 
-func (m ServeStatic) Handle(c *gin.Context, apiModel *APIDataModel) error {
+func (m *ServeStatic) HlHandle(c *gin.Context, apiModel *APIDataModel) error {
 	rootStat, err := os.Stat(m.Root)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {

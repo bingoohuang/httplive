@@ -321,8 +321,7 @@ func CreateAPIDataModel(ep *process.Endpoint, query bool) *process.APIDataModel 
 		return m
 	}
 
-	m.TryDo(ep.CreateServiceStatic)
-	m.TryDo(ep.CreateEcharts)
+	m.TryDo(ep.CreateHlHandlers)
 	m.TryDo(ep.CreateMockbin)
 	m.TryDo(ep.CreateEcho)
 	m.TryDo(ep.CreateProxy)

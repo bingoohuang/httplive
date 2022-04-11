@@ -97,32 +97,38 @@ func (ep *Endpoint) CreateDefault(m *APIDataModel) {
 	}
 }
 
-func (ep *Endpoint) CreateServiceStatic(m *APIDataModel) {
-	if h := jj.Get(ep.Body, "_hl"); h.String() != HlServerStatic {
-		return
-	}
-
-	var b ServeStatic
-
-	if err := json.Unmarshal([]byte(ep.Body), &b); err != nil {
-		return
-	}
-
-	m.ServeFn = wrap(b.Handle, m)
+type HlHandler interface {
+	HlHandle(c *gin.Context, apiModel *APIDataModel) error
 }
 
-func (ep *Endpoint) CreateEcharts(m *APIDataModel) {
-	if h := jj.Get(ep.Body, "_hl"); h.String() != HlEcharts {
-		return
+type HlHandlerFn func(c *gin.Context, apiModel *APIDataModel) error
+
+func (f HlHandlerFn) HlHandle(c *gin.Context, apiModel *APIDataModel) error {
+	return f(c, apiModel)
+}
+
+type HlHandlerCreator func() HlHandler
+
+var hlHandlers = map[string]HlHandlerCreator{}
+
+func registerHlHandlers(k string, creator HlHandlerCreator) {
+	hlHandlers[k] = creator
+}
+
+func (ep *Endpoint) CreateHlHandlers(m *APIDataModel) {
+	for k, v := range hlHandlers {
+		if h := jj.Get(ep.Body, "_hl"); h.String() == k {
+			b := v()
+			if err := json.Unmarshal([]byte(ep.Body), b); err != nil {
+				return
+			}
+			if bb, ok := b.(AfterUnmashaler); ok {
+				bb.AfterUnmashal()
+			}
+
+			m.ServeFn = wrap(b.HlHandle, m)
+		}
 	}
-
-	var b EchartConfig
-
-	if err := json.Unmarshal([]byte(ep.Body), &b); err != nil {
-		return
-	}
-
-	m.ServeFn = wrap(b.Handle, m)
 }
 
 func wrap(handle func(*gin.Context, *APIDataModel) error, apiModel *APIDataModel) gin.HandlerFunc {
