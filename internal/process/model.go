@@ -3,7 +3,6 @@ package process
 import (
 	"bytes"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -65,7 +64,7 @@ type WsMessage struct {
 	Time           string            `json:"time"`
 	Host           string            `json:"host"`
 	Body           interface{}       `json:"body"`
-	Response       json.RawMessage   `json:"response"`
+	Response       interface{}       `json:"response"`
 	ResponseStatus int               `json:"status"`
 	ResponseHeader map[string]string `json:"responseHeader"`
 	ResponseSize   int               `json:"responseSize"`

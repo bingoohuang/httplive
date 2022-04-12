@@ -7,6 +7,7 @@ import (
 	"github.com/bingoohuang/gg/pkg/osx"
 	"io"
 	"io/ioutil"
+	"log"
 	"mime"
 	"net/http"
 	"runtime"
@@ -15,7 +16,6 @@ import (
 
 	"github.com/bingoohuang/gg/pkg/randx"
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
 	"github.com/skratchdot/open-golang/open"
 )
 
@@ -156,30 +156,13 @@ func TryBind(c *gin.Context) interface{} {
 }
 
 // GetRequestBody ...
-func GetRequestBody(c *gin.Context) interface{} {
-	if c.Request.Method == http.MethodGet {
-		return nil
+func GetRequestBody(requestBody *bytes.Buffer) interface{} {
+	envSize := osx.EnvSize("MAX_PAYLOAD_SIZE", 256)
+	body, err := ioutil.ReadAll(io.LimitReader(requestBody, int64(envSize)))
+	if err != nil {
+		log.Printf("read request body failed: %+v", err)
 	}
-
-	multiPartFormValue := GetMultiPartFormValue(c)
-	if multiPartFormValue != nil {
-		return multiPartFormValue
-	}
-
-	formBody := GetFormBody(c)
-	if len(formBody) > 0 {
-		return formBody
-	}
-
-	contentType := c.ContentType()
-	switch {
-	case strings.Contains(contentType, binding.MIMEJSON):
-		return TryBind(c)
-	default:
-		envSize := osx.EnvSize("MAX_PAYLOAD_SIZE", 256)
-		body, _ := ioutil.ReadAll(io.LimitReader(c.Request.Body, int64(envSize)))
-		return string(body)
-	}
+	return string(body)
 }
 
 // IsJSONBytes tests bytes b is in JSON format.

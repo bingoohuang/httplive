@@ -1,8 +1,10 @@
 package httplive
 
 import (
+	"bytes"
 	"embed"
 	"fmt"
+	"io"
 	"net/http"
 	"path"
 	"strings"
@@ -53,9 +55,12 @@ func APIMiddleware(c *gin.Context) {
 		return
 	}
 
+	var bufferRead bytes.Buffer
+	c.Request.Body = CreateTeeReader(c.Request.Body, &bufferRead)
+
 	if result := serveAPI(c.Writer, c.Request); result.RouterServed {
 		if broadcastThrottler.Allow() {
-			broadcast(c, result)
+			broadcast(c, &bufferRead, result)
 		}
 
 		c.Abort()
@@ -65,17 +70,27 @@ func APIMiddleware(c *gin.Context) {
 	c.Next()
 }
 
-func broadcast(c *gin.Context, rr process.RouterResult) {
+type ReadCloser struct {
+	io.Reader
+	io.Closer
+}
+
+func CreateTeeReader(rc io.ReadCloser, w io.Writer) io.ReadCloser {
+	tee := io.TeeReader(rc, w)
+	return &ReadCloser{Reader: tee, Closer: rc}
+}
+
+func broadcast(c *gin.Context, requestBody *bytes.Buffer, rr process.RouterResult) {
 	msg := process.WsMessage{
 		Time:   util.TimeFmt(time.Now()),
 		Host:   c.Request.Host,
-		Body:   util.GetRequestBody(c),
+		Body:   util.GetRequestBody(requestBody),
 		Method: c.Request.Method,
 		Path:   c.Request.URL.Path,
 		Query:  util.ConvertHeader(c.Request.URL.Query()),
 		Header: util.GetHeaders(c),
 
-		Response:       util.CompactJSON(rr.RouterBody),
+		Response:       string(util.CompactJSON(rr.RouterBody)),
 		ResponseSize:   rr.ResponseSize,
 		ResponseStatus: rr.ResponseStatus,
 		ResponseHeader: rr.ResponseHeader,
