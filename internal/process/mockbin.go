@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/bingoohuang/gg/pkg/osx"
@@ -124,16 +123,10 @@ func (m Mockbin) HlHandle(c *gin.Context, _ *APIDataModel, _ func(name string) s
 	}
 
 	if m.PayloadFile != "" {
-		if stat, err := os.Stat(m.PayloadFile); err != nil {
-			log.Printf("stat payloadFile %s failed: %v", m.PayloadFile, err)
-		} else if stat.IsDir() {
-			log.Printf("stat payloadFile %s is a directory", m.PayloadFile)
+		if p := osx.ReadFile(m.PayloadFile); !p.OK() {
+			log.Printf("read payloadFile %s failed: %v", m.PayloadFile, p.Err)
 		} else {
-			if p := osx.ReadFile(m.PayloadFile); !p.OK() {
-				log.Printf("read payloadFile %s failed: %v", m.PayloadFile, err)
-			} else {
-				m.Payload = p.Data
-			}
+			m.Payload = p.Data
 		}
 	}
 
