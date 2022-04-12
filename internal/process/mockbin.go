@@ -2,6 +2,7 @@ package process
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -141,6 +142,7 @@ func (m Mockbin) HlHandle(c *gin.Context, _ *APIDataModel, _ func(name string) s
 		payload = jj.Gen(payload)
 	}
 
+	c.Header("Content-Length", fmt.Sprintf("%d", len(payload)))
 	c.Data(m.Status, m.ContentType, []byte(payload))
 	return nil
 }
