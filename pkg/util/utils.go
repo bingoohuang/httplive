@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/bingoohuang/gg/pkg/osx"
+	"io"
 	"io/ioutil"
 	"mime"
 	"net/http"
@@ -69,6 +71,10 @@ func JSON(v interface{}) []byte {
 
 // CompactJSON compact a json byte slice or wrap it to raw value.
 func CompactJSON(b []byte) []byte {
+	if s := osx.EnvSize("MAX_PAYLOAD_SIZE", 256); len(b) > s {
+		return append(append([]byte{}, b[:s]...), []byte("...")...)
+	}
+
 	var out bytes.Buffer
 	if err := json.Compact(&out, b); err != nil {
 		v, _ := json.Marshal(map[string]string{"raw": string(b)})
@@ -170,7 +176,8 @@ func GetRequestBody(c *gin.Context) interface{} {
 	case strings.Contains(contentType, binding.MIMEJSON):
 		return TryBind(c)
 	default:
-		body, _ := ioutil.ReadAll(c.Request.Body)
+		envSize := osx.EnvSize("MAX_PAYLOAD_SIZE", 256)
+		body, _ := ioutil.ReadAll(io.LimitReader(c.Request.Body, int64(envSize)))
 		return string(body)
 	}
 }
