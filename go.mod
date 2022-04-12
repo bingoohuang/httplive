@@ -6,7 +6,7 @@ require (
 	github.com/antonmedv/expr v1.9.0
 	github.com/asdine/storm/v3 v3.2.1
 	github.com/bingoohuang/gg v0.0.0-20220412043035-de628cfc8c77
-	github.com/bingoohuang/golog v0.0.0-20220408033616-3330e2d53b06
+	github.com/bingoohuang/golog v0.0.0-20220412052216-f20212e5ae9f
 	github.com/bingoohuang/gor v0.0.0-20200628053500-ec6cb95c0e1b
 	github.com/bingoohuang/jj v0.0.0-20220412043210-85c164d92ea3
 	github.com/bingoohuang/sariaf v0.0.0-20210118074537-bac7a178cb89
