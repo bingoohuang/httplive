@@ -8,7 +8,7 @@ require (
 	github.com/bingoohuang/gg v0.0.0-20220412050757-14d06220b568
 	github.com/bingoohuang/golog v0.0.0-20220412052216-f20212e5ae9f
 	github.com/bingoohuang/gor v0.0.0-20200628053500-ec6cb95c0e1b
-	github.com/bingoohuang/jj v0.0.0-20220412043210-85c164d92ea3
+	github.com/bingoohuang/jj v0.0.0-20220412091450-0f832da452fb
 	github.com/bingoohuang/sariaf v0.0.0-20210118074537-bac7a178cb89
 	github.com/casbin/casbin/v2 v2.43.2
 	github.com/dustin/go-humanize v1.0.0

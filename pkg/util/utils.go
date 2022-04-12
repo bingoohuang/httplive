@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/bingoohuang/gg/pkg/osx"
 	"io"
 	"io/ioutil"
 	"log"
@@ -13,6 +12,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/bingoohuang/gg/pkg/osx"
 
 	"github.com/bingoohuang/gg/pkg/randx"
 	"github.com/gin-gonic/gin"

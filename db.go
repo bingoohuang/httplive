@@ -368,6 +368,20 @@ func DeleteEndpoint(id string) error {
 	})
 }
 
+// GetByEndpoint ...
+func GetByEndpoint(endpoint string) (*process.APIDataModel, error) {
+	var model *process.APIDataModel
+
+	err := DBDo(func(dao *Dao) error {
+		ep := dao.FindByEndpoint(endpoint)
+		model = CreateAPIDataModel(ep, true)
+
+		return nil
+	})
+
+	return model, err
+}
+
 // GetEndpoint ...
 func GetEndpoint(id process.ID) (*process.APIDataModel, error) {
 	var model *process.APIDataModel

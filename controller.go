@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
+	"log"
 	"mime"
 	"net/http"
 	"path"
 	"strings"
+
+	"github.com/bingoohuang/jj"
 
 	"github.com/gin-gonic/gin/binding"
 
@@ -81,21 +84,38 @@ type endpointT struct {
 
 // Endpoint ...
 func (ctrl WebCliController) Endpoint(c *gin.Context, _ endpointT) (giu.HTTPStatus, interface{}, error) {
-	id := c.Query("id")
-	model, err := GetEndpoint(process.ID(id))
+	var model *process.APIDataModel
+	var err error
+
+	if s := c.Query("id"); s != "" {
+		model, err = GetEndpoint(process.ID(s))
+	} else if s = c.Query("endpoint"); s != "" {
+		model, err = GetByEndpoint(s)
+	}
+
 	if err != nil {
 		return giu.HTTPStatus(http.StatusInternalServerError), gin.H{"error": err.Error()}, err
 	}
 
 	if model != nil {
+		if c.Query("format") == "clean" {
+			data, err := json.Marshal(model)
+			if err != nil {
+				log.Printf("marshal json failed: %v", err)
+			}
+			data = jj.FreeInnerJSON(data)
+			var x gin.H
+			if err := json.Unmarshal(data, &x); err != nil {
+				log.Printf("unmarshals failed: %v", err)
+			}
+
+			return giu.HTTPStatus(http.StatusOK), x, nil
+		}
+
 		return giu.HTTPStatus(http.StatusOK), model, nil
 	}
 
 	return giu.HTTPStatus(http.StatusNotFound), gin.H{"error": "endpoint and method required"}, nil
-}
-
-type saveT struct {
-	giu.T `url:"POST /api/save"`
 }
 
 func decodeJSON(r io.Reader, obj interface{}) error {
@@ -119,14 +139,18 @@ func validate(obj interface{}) error {
 	return binding.Validator.ValidateStruct(obj)
 }
 
+type saveT struct {
+	giu.T `url:"POST /api/save"`
+}
+
 // Save 保存body.
 func (ctrl WebCliController) Save(c *gin.Context, _ saveT) (giu.HTTPStatus, interface{}) {
 	endpoint := c.Query("endpoint")
 	method := c.Query("method")
 	body := c.Query("body")
 	if body == "" {
-		v, _ := ioutil.ReadAll(c.Request.Body)
-		body = string(v)
+		s, _ := ioutil.ReadAll(c.Request.Body)
+		body = string(s)
 	}
 	var model process.APIDataModel
 	if endpoint == "" {
