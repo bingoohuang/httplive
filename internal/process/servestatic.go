@@ -66,25 +66,28 @@ type ServeStatic struct {
 
 func (s *ServeStatic) AfterUnmashal() {
 	var err error
-	s.downloadRateLimit, err = man.ParseBytes(s.DownloadRateLimit)
-	if err != nil {
-		log.Printf("parse downloadRateLimit %s failed: %v", s.DownloadRateLimit, err)
+
+	if s.DownloadRateLimit != "" {
+		if s.downloadRateLimit, err = man.ParseBytes(s.DownloadRateLimit); err != nil {
+			log.Printf("parse downloadRateLimit %s failed: %v", s.DownloadRateLimit, err)
+		}
+	}
+	if s.UploadMaxSize != "" {
+		if s.uploadMaxSize, err = man.ParseBytes(s.UploadMaxSize); err != nil {
+			log.Printf("parse uploadMaxSize %s failed: %v", s.UploadMaxSize, err)
+		}
+	}
+	if s.UploadRateLimit != "" {
+		if s.uploadRateLimit, err = man.ParseBytes(s.UploadRateLimit); err != nil {
+			log.Printf("parse uploadRateLimit %s failed: %v", s.UploadRateLimit, err)
+		}
+	}
+	if s.UploadMaxMemory != "" {
+		if s.uploadMaxMemory, err = man.ParseBytes(s.UploadMaxMemory); err != nil {
+			log.Printf("parse uploadMaxMemory %s failed: %v", s.UploadMaxMemory, err)
+		}
 	}
 
-	s.uploadMaxSize, err = man.ParseBytes(s.UploadMaxSize)
-	if err != nil {
-		log.Printf("parse uploadMaxSize %s failed: %v", s.UploadMaxSize, err)
-	}
-
-	s.uploadRateLimit, err = man.ParseBytes(s.UploadRateLimit)
-	if err != nil {
-		log.Printf("parse uploadRateLimit %s failed: %v", s.UploadRateLimit, err)
-	}
-
-	s.uploadMaxMemory, err = man.ParseBytes(s.UploadMaxMemory)
-	if err != nil {
-		log.Printf("parse uploadMaxMemory %s failed: %v", s.UploadMaxMemory, err)
-	}
 	if s.uploadMaxMemory <= 0 {
 		s.uploadMaxMemory = 16 /*16 MiB */ << 20
 	}
