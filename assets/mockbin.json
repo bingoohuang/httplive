@@ -1,5 +1,5 @@
 {
-  "_mockbin": true,
+  "_hl": "mockbin",
   "status": 200,
   "method": "GET",
   "redirectURL": "",
@@ -19,10 +19,12 @@
   ],
   "close": true,
   "contentType": "application/json; charset=utf-8",
+  "payloadFile": "",
   "payload": {
     "name": "@姓名",
     "id": "@uuid",
-    "addr":"@random(20)"
+    "addr": "@random(20)",
+    "image": "@base64(file=~/bizhi/100.png)"
   },
   "sleep": "10ms-100ms"
 }

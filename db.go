@@ -324,7 +324,6 @@ func CreateAPIDataModel(ep *process.Endpoint, query bool) *process.APIDataModel 
 	}
 
 	m.TryDo(ep.CreateHlHandlers, asset)
-	m.TryDo(ep.CreateMockbin, nil)
 	m.TryDo(ep.CreateEcho, nil)
 	m.TryDo(ep.CreateProxy, nil)
 	m.TryDo(ep.CreateDirect, nil)

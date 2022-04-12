@@ -53,9 +53,8 @@ github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6r
 github.com/bgentry/speakeasy v0.1.0/go.mod h1:+zsyZBPWlz7T6j88CTgSN5bM796AkVf0kBD4zp0CCIs=
 github.com/bingoohuang/easyjson v0.0.0-20211118132814-5606aa48c508 h1:Ew6KVZFgaX/C93v95gc1spL8H+4pis70mLSXFlvyk0E=
 github.com/bingoohuang/easyjson v0.0.0-20211118132814-5606aa48c508/go.mod h1:pj5RZaMJwbOBOXIzDlvOY1kQBJ1unO/XA+gHt17QxBQ=
-github.com/bingoohuang/gg v0.0.0-20220401032752-6d4a79888f0e/go.mod h1:tltYEITxWTTXTTAqJNBK62x6Eg1iThhAnez8CxcQxQo=
-github.com/bingoohuang/gg v0.0.0-20220407015830-93e63d3f812c h1:yyVPzVqgX0HwNwtlpUSabCA6ooDWqgSqOYNCLits5/E=
-github.com/bingoohuang/gg v0.0.0-20220407015830-93e63d3f812c/go.mod h1:tltYEITxWTTXTTAqJNBK62x6Eg1iThhAnez8CxcQxQo=
+github.com/bingoohuang/gg v0.0.0-20220412043035-de628cfc8c77 h1:zQGhSkUuPEpSeN6i9Il0eDpjoAUKQWJFfOmCEIcDlvQ=
+github.com/bingoohuang/gg v0.0.0-20220412043035-de628cfc8c77/go.mod h1:tltYEITxWTTXTTAqJNBK62x6Eg1iThhAnez8CxcQxQo=
 github.com/bingoohuang/golog v0.0.0-20211112131923-101b7e1b3d4c/go.mod h1:atiVUeYe0Rsi80P0eDEF8lpf9qvt/w/qpil8PpNGYvw=
 github.com/bingoohuang/golog v0.0.0-20220408033616-3330e2d53b06 h1:fslrAucdt1mztzPHb3Mtm7SsvGyyaMXAkPa48iovNbM=
 github.com/bingoohuang/golog v0.0.0-20220408033616-3330e2d53b06/go.mod h1:eG/trxk0nks1UTikeTcuupJury4OzyzF+iQ13KNrQH0=
@@ -65,8 +64,8 @@ github.com/bingoohuang/gor v0.0.0-20200628053500-ec6cb95c0e1b h1:V8FCwcSdI/IxeiS
 github.com/bingoohuang/gor v0.0.0-20200628053500-ec6cb95c0e1b/go.mod h1:6kZE8zuEyuhWpwUBjVbUw9lj8Ufuf1AIBqHB0/uUWL0=
 github.com/bingoohuang/gou v0.0.0-20200427104110-9b847a792b6b h1:oClcAEpNt6yiv/l8DRfHjmAc6pk948zTVKyjEXlMNYM=
 github.com/bingoohuang/gou v0.0.0-20200427104110-9b847a792b6b/go.mod h1:aDOwtkuv68JHEEsHoWJhqyUODo79t5k/erZCZllNBhc=
-github.com/bingoohuang/jj v0.0.0-20220403155614-6febd5a6974b h1:qbyQB8jObhramwsgP5aAPFI7e9yDDDR5dfZ8Rni0P5Q=
-github.com/bingoohuang/jj v0.0.0-20220403155614-6febd5a6974b/go.mod h1:dZupQANAoD8WuU/xQ4EBAxuY6CYXsoSB/XritS0ExL8=
+github.com/bingoohuang/jj v0.0.0-20220412043210-85c164d92ea3 h1:+8OUPTHkfx8i9VRsCHAO8yBdl7CboFz4nJuIfY1A278=
+github.com/bingoohuang/jj v0.0.0-20220412043210-85c164d92ea3/go.mod h1:qqtXxZKRvuwIQgARnivGiknmU06R+YQXQFguMGNqXJs=
 github.com/bingoohuang/sariaf v0.0.0-20201222043148-21fd9703b115/go.mod h1:DSi1LVR76Ap189KzzA40C8pFSpRZHsy/n+kgK8ihfhs=
 github.com/bingoohuang/sariaf v0.0.0-20210118074537-bac7a178cb89 h1:5PjJ1dryINBibE25Hzeue4A9NIVp+4fJc3e9pGqhgGw=
 github.com/bingoohuang/sariaf v0.0.0-20210118074537-bac7a178cb89/go.mod h1:DSi1LVR76Ap189KzzA40C8pFSpRZHsy/n+kgK8ihfhs=

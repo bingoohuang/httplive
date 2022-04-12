@@ -2,14 +2,26 @@ package process
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
+	"os"
 	"strings"
+
+	"github.com/bingoohuang/gg/pkg/osx"
 
 	"github.com/bingoohuang/gg/pkg/thinktime"
 	"github.com/bingoohuang/httplive/pkg/util"
 	"github.com/bingoohuang/jj"
 	"github.com/gin-gonic/gin"
 )
+
+const (
+	HLMockbin = "mockbin"
+)
+
+func init() {
+	registerHlHandlers(HLMockbin, func() HlHandler { return &Mockbin{} })
+}
 
 // MockbinCookie defines the cookie format.
 type MockbinCookie struct {
@@ -51,28 +63,8 @@ type Mockbin struct {
 	Close       bool              `json:"close"`
 	ContentType string            `json:"contentType"`
 	Payload     json.RawMessage   `json:"payload"`
+	PayloadFile string            `json:"payloadFile"`
 	Sleep       string            `json:"sleep"`
-}
-
-func countIf(cond bool) int {
-	if cond {
-		return 1
-	}
-
-	return 0
-}
-
-// IsValid tells the mockbin is valid or not.
-func (m Mockbin) IsValid() bool {
-	return countIf(m.Status >= 100)+
-		countIf(m.Method != "")+
-		countIf(m.RedirectURL != "")+
-		countIf(len(m.Headers) > 0)+
-		countIf(len(m.Cookies) > 0)+
-		countIf(m.Close)+
-		countIf(m.ContentType != "")+
-		countIf(len(m.Payload) > 0)+
-		countIf(m.Sleep != "") >= 1
 }
 
 func (m Mockbin) Redirect(c *gin.Context) {
@@ -94,11 +86,11 @@ func (m Mockbin) Redirect(c *gin.Context) {
 	}
 }
 
-func (m Mockbin) Handle(c *gin.Context) {
+func (m Mockbin) HlHandle(c *gin.Context, _ *APIDataModel, _ func(name string) string) error {
 	M := strings.ToUpper(m.Method)
 	if M != "" && !strings.Contains(M, "ANY") && !strings.Contains(M, c.Request.Method) {
 		c.Status(http.StatusMethodNotAllowed)
-		return
+		return nil
 	}
 
 	for k, v := range m.Headers {
@@ -116,7 +108,7 @@ func (m Mockbin) Handle(c *gin.Context) {
 
 	if m.RedirectURL != "" {
 		m.Redirect(c)
-		return
+		return nil
 	}
 
 	if m.ContentType == "" {
@@ -130,10 +122,25 @@ func (m Mockbin) Handle(c *gin.Context) {
 		}
 	}
 
+	if m.PayloadFile != "" {
+		if stat, err := os.Stat(m.PayloadFile); err != nil {
+			log.Printf("stat payloadFile %s failed: %v", m.PayloadFile, err)
+		} else if stat.IsDir() {
+			log.Printf("stat payloadFile %s is a directory", m.PayloadFile)
+		} else {
+			if p := osx.ReadFile(m.PayloadFile); !p.OK() {
+				log.Printf("read payloadFile %s failed: %v", m.PayloadFile, err)
+			} else {
+				m.Payload = p.Data
+			}
+		}
+	}
+
 	payload := string(m.Payload)
 	if jj.Valid(payload) {
 		payload = jj.Gen(payload)
 	}
 
 	c.Data(m.Status, m.ContentType, []byte(payload))
+	return nil
 }

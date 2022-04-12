@@ -143,21 +143,6 @@ func (ep *Endpoint) CreateHlHandlers(m *APIDataModel, asset func(name string) st
 	}
 }
 
-func (ep *Endpoint) CreateMockbin(m *APIDataModel, _ func(name string) string) {
-	echoType := jj.Get(ep.Body, "_mockbin")
-	if !echoType.Bool() {
-		return
-	}
-
-	var b Mockbin
-
-	if err := json.Unmarshal([]byte(ep.Body), &b); err != nil || !b.IsValid() {
-		return
-	}
-
-	m.ServeFn = b.Handle
-}
-
 func (ep *Endpoint) CreateEcho(m *APIDataModel, _ func(name string) string) {
 	echoType := jj.Get(ep.Body, "_echo")
 	if echoType.Type != jj.String {
