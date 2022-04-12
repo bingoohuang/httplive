@@ -70,11 +70,13 @@ func APIMiddleware(c *gin.Context) {
 	c.Next()
 }
 
+// ReadCloser is a struct that includes an io.Reader and an io.Writer.
 type ReadCloser struct {
 	io.Reader
 	io.Closer
 }
 
+// CreateTeeReader creates a tee reader for io.ReadCloser.
 func CreateTeeReader(rc io.ReadCloser, w io.Writer) io.ReadCloser {
 	tee := io.TeeReader(rc, w)
 	return &ReadCloser{Reader: tee, Closer: rc}
