@@ -8,6 +8,8 @@
         body {
             background-color: white;
             color: #333333;
+            height: 100%;
+            margin: 0 auto;
         }
 
         table {
@@ -35,29 +37,120 @@
         table tr > td:nth-child(2), table tr > td:nth-child(3) {
             font-size: 13px;
         }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        .row {
+            display: -ms-flexbox; /* IE 10 */
+            display: flex;
+            -ms-flex-wrap: wrap; /* IE 10 */
+            flex-wrap: wrap;
+            padding: 0 4px;
+        }
+
+        .grid {
+            -ms-flex: 25%; /* IE 10 */
+            flex: 25%;
+            padding: 0 4px;
+        }
+
+        .grid img {
+            margin-top: 8px;
+            vertical-align: middle;
+        }
+
+        .center {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .container {
+            position: relative;
+            width: 300px;
+        }
+
+        .top_left {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+        }
     </style>
 </head>
+
 <body>
-<table>
-    <tr>
-        <th>#</th>
-        <th>Name</th>
-        <th>Size</th>
-        <th>Human size</th>
-        <th>Dir files</th>
-        <th>Modification</th>
-    </tr>
-    {{range $files := .Files}}
-    <tr>
-        <td>{{.Seq}}</td>
-        <td><a href="{{.Url}}">{{.Name}}</a></td>
-        <td>{{.Size}}</td>
-        <td>{{.HumanSize}}</td>
-        <td>{{.DirFiles}}</td>
-        {{/* t2s example: {{ t2s .ModTime "2006-01-02 15:04"}} */}}
-        <td>{{t2s .ModTime}}</td>
-    </tr>
+
+{{if .Upload }}
+
+<div id="selectCSVFile" class="container">
+    <div class="top_left"><a href="#">
+        <label for="myFile" class="btn btn-primary btn-block btn-outlined">Select File to Upload</label>
+        <input id="myFile" style="visibility:hidden;" type="file">
+    </a>
+    </div>
+</div>
+{{ end }}
+
+<div>
+    {{if eq .Dir "list" }}
+    <table class="center">
+        <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Size</th>
+            <th>Human size</th>
+            <th>Dir files</th>
+            <th>Modification</th>
+        </tr>
+        {{range $files := .Files}}
+        <tr>
+            <td>{{.Seq}}</td>
+            <td><a href="{{.Url}}">{{.Name}}</a></td>
+            <td>{{.Size}}</td>
+            <td>{{.HumanSize}}</td>
+            <td>{{.DirFiles}}</td>
+            {{/* t2s example: {{ t2s .ModTime "2006-01-02 15:04"}} */}}
+            <td>{{t2s .ModTime}}</td>
+        </tr>
+        {{end}}
+    </table>
     {{end}}
-</table>
+</div>
+
+{{if eq .Dir "grid" }}
+<div class="row">
+    {{ range .Files -}}
+    <div class="grid">
+        <img src="{{.Url}}" style="width:100%">
+    </div>
+    {{- end }}
+</div>
+{{end}}
+
+{{if .Upload}}
+<script>
+
+    document.getElementById("myFile").addEventListener("change", function () {
+        if (this.files && this.files[0]) {
+            const formData = new FormData();
+            formData.append("file", this.files[0]);
+            let xhr = new XMLHttpRequest()
+            xhr.responseType = 'json';
+
+            // log response
+            xhr.onload = () => {
+                alert(JSON.stringify(xhr.response))
+                console.log(xhr.response);
+            };
+
+            xhr.open("POST", './', true)
+            xhr.send(formData);
+        }
+    });
+
+</script>
+{{end}}
+
 </body>
 </html>

@@ -152,18 +152,6 @@ func init() {
 		return t
 	}()
 
-	process.GridTemplate = func() *template.Template {
-		t, err := template.New("grid").
-			Funcs(template.FuncMap{
-				"mod": func(i, j, target int) bool { return i%j == target },
-			}).
-			Parse(asset("grid.html"))
-		if err != nil {
-			log.Fatalf("Directory grid template init error: %v", err)
-		}
-		return t
-	}()
-
 	process.EchartsTemplate = func() *textTemplate.Template {
 		t, err := textTemplate.New("echarts").
 			Funcs(textTemplate.FuncMap{

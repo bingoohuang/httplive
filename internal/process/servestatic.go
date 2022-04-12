@@ -97,10 +97,7 @@ type AfterUnmashaler interface {
 	AfterUnmashal()
 }
 
-var (
-	DirListTemplate *template.Template
-	GridTemplate    *template.Template
-)
+var DirListTemplate *template.Template
 
 func (s *ServeStatic) HlHandle(c *gin.Context, apiModel *APIDataModel, asset func(name string) string) error {
 	rootStat, err := os.Stat(s.Root)
@@ -113,11 +110,13 @@ func (s *ServeStatic) HlHandle(c *gin.Context, apiModel *APIDataModel, asset fun
 		return fmt.Errorf("root directory: %w", err)
 	}
 
-	if c.Request.Method == http.MethodGet && c.Query("dir") == "upload" || c.Request.Method == http.MethodPost {
+	switch c.Request.Method {
+	case http.MethodPost:
 		return s.serveUpload(c, apiModel, rootStat, asset)
-	} else if c.Request.Method == http.MethodGet {
+	case http.MethodGet:
 		return s.serveGet(c, apiModel, rootStat)
 	}
+
 	c.Status(http.StatusMethodNotAllowed)
 	return nil
 }
@@ -151,8 +150,7 @@ func (s *ServeStatic) serveUpload(c *gin.Context, apiModel *APIDataModel, rootSt
 	}
 
 	if r.MultipartForm == nil || len(r.MultipartForm.File) == 0 {
-		c.Header("Content-Type", "text/html; charset=utf-8")
-		_, _ = c.Writer.Write([]byte(asset("upload.html")))
+		c.Status(http.StatusForbidden)
 		return nil
 	}
 
@@ -284,11 +282,6 @@ func firstFilename(s ...string) string {
 	return ""
 }
 
-// TrimExt trim ext from the right of filepath.
-func TrimExt(filepath, ext string) string {
-	return filepath[:len(filepath)-len(ext)]
-}
-
 func (s *ServeStatic) serveGet(c *gin.Context, apiModel *APIDataModel, rootStat os.FileInfo) error {
 	if !rootStat.IsDir() { // not a directory
 		c.File(s.Root)
@@ -328,9 +321,7 @@ func (s *ServeStatic) serveGet(c *gin.Context, apiModel *APIDataModel, rootStat 
 	}
 
 	switch s.Dir {
-	case "grid":
-		return s.listPage(c, dirPath)
-	case "list":
+	case "grid", "list":
 		return s.listPage(c, dirPath)
 	}
 
@@ -366,6 +357,11 @@ func (s ServeStatic) tryIndexHtml(c *gin.Context) {
 	c.Status(http.StatusNotFound)
 }
 
+type DirListTemplateData struct {
+	ServeStatic
+	*DirList
+}
+
 func (s ServeStatic) listPage(c *gin.Context, dir string) error {
 	data, err := ListDir(dir, c.Request.URL.RawQuery, 1000)
 	if err != nil {
@@ -384,11 +380,12 @@ func (s ServeStatic) listPage(c *gin.Context, dir string) error {
 
 		if len(imageFiles) > 0 {
 			data.Files = imageFiles
-			return GridTemplate.Execute(c.Writer, data)
+		} else {
+			s.Dir = "list"
 		}
 
 	}
-	return DirListTemplate.Execute(c.Writer, data)
+	return DirListTemplate.Execute(c.Writer, DirListTemplateData{ServeStatic: s, DirList: data})
 }
 
 func ParsePathParams(apiModel *APIDataModel) (prefix string, hasParams bool) {
