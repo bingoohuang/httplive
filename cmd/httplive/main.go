@@ -118,7 +118,7 @@ func host(env *httplive.EnvVars, certFiles *netx.CertFiles) {
 	}
 
 	r := gin.New()
-	r.Use(gzip.Gzip(gzip.DefaultCompression))
+	r.Use(gzip.Gzip(gzip.DefaultCompression, gzip.WithDecompressFn(gzip.DefaultDecompressHandle)))
 	r.Use(httplive.APIMiddleware, httplive.StaticFileMiddleware,
 		util.CORSMiddleware, httplive.ConfigJsMiddleware)
 
