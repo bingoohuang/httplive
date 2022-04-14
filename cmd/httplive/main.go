@@ -8,6 +8,8 @@ import (
 	"path"
 	"strings"
 
+	"github.com/bingoohuang/httplive/pkg/gzip"
+
 	"github.com/bingoohuang/gg/pkg/netx"
 	"github.com/bingoohuang/golog"
 
@@ -116,6 +118,7 @@ func host(env *httplive.EnvVars, certFiles *netx.CertFiles) {
 	}
 
 	r := gin.New()
+	r.Use(gzip.Gzip(gzip.DefaultCompression))
 	r.Use(httplive.APIMiddleware, httplive.StaticFileMiddleware,
 		util.CORSMiddleware, httplive.ConfigJsMiddleware)
 

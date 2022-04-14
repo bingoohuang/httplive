@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"strings"
 
+	"github.com/bingoohuang/golog/pkg/hlog"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -36,7 +38,8 @@ func (w *GinCopyWriter) Body(maxSize int) string {
 		return w.Buf.String()
 	}
 
-	return string(w.Buf.Bytes()[:maxSize-3]) + "..."
+	payload, extra := hlog.AbbreviateBytes(w.Buf.Bytes(), maxSize)
+	return payload + extra
 }
 
 func (w *GinCopyWriter) Bytes() []byte {

@@ -64,10 +64,9 @@ func APIMiddleware(c *gin.Context) {
 		}
 
 		c.Abort()
-		return
+	} else {
+		c.Next()
 	}
-
-	c.Next()
 }
 
 // ReadCloser is a struct that includes an io.Reader and an io.Writer.

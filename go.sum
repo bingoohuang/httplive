@@ -55,8 +55,8 @@ github.com/bingoohuang/easyjson v0.0.0-20211118132814-5606aa48c508 h1:Ew6KVZFgaX
 github.com/bingoohuang/gg v0.0.0-20220412050757-14d06220b568 h1:ZXkKWLMWe7mTBdhbQO67gdcNhG5AFe0Xn2EnnWDhMeU=
 github.com/bingoohuang/gg v0.0.0-20220412050757-14d06220b568/go.mod h1:tltYEITxWTTXTTAqJNBK62x6Eg1iThhAnez8CxcQxQo=
 github.com/bingoohuang/golog v0.0.0-20211112131923-101b7e1b3d4c/go.mod h1:atiVUeYe0Rsi80P0eDEF8lpf9qvt/w/qpil8PpNGYvw=
-github.com/bingoohuang/golog v0.0.0-20220412052216-f20212e5ae9f h1:bbfwrnesgT1z/EyYJEgIJtqABnDoRIzDQrcw3ta4UGg=
-github.com/bingoohuang/golog v0.0.0-20220412052216-f20212e5ae9f/go.mod h1:eG/trxk0nks1UTikeTcuupJury4OzyzF+iQ13KNrQH0=
+github.com/bingoohuang/golog v0.0.0-20220414031919-b31fc4e302cf h1:fS/yA4rJJrvVRtWTfuwwxg1yiTVuPUpxiI54L9mL2iM=
+github.com/bingoohuang/golog v0.0.0-20220414031919-b31fc4e302cf/go.mod h1:eG/trxk0nks1UTikeTcuupJury4OzyzF+iQ13KNrQH0=
 github.com/bingoohuang/gonet v0.0.0-20190716021716-fd516efe8b31/go.mod h1:lSe5gMXAiQESg/xTshM6sByKvDkMGdDffZSXt0d64JI=
 github.com/bingoohuang/gor v0.0.0-20200321095356-94cf6290c6ea/go.mod h1:ahEOivpxL+rGjwq6hk2H8aQEMh/Uc6r1N3ohugldIww=
 github.com/bingoohuang/gor v0.0.0-20200628053500-ec6cb95c0e1b h1:V8FCwcSdI/IxeiS3cAH94x9080H1r58PP7ltUnohFPk=

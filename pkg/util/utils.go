@@ -13,6 +13,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/bingoohuang/golog/pkg/hlog"
+
 	"github.com/bingoohuang/gg/pkg/osx"
 
 	"github.com/bingoohuang/gg/pkg/randx"
@@ -72,8 +74,9 @@ func JSON(v interface{}) []byte {
 
 // CompactJSON compact a json byte slice or wrap it to raw value.
 func CompactJSON(b []byte) []byte {
-	if s := osx.EnvSize("MAX_PAYLOAD_SIZE", 256); len(b) > s {
-		return append(append([]byte{}, b[:s]...), []byte("...")...)
+	s1, s2 := hlog.AbbreviateBytesEnv(b)
+	if s2 != "" {
+		return append([]byte(s1), s2...)
 	}
 
 	var out bytes.Buffer
