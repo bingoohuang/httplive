@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/bingoohuang/gg/pkg/ss"
 	"io"
 	"io/ioutil"
 	"log"
 	"mime"
 	"net/http"
-	"runtime"
 	"strings"
 	"time"
 
@@ -19,7 +19,6 @@ import (
 
 	"github.com/bingoohuang/gg/pkg/randx"
 	"github.com/gin-gonic/gin"
-	"github.com/skratchdot/open-golang/open"
 )
 
 // Or returns or if s is empty.
@@ -205,20 +204,13 @@ func DetectContentType(b []byte) string {
 
 // OpenExplorer ...
 func OpenExplorer(https bool, port int, contextPath string) {
-	switch runtime.GOOS {
-	case "windows", "darwin":
-		if contextPath == "/" {
-			contextPath = ""
-		}
-
-		schema := "http"
-		if https {
-			schema = "https"
-		}
-
-		addr := fmt.Sprintf("%s://127.0.0.1:%d/%s?%s", schema, port, contextPath, randx.String(10))
-		_ = open.Run(addr)
+	if contextPath == "/" {
+		contextPath = ""
 	}
+
+	schema := ss.If(https, "https", "http")
+	addr := fmt.Sprintf("%s://127.0.0.1:%d/%s?%s", schema, port, contextPath, randx.String(10))
+	_ = osx.OpenBrowser(addr)
 }
 
 // Throttle ...

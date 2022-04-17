@@ -15,8 +15,8 @@ type EnvVars struct {
 	ContextPath string
 	CaRoot      string
 
-	Logging      bool
-	DisableHTTPS bool
+	Logging     bool
+	EnableHTTPS bool
 }
 
 var (
