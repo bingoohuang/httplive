@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/bingoohuang/gg/pkg/ss"
 	"io"
 	"io/ioutil"
 	"log"
@@ -12,6 +11,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/bingoohuang/gg/pkg/ss"
 
 	"github.com/bingoohuang/golog/pkg/hlog"
 
@@ -204,12 +205,8 @@ func DetectContentType(b []byte) string {
 
 // OpenExplorer ...
 func OpenExplorer(https bool, port int, contextPath string) {
-	if contextPath == "/" {
-		contextPath = ""
-	}
-
 	schema := ss.If(https, "https", "http")
-	addr := fmt.Sprintf("%s://127.0.0.1:%d/%s?%s", schema, port, contextPath, randx.String(10))
+	addr := fmt.Sprintf("%s://127.0.0.1:%d/%s?%s", schema, port, strings.TrimPrefix(contextPath, "/"), randx.String(10))
 	_ = osx.OpenBrowser(addr)
 }
 

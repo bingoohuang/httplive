@@ -48,7 +48,7 @@ func APIMiddleware(c *gin.Context) {
 	p := trimContextPath(c)
 	ua := user_agent.New(c.Request.UserAgent())
 	isBrowser := ua.OS() != ""
-	isBrowserIndex := isBrowser && c.Request.URL.Path == "/" && c.Query("_hl") == ""
+	isBrowserIndex := isBrowser && p == "/" && c.Query("_hl") == ""
 
 	if isBrowserIndex || util.AnyOf(p, "/favicon.ico") || util.HasPrefix(p, "/httplive/") {
 		c.Next()

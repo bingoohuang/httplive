@@ -185,3 +185,20 @@ sleep in mockbin format demo:
 [^1]: 
 
 ![img.png](_imgs/img.png)
+
+
+
+## Nginx config example
+
+
+```nginx
+location /httplive {
+   proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+   proxy_set_header Accept-Encoding "gzip";
+   proxy_set_header Origin "";
+   proxy_http_version 1.1;
+   proxy_set_header Connection "";
+   proxy_redirect off;
+   proxy_pass http://127.0.0.1:5003;
+}
+```

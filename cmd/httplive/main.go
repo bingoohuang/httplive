@@ -122,10 +122,12 @@ func host(env *httplive.EnvVars, certFiles *netx.CertFiles) {
 	r.Use(httplive.APIMiddleware, httplive.StaticFileMiddleware,
 		util.CORSMiddleware, httplive.ConfigJsMiddleware)
 
-	r.GET(httplive.JoinContextPath("/httplive/ws", nil), wshandler)
+	wsPath := httplive.JoinContextPath("/httplive/ws", nil)
+	r.GET(wsPath, wshandler)
 
 	ga := giu.NewAdaptor()
-	group := r.Group(httplive.JoinContextPath("/httplive/webcli", nil))
+	groupPath := httplive.JoinContextPath("/httplive/webcli", nil)
+	group := r.Group(groupPath)
 	group.Use(process.AdminAuth)
 	ga.Route(group).HandleFn(new(httplive.WebCliController))
 
@@ -139,7 +141,7 @@ func host(env *httplive.EnvVars, certFiles *netx.CertFiles) {
 				err = r.Run(":" + port)
 			}
 			if err != nil {
-				log.Printf("run on port %s failed: %v", port, err)
+				log.Panicf("run on port %s failed: %v", port, err)
 			}
 		}(p)
 	}
