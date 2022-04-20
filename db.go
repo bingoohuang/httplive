@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html/template"
 	"io/fs"
@@ -17,6 +18,8 @@ import (
 	"sync"
 	textTemplate "text/template"
 	"time"
+
+	"github.com/julienschmidt/httprouter"
 
 	"github.com/bingoohuang/jj"
 
@@ -34,7 +37,6 @@ import (
 	"github.com/bingoohuang/httplive/internal/process"
 	"github.com/bingoohuang/httplive/pkg/http2curl"
 	"github.com/bingoohuang/httplive/pkg/util"
-	"github.com/bingoohuang/sariaf"
 	"github.com/gin-gonic/gin"
 
 	"github.com/mssola/user_agent"
@@ -421,20 +423,24 @@ func JoinContextPath(elem string, p *process.APIDataModel) string {
 }
 
 // TestAPIRouter ...
-func TestAPIRouter(p process.APIDataModel) error {
-	router := sariaf.New()
-
-	for _, ep := range EndpointList(false) {
-		if ep.ID == p.ID {
-			continue
+func TestAPIRouter(p process.APIDataModel) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = errors.New(r.(string))
 		}
+	}()
 
-		if err := router.Handle(http.MethodGet, JoinContextPath(ep.Endpoint, &ep), nil); err != nil {
-			return err
+	router := httprouter.New()
+	for _, ep := range EndpointList(false) {
+		if ep.ID != p.ID {
+			contextPath := JoinContextPath(ep.Endpoint, &ep)
+			router.GET(contextPath, nil)
 		}
 	}
 
-	return router.Handle(http.MethodGet, JoinContextPath(p.Endpoint, &p), nil)
+	contextPath := JoinContextPath(p.Endpoint, &p)
+	router.GET(contextPath, nil)
+	return nil
 }
 
 func echoXHeaders(c *gin.Context) {

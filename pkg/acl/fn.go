@@ -4,11 +4,13 @@ import (
 	"bufio"
 	"encoding/csv"
 	"net/http"
+	"net/http/httptest"
 	"path"
 	"strings"
 	"time"
 
-	"github.com/bingoohuang/sariaf"
+	"github.com/julienschmidt/httprouter"
+
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
 	"github.com/casbin/casbin/v2/persist"
@@ -90,19 +92,19 @@ var CasbinEpoch = time.Now()
 // CasbinTimeLayout defines the time layout used in casbin.
 const CasbinTimeLayout = "2006-01-02 15:04:05"
 
-func RouterMatch(router, pattern string) bool {
+func RouterMatch(router, pattern string) (matched bool) {
 	if pattern == "-" {
 		return true
 	}
 
-	r := sariaf.New()
-	if err := r.Handle(http.MethodGet, pattern, nil); err != nil {
-		logrus.Errorf("failed to parse pattern %s: %v", pattern, err)
-		return false
-	}
+	r := httprouter.New()
+	r.GET(pattern, func(http.ResponseWriter, *http.Request, httprouter.Params) {
+		matched = true
+	})
 
-	node, _ := r.Search(http.MethodGet, router)
-	return node != nil
+	r.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", router, nil))
+
+	return
 }
 
 // TimeAllow 允许运行时间
