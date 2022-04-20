@@ -3,6 +3,7 @@ package process
 import (
 	"fmt"
 	"html"
+	"io"
 	"os"
 	"path"
 	"path/filepath"
@@ -58,6 +59,9 @@ func ListDir(dir, rawQuery string, max int) (*DirList, error) {
 
 	info, err := f.Readdir(max)
 	if err != nil {
+		if err == io.EOF { // blank directory
+			return &DirList{}, nil
+		}
 		return nil, err
 	}
 

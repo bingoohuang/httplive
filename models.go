@@ -1,6 +1,7 @@
 package httplive
 
 import (
+	"github.com/bingoohuang/httplive/internal/process"
 	"strings"
 
 	"github.com/bingoohuang/httplive/pkg/util"
@@ -34,6 +35,8 @@ func (r *EnvVars) Init() {
 	if !util.HasPrefix(r.ContextPath, "/") {
 		r.ContextPath = "/" + r.ContextPath
 	}
+
+	process.ContextPath = r.ContextPath
 }
 
 // WebCliController ...
