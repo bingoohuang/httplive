@@ -345,6 +345,13 @@ func (a *APIDataModel) TryDo(f func(*APIDataModel, func(name string) string), as
 }
 
 func AdminAuth(c *gin.Context) {
+	if Envs.BasicAuth != "" && c.GetHeader("Authorization") != Envs.BasicAuth {
+		realm := "Authorization Required"
+		c.Header("WWW-Authenticate", "Basic realm="+strconv.Quote(realm))
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
 	if adminAuthHandler == nil {
 		return
 	}
@@ -358,8 +365,7 @@ func AdminAuth(c *gin.Context) {
 	if err != nil {
 		logrus.Warnf("failed to casbin %v", err)
 	} else if !ok {
-		authHead := c.GetHeader("Authorization")
-		if authHead == "" {
+		if authHead := c.GetHeader("Authorization"); authHead == "" {
 			realm := "Authorization Required"
 			c.Header("WWW-Authenticate", "Basic realm="+strconv.Quote(realm))
 			c.AbortWithStatus(http.StatusUnauthorized)

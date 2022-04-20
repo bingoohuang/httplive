@@ -41,12 +41,16 @@ func (v DynamicValue) responseDynamic(ep APIDataModel, c *gin.Context) {
 		}
 	}
 
-	payload := []byte(eval.Eval(ep.Endpoint, string(v.Response)))
+	payload := []byte(Eval(ep.Endpoint, string(v.Response)))
 	if contentType == "" {
 		contentType = util.DetectContentType(payload)
 	}
 
 	c.Data(statusCode, contentType, payload)
+}
+
+func Eval(endpoint string, body string) string {
+	return eval.JjGen(eval.EvalInternal(endpoint, body))
 }
 
 func MakeParamValuer(jsonConfig string, vars []string) map[string]Valuer {

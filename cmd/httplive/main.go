@@ -33,6 +33,7 @@ func main() {
 	env := &httplive.Envs
 
 	fla := fla9.NewFlagSet(os.Args[0]+" (HTTP Request & Response Service, Mock HTTP)", fla9.ExitOnError)
+	fla.StringVar(&env.BasicAuth, "basic,b", "", "basic auth, format user:pass")
 	fla.StringVar(&env.Ports, "ports,p", "5003", "Hosting ports, eg. 5003,5004")
 	fla.StringVar(&env.DBFullPath, "dbpath,d", "", "Full path of the httplive.bolt")
 	fla.StringVar(&env.ContextPath, "context,c", "", "Context path of httplive http service")
@@ -62,7 +63,7 @@ func main() {
 	host(env, certFile)
 }
 
-func mkdirCerts(env *httplive.EnvVars) *netx.CertFiles {
+func mkdirCerts(env *process.EnvVars) *netx.CertFiles {
 	if !env.EnableHTTPS {
 		return nil
 	}
@@ -70,7 +71,7 @@ func mkdirCerts(env *httplive.EnvVars) *netx.CertFiles {
 	return netx.LoadCerts(env.CaRoot)
 }
 
-func createDB(env *httplive.EnvVars) error {
+func createDB(env *process.EnvVars) error {
 	fullPath := fixDBPath(env)
 	env.DBFile = fullPath
 	return httplive.CreateDB()
@@ -78,7 +79,7 @@ func createDB(env *httplive.EnvVars) error {
 
 const defaultDb = "httplive.bolt"
 
-func fixDBPath(env *httplive.EnvVars) string {
+func fixDBPath(env *process.EnvVars) string {
 	fullPath := env.DBFullPath
 	workingDir, _ := os.Getwd()
 	if fullPath == "" {
@@ -109,7 +110,7 @@ func fixDBPath(env *httplive.EnvVars) string {
 	return fullPath
 }
 
-func host(env *httplive.EnvVars, certFiles *netx.CertFiles) {
+func host(env *process.EnvVars, certFiles *netx.CertFiles) {
 	env.Init()
 
 	if err := createDB(env); err != nil {

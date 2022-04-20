@@ -238,6 +238,7 @@ func createDB(dao *Dao) error {
 	}
 
 	now := util.TimeFmt(time.Now())
+	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/auth/demo", Methods: http.MethodGet, MimeType: "", Filename: "", Body: asset("auth.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/api/demo", Methods: http.MethodGet, MimeType: "", Filename: "", Body: asset("apidemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/dynamic/demo", Methods: http.MethodPost, MimeType: "", Filename: "", Body: asset("dynamicdemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/proxy/demo", Methods: http.MethodGet, MimeType: "", Filename: "", Body: asset("proxydemo.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})

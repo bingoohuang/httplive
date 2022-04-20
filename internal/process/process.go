@@ -76,24 +76,40 @@ func (ep *Endpoint) CreateDirect(m *APIDataModel, _ func(name string) string) {
 		return
 	}
 
+	_, authBean := ParseAuth(ep.Body)
+
 	m.ServeFn = func(c *gin.Context) {
+		if !authBean.AuthRequest(c) {
+			return
+		}
+
 		util.GinData(c, []byte(eval.JjGen(direct.String())))
 	}
 }
 
 func (ep *Endpoint) CreateDefault(m *APIDataModel, _ func(name string) string) {
-	dynamic := jj.Get(ep.Body, "_dynamic")
+	body := ep.Body
+	dynamic := jj.Get(body, "_dynamic")
 	if dynamic.Type == jj.JSON && dynamic.IsArray() {
-		m.dynamicValuers = createDynamics(ep.Body, []byte(dynamic.Raw))
+		m.dynamicValuers = createDynamics(body, []byte(dynamic.Raw))
 	}
 
 	model := *m
+
+	body, authBean := ParseAuth(ep.Body)
+	body, _ = jj.Delete(body, "_hl")
+	body, _ = jj.Delete(body, "_dynamic")
+
 	m.ServeFn = func(c *gin.Context) {
+		if !authBean.AuthRequest(c) {
+			return
+		}
+
 		if dynamicProcess(c, model) {
 			return
 		}
 
-		util.GinData(c, []byte(eval.Eval(ep.Endpoint, ep.Body)))
+		util.GinData(c, []byte(Eval(ep.Endpoint, body)))
 	}
 }
 
@@ -126,7 +142,13 @@ func (ep *Endpoint) CreateHlHandlers(m *APIDataModel, asset func(name string) st
 				bb.AfterUnmashal()
 			}
 
+			_, authBean := ParseAuth(ep.Body)
+
 			m.ServeFn = func(ctx *gin.Context) {
+				if !authBean.AuthRequest(ctx) {
+					return
+				}
+
 				if a, ok := b.(MethodsAllowed); ok {
 					if !a.AllowMethods(ctx.Request.Method) {
 						ctx.Status(http.StatusMethodNotAllowed)

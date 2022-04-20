@@ -13,10 +13,6 @@ import (
 // purges expired items every 10 minutes
 var evalCache = cache.New(5*time.Minute, 10*time.Minute)
 
-func Eval(endpoint string, body string) string {
-	return JjGen(evalInternal(endpoint, body))
-}
-
 func JjGen(v string) string {
 	if jj.Valid(v) {
 		return jj.Gen(v)
@@ -25,17 +21,14 @@ func JjGen(v string) string {
 	return v
 }
 
-func evalInternal(endpoint string, body string) string {
+func EvalInternal(endpoint string, body string) string {
 	_hl := jj.Get(body, "_hl")
 	if !(_hl.Type == jj.String && _hl.String() == "eval") {
 		return body
 	}
 
-	body, err := jj.Delete(body, "_hl")
-	if err != nil {
-		log.Printf("W! failed to delete %s in json, error:%v", "_hl", err)
-		return body
-	}
+	body, _ = jj.Delete(body, "_auth")
+	body, _ = jj.Delete(body, "_hl")
 
 	f0 := func() string {
 		ctx := NewContext()

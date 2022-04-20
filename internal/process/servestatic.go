@@ -335,7 +335,7 @@ func (s *ServeStatic) serveGet(c *gin.Context, apiModel *APIDataModel, rootStat 
 }
 
 func (s *ServeStatic) DirPath(c *gin.Context, apiModel *APIDataModel) string {
-	urlPath := strings.TrimPrefix(c.Request.URL.Path, ContextPath)
+	urlPath := strings.TrimPrefix(c.Request.URL.Path, Envs.ContextPath)
 	fixPath, _ := ParsePathParams(apiModel)
 	urlPath = strings.TrimPrefix(urlPath, fixPath)
 	dirPath := path.Join(s.Root, urlPath)
