@@ -21,7 +21,7 @@ func JjGen(v string) string {
 	return v
 }
 
-func EvalInternal(endpoint string, body string) string {
+func Execute(endpoint string, body string) string {
 	_hl := jj.Get(body, "_hl")
 	if !(_hl.Type == jj.String && _hl.String() == "eval") {
 		return body

@@ -262,16 +262,12 @@ func fulfilPayload(r *http.Request, m map[string]interface{}, body string) {
 		return
 	}
 
-	payload, _ := ioutil.ReadAll(r.Body)
-	if len(payload) > 0 {
-		if util.HasContentType(r, "application/json") {
-			if p := jj.ParseBytes(payload); p.Type == jj.JSON {
-				m["payload"] = json.RawMessage(payload)
-				return
-			}
+	if p, _ := ioutil.ReadAll(r.Body); len(p) > 0 {
+		if r := jj.ParseBytes(p); r.IsJSON() {
+			m["payload"] = json.RawMessage(p)
+		} else {
+			m["payload"] = string(p)
 		}
-
-		m["payload"] = string(payload)
 	}
 }
 
@@ -299,17 +295,17 @@ func createDynamics(epBody string, dynamicRaw []byte) (dynamicValues []DynamicVa
 			return
 		}
 
-		expr, err := expr.Compile(v.Condition)
+		exp, err := expr.Compile(v.Condition)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 
-		visitor := &visitor{}
-		ast.Walk(&tree.Node, visitor)
+		vi := &visitor{}
+		ast.Walk(&tree.Node, vi)
 
-		dynamicValues[i].Expr = expr
-		dynamicValues[i].ParametersEvaluator = MakeParamValuer(epBody, visitor.identifiers)
+		dynamicValues[i].Expr = exp
+		dynamicValues[i].ParametersEvaluator = MakeParamValuer(epBody, vi.identifiers)
 	}
 
 	return

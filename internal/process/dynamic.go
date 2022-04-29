@@ -50,7 +50,7 @@ func (v DynamicValue) responseDynamic(ep APIDataModel, c *gin.Context) {
 }
 
 func Eval(endpoint string, body string) string {
-	return eval.JjGen(eval.EvalInternal(endpoint, body))
+	return eval.JjGen(eval.Execute(endpoint, body))
 }
 
 func MakeParamValuer(jsonConfig string, vars []string) map[string]Valuer {
