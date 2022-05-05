@@ -263,7 +263,8 @@ func fulfilPayload(r *http.Request, m map[string]interface{}, body string) {
 	}
 
 	if p, _ := ioutil.ReadAll(r.Body); len(p) > 0 {
-		if r := jj.ParseBytes(p); r.IsJSON() {
+		typ, outi, ok := jj.ValidPayload(p, 0)
+		if ok && typ == jj.JSON && len(p[outi:]) == 0 {
 			m["payload"] = json.RawMessage(p)
 		} else {
 			m["payload"] = string(p)
