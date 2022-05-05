@@ -91,7 +91,7 @@ func broadcast(c *gin.Context, requestBody *bytes.Buffer, rr process.RouterResul
 		Query:  util.ConvertHeader(c.Request.URL.Query()),
 		Header: util.GetHeaders(c),
 
-		Response:       string(util.CompactJSON(rr.RouterBody)),
+		Response:       util.CompactJSON(rr.RouterBody),
 		ResponseSize:   rr.ResponseSize,
 		ResponseStatus: rr.ResponseStatus,
 		ResponseHeader: rr.ResponseHeader,

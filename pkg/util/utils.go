@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/bingoohuang/jj"
 	"io"
 	"io/ioutil"
 	"log"
@@ -73,19 +74,18 @@ func JSON(v interface{}) []byte {
 }
 
 // CompactJSON compact a json byte slice or wrap it to raw value.
-func CompactJSON(b []byte) []byte {
-	s1, s2 := hlog.AbbreviateBytesEnv(b)
+func CompactJSON(b []byte) interface{} {
+	s1, s2 := hlog.AbbreviateBytes(b, hlog.EnvSize("MAX_PAYLOAD_SIZE", 1024*4))
 	if s2 != "" {
-		return append([]byte(s1), s2...)
+		return string(append([]byte(s1), s2...))
 	}
 
-	var out bytes.Buffer
-	if err := json.Compact(&out, b); err != nil {
-		v, _ := json.Marshal(map[string]string{"raw": string(b)})
-		return v
+	typ, outi, ok := jj.ValidPayload(b, 0)
+	if ok && typ == jj.JSON && len(b[outi:]) == 0 {
+		return json.RawMessage(b)
 	}
 
-	return out.Bytes()
+	return string(b)
 }
 
 // ConvertHeader convert s head map[string][]string to map[string]string.
@@ -166,6 +166,12 @@ func GetRequestBody(requestBody *bytes.Buffer) interface{} {
 	if err != nil {
 		log.Printf("read request body failed: %+v", err)
 	}
+
+	typ, outi, ok := jj.ValidPayload(body, 0)
+	if ok && typ == jj.JSON && len(body[outi:]) == 0 {
+		return json.RawMessage(body)
+	}
+
 	return string(body)
 }
 
