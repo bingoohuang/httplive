@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"github.com/bingoohuang/gg/pkg/emb"
 	"github.com/bingoohuang/gg/pkg/sqx"
+	"github.com/bingoohuang/gg/pkg/ss"
 	"github.com/bingoohuang/gg/pkg/vars"
 	"github.com/gin-gonic/gin"
+	_ "github.com/go-sql-driver/mysql"
 	"io/fs"
 	"log"
 	_ "modernc.org/sqlite"
@@ -20,8 +22,10 @@ func init() {
 }
 
 type Sqli struct {
-	Scripts []string `json:"scripts"`
-	Query   string   `json:"query"`
+	Scripts        []string `json:"scripts"`
+	Query          string   `json:"query"`
+	DriverName     string   `json:"driverName"`
+	DataSourceName string   `json:"dataSourceName"`
 
 	db *sql.DB
 }
@@ -56,18 +60,23 @@ func (s Sqli) HlHandle(c *gin.Context, apiModel *APIDataModel, asset func(name s
 }
 
 func (s *Sqli) AfterUnmashal() {
-	dir, err := os.MkdirTemp("", "test-")
-	if err != nil {
-		log.Printf("E! create temp dir failed: %v", err)
-		return
+	driverName := ss.Or(s.DriverName, "sqlite")
+	dataSourceName := s.DataSourceName
+
+	if driverName == "sqlite" {
+		dir, err := os.MkdirTemp("", "sqlite-")
+		if err != nil {
+			log.Printf("E! create temp dir failed: %v", err)
+			return
+		}
+
+		//defer os.RemoveAll(dir)
+		dataSourceName = filepath.Join(dir, "db")
 	}
 
-	//defer os.RemoveAll(dir)
-
-	fn := filepath.Join(dir, "db")
-	db, err := sql.Open("sqlite", fn)
+	db, err := sql.Open(driverName, dataSourceName)
 	if err != nil {
-		log.Printf("E! open sqlite %s failed: %v", fn, err)
+		log.Printf("E! open %s failed: %v", driverName, err)
 		return
 	}
 
@@ -80,3 +89,5 @@ func (s *Sqli) AfterUnmashal() {
 		}
 	}
 }
+
+// docker run -p 3306:3306 --name mysql -e MYSQL_ROOT_PASSWORD=root -d mysql:5.7.37

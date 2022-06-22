@@ -5,20 +5,33 @@
     <meta charset="utf-8">
     <title>Demo SQLi</title>
     <link rel="stylesheet" href="static/pure-min-v2.1.0.css">
+    <link rel="stylesheet" href="static/grids-responsive-min.css-v2.1.0.css">
+    <style>
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 
 <body>
+
 <form class="pure-form">
-    <fieldset>
-        <input id="idInput" type="text" placeholder="ID" />
-        <button type="button" id="doQuery" class="pure-button pure-button-primary">Query</button>
+    <fieldset class="pure-group">
+        <textarea id="idInput" class="pure-input-1" placeholder="ID"></textarea>
     </fieldset>
+    <button type="button" id="doQuery" class="pure-button pure-input-1 pure-button-primary">Query</button>
 </form>
 
-<pre id="responsePre">
 
-</pre>
+<div class="pure-g">
+    <div class="pure-u-1">
+        <pre id="responsePre"></pre>
+    </div>
+</div>
+
+
 </body>
 
 

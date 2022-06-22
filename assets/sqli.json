@@ -1,10 +1,14 @@
 {
   "_hl": "sqli",
+  "driverName": "mysql",
+  "dataSourceName": "root:root@tcp(127.0.0.1:3306)/mysql?charset=utf8&parseTime=true",
   "scripts": [
-    "create table news (id int, title text, timestamps text)",
+    "drop table if exists news",
+    "create table news (id int, title varchar(600), timestamps timestamp) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4",
     "insert into news (id ,title, timestamps) values(1, '金砖国家应该坚定信念 直面风浪', '2022-06-22 15:51:34')",
     "insert into news (id ,title, timestamps) values(2, '难民问题不断恶化 外交部批驳美国', '2022-06-22 15:51:38')",
     "insert into news (id ,title, timestamps) values(3, '鲁豫对奶茶刘若英说：像你这样的日子，我一天都过不了！刘若英说：“因为你没有那个困扰，说真的，我有时候特别讨厌你。', '2022-06-22 15:51:38')"
   ],
-  "query":"select * from news where id=${query_id}"
+  "query":"select * from news where id=${query_id}",
+  "docker": "docker run -p 3306:3306 --name mysql -e MYSQL_ROOT_PASSWORD=root -d mysql:5.7.37"
 }
