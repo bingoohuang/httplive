@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Demo SQLi</title>
+    <link rel="stylesheet" href="static/pure-min-v2.1.0.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+<form class="pure-form">
+    <fieldset>
+        <input id="idInput" type="text" placeholder="ID" />
+        <button type="button" id="doQuery" class="pure-button pure-button-primary">Query</button>
+    </fieldset>
+</form>
+
+<pre id="responsePre">
+
+</pre>
+</body>
+
+
+<script>
+    function doQuery() {
+        let xhr = new XMLHttpRequest()
+        xhr.open("POST", '?id=' + encodeURIComponent(document.getElementById("idInput").value), true)
+        xhr.onload = function () {
+            document.getElementById("responsePre").innerHTML = this.responseText;
+        };
+        xhr.send('')
+    }
+
+    let el = document.getElementById("doQuery");
+    el.addEventListener("click", doQuery, false);
+</script>
+
+</html>

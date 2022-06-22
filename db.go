@@ -245,6 +245,7 @@ func createDB(dao *Dao) error {
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/echo/:id", Methods: "ANY", MimeType: "", Filename: "", Body: asset("echo.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/mockbin", Methods: "ANY", MimeType: "", Filename: "", Body: asset("mockbin.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/serveStatic", Methods: http.MethodGet, MimeType: "", Filename: "", Body: asset("servestatic.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
+	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/sqli", Methods: "ANY", MimeType: "", Filename: "", Body: asset("sqli.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/upload", Methods: "ANY", MimeType: "", Filename: "", Body: asset("upload.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/echarts1", Methods: http.MethodGet, MimeType: "", Filename: "", Body: asset("echarts1.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
 	dao.AddEndpoint(process.Endpoint{ID: 0, Endpoint: "/echarts2", Methods: http.MethodGet, MimeType: "", Filename: "", Body: asset("echarts2.json"), CreateTime: now, UpdateTime: now, DeletedAt: ""})
