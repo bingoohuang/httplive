@@ -63,12 +63,18 @@
             return '<span class="' + cls + '">' + match + '</span>';
         });
     }
+
     function doQuery() {
         let xhr = new XMLHttpRequest()
         xhr.open("POST", '?id=' + encodeURIComponent(document.getElementById("idInput").value), true)
         xhr.onload = function () {
-            var pretty = JSON.stringify(JSON.parse(this.responseText),null,2);
-            document.getElementById("responsePre").innerHTML = syntaxHighlight(pretty);
+            var text = this.responseText;
+            try {
+                var pretty = JSON.stringify(JSON.parse(this.responseText), null, 2);
+                text = syntaxHighlight(pretty);
+            } catch (e) {
+            }
+            document.getElementById("responsePre").innerHTML = text
         };
         xhr.send('')
     }
