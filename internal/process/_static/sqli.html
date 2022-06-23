@@ -10,10 +10,16 @@
     <link rel="stylesheet" href="_static/pure-min-v2.1.0.css">
     <link rel="stylesheet" href="_static/grids-responsive-min-v2.1.0.css">
     <style>
-        pre {
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
+        /*pre {*/
+        /*    white-space: pre-wrap;*/
+        /*    word-wrap: break-word;*/
+        /*}*/
+        pre {outline: 1px solid #ccc; padding: 5px; margin: 5px; }
+        .string { color: green; }
+        .number { color: darkorange; }
+        .boolean { color: blue; }
+        .null { color: magenta; }
+        .key { color: red; }
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
@@ -39,11 +45,30 @@
 
 
 <script>
+    function syntaxHighlight(json) {
+        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+            var cls = 'number';
+            if (/^"/.test(match)) {
+                if (/:$/.test(match)) {
+                    cls = 'key';
+                } else {
+                    cls = 'string';
+                }
+            } else if (/true|false/.test(match)) {
+                cls = 'boolean';
+            } else if (/null/.test(match)) {
+                cls = 'null';
+            }
+            return '<span class="' + cls + '">' + match + '</span>';
+        });
+    }
     function doQuery() {
         let xhr = new XMLHttpRequest()
         xhr.open("POST", '?id=' + encodeURIComponent(document.getElementById("idInput").value), true)
         xhr.onload = function () {
-            document.getElementById("responsePre").innerHTML = this.responseText;
+            var pretty = JSON.stringify(JSON.parse(this.responseText),null,2);
+            document.getElementById("responsePre").innerHTML = syntaxHighlight(pretty);
         };
         xhr.send('')
     }

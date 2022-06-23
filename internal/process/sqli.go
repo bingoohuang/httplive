@@ -49,7 +49,7 @@ func (s Sqli) HlHandle(c *gin.Context, apiModel *APIDataModel, asset func(name s
 		return ""
 	}))
 
-	result, err := sqx.NewSQL(query).QueryAsMap(s.db)
+	result, err := sqx.NewSQL(query).QueryAsMaps(s.db)
 	if err != nil && err != sql.ErrNoRows {
 		c.JSON(200, err.Error())
 	} else {
