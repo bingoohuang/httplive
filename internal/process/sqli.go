@@ -3,18 +3,19 @@ package process
 import (
 	"database/sql"
 	"fmt"
+	"log"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"github.com/bingoohuang/gg/pkg/emb"
 	"github.com/bingoohuang/gg/pkg/sqx"
 	"github.com/bingoohuang/gg/pkg/ss"
 	"github.com/bingoohuang/gg/pkg/vars"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
-	"io/fs"
-	"log"
+
 	_ "modernc.org/sqlite"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 func init() {
@@ -32,8 +33,7 @@ type Sqli struct {
 
 func (s Sqli) HlHandle(c *gin.Context, apiModel *APIDataModel, asset func(name string) string) error {
 	if c.Request.Method == "GET" {
-		data := emb.AssetBytes(fs.FS(staticFS), "static/sqli.html", false)
-		c.Data(200, "text/html; charset=utf-8", data)
+		emb.ServeFile(subStatic, "sqli.html", c.Writer, c.Request)
 		return nil
 	}
 
@@ -70,7 +70,7 @@ func (s *Sqli) AfterUnmashal() {
 			return
 		}
 
-		//defer os.RemoveAll(dir)
+		// defer os.RemoveAll(dir)
 		dataSourceName = filepath.Join(dir, "db")
 	}
 

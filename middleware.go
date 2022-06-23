@@ -40,8 +40,8 @@ func StaticFileMiddleware(c *gin.Context) {
 		return
 	}
 
-	if strings.HasPrefix(p, "/static/") {
-		process.ServeStaticFS(c, p)
+	if strings.HasPrefix(p, "/_static/") {
+		process.ServeStaticFS(c, strings.TrimPrefix(p, "/_static/"))
 		c.Abort()
 		return
 	}
@@ -56,7 +56,7 @@ func APIMiddleware(c *gin.Context) {
 	isBrowser := ua.OS() != ""
 	isBrowserIndex := isBrowser && p == "/" && c.Query("_hl") == ""
 
-	if isBrowserIndex || util.AnyOf(p, "/favicon.ico") || util.HasPrefix(p, "/httplive/") || util.HasPrefix(p, "/static/") {
+	if isBrowserIndex || util.AnyOf(p, "/favicon.ico") || util.HasPrefix(p, "/httplive/", "/_static/") {
 		c.Next()
 		return
 	}
