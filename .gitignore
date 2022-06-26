@@ -21,3 +21,4 @@ vendor
 /httplive.bolt
 .cert/root.key
 .cert/root.pem
+.vscode
