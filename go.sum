@@ -29,8 +29,6 @@ github.com/averagesecurityguy/random v0.0.0-20180326012618-37cce341d2af/go.mod h
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
 github.com/beorn7/perks v1.0.0/go.mod h1:KWe93zE9D1o94FZ5RNwFwVgaQK1VOXiVxmqh+CedLV8=
 github.com/bingoohuang/easyjson v0.0.0-20211118132814-5606aa48c508 h1:Ew6KVZFgaX/C93v95gc1spL8H+4pis70mLSXFlvyk0E=
-github.com/bingoohuang/gg v0.0.0-20220623010619-3d5267ccacbc h1:blZjMY8y/L4qe3pVCbr/cQOefSFesvXh4wtnheCAdmU=
-github.com/bingoohuang/gg v0.0.0-20220623010619-3d5267ccacbc/go.mod h1:Ls5vFGvCd8cfN3S7s7clOr3Y7WLc7UFyNRGuXHLOfAM=
 github.com/bingoohuang/gg v0.0.0-20220623011341-703ede41a349 h1:2Us1edT7JoiGj7RACrstWgAINFknDz/TUqMS4MC6U1g=
 github.com/bingoohuang/gg v0.0.0-20220623011341-703ede41a349/go.mod h1:Ls5vFGvCd8cfN3S7s7clOr3Y7WLc7UFyNRGuXHLOfAM=
 github.com/bingoohuang/golog v0.0.0-20220414031919-b31fc4e302cf h1:fS/yA4rJJrvVRtWTfuwwxg1yiTVuPUpxiI54L9mL2iM=

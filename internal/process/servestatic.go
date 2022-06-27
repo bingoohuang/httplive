@@ -335,11 +335,9 @@ func (s *ServeStatic) serveGet(c *gin.Context, apiModel *APIDataModel, rootStat 
 }
 
 func (s *ServeStatic) DirPath(c *gin.Context, apiModel *APIDataModel) string {
-	urlPath := strings.TrimPrefix(c.Request.URL.Path, Envs.ContextPath)
 	fixPath, _ := ParsePathParams(apiModel)
-	urlPath = strings.TrimPrefix(urlPath, fixPath)
-	dirPath := path.Join(s.Root, urlPath)
-	return dirPath
+	urlPath := strings.TrimPrefix(TrimContextPath(c), fixPath)
+	return path.Join(s.Root, urlPath)
 }
 
 func (s ServeStatic) tryIndexHtml(c *gin.Context) {
@@ -396,5 +394,5 @@ func ParsePathParams(apiModel *APIDataModel) (prefix string, hasParams bool) {
 		}
 	}
 	prefix = strings.Join(segments, "/")
-	return apiModel.Endpoint, false
+	return prefix, false
 }

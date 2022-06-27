@@ -23,7 +23,7 @@ var publicFS embed.FS
 
 // StaticFileMiddleware ...
 func StaticFileMiddleware(c *gin.Context) {
-	p := trimContextPath(c)
+	p := process.TrimContextPath(c)
 	if util.HasPrefix(p, "/httplive/webcli", "/httplive/ws") {
 		c.Next()
 		return
@@ -51,7 +51,7 @@ func StaticFileMiddleware(c *gin.Context) {
 
 // APIMiddleware ...
 func APIMiddleware(c *gin.Context) {
-	p := trimContextPath(c)
+	p := process.TrimContextPath(c)
 	ua := user_agent.New(c.Request.UserAgent())
 	isBrowser := ua.OS() != ""
 	isBrowserIndex := isBrowser && p == "/" && c.Query("_hl") == ""
@@ -113,18 +113,9 @@ func broadcast(c *gin.Context, requestBody *bytes.Buffer, rr process.RouterResul
 	}
 }
 
-func trimContextPath(c *gin.Context) string {
-	p := c.Request.URL.Path
-	if Envs.ContextPath != "/" {
-		p = strings.TrimPrefix(p, Envs.ContextPath)
-	}
-
-	return util.Or(p, "/")
-}
-
 // ConfigJsMiddleware ...
 func ConfigJsMiddleware(c *gin.Context) {
-	p := trimContextPath(c)
+	p := process.TrimContextPath(c)
 	if p != "/httplive/config.js" {
 		c.Next()
 		return

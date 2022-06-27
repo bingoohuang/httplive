@@ -9,8 +9,7 @@ func init() {
 	registerHlHandlers("form", func() HlHandler { return &Form{} })
 }
 
-type Form struct {
-}
+type Form struct{}
 
 func (s Form) HlHandle(c *gin.Context, apiModel *APIDataModel, asset func(name string) string) error {
 	if c.Request.Method == "GET" {

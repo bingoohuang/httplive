@@ -509,7 +509,7 @@ var counter countable.Counter
 
 func noRouteHandler(c *gin.Context) (processed bool) {
 	processed = true
-	p := trimContextPath(c)
+	p := process.TrimContextPath(c)
 
 	ua := user_agent.New(c.Request.UserAgent())
 	isBrowser := ua.OS() != ""
