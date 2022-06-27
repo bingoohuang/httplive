@@ -142,6 +142,11 @@
             xhr.onload = () => {
                 alert(JSON.stringify(xhr.response))
                 console.log(xhr.response);
+                document.getElementById("myFile").value = null;
+            };
+            xhr.onerror = function () {
+                alert(xhr.responseText);
+                document.getElementById("myFile").value = null;
             };
 
             xhr.open("POST", './', true)
