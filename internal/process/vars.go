@@ -16,8 +16,7 @@ type EnvVars struct {
 	CaRoot      string
 	BasicAuth   string
 
-	Logging     bool
-	EnableHTTPS bool
+	Logging bool
 }
 
 // Init initializes the environments.

@@ -32,17 +32,16 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 	env := &httplive.Envs
 
-	fla := fla9.NewFlagSet(os.Args[0]+" (HTTP Request & Response Service, Mock HTTP)", fla9.ExitOnError)
-	fla.StringVar(&env.BasicAuth, "basic,b", "", "basic auth, format user:pass")
-	fla.StringVar(&env.Ports, "ports,p", "5003", "Hosting ports, eg. 5003,5004")
-	fla.StringVar(&env.DBFullPath, "dbpath,d", "", "Full path of the httplive.bolt")
-	fla.StringVar(&env.ContextPath, "context,c", "", "Context path of httplive http service")
-	fla.StringVar(&env.CaRoot, "ca", ".cert", "Cert root path of x.key and x.pem")
-	fla.BoolVar(&env.EnableHTTPS, "enableHttps,k", false, "Enable tls cert, using http other than https")
-	fla.BoolVar(&env.Logging, "log,l", false, "Enable golog logging")
-	pInit := fla.Bool("init", false, "Create initial ctl and exit")
-	pVersion := fla.Bool("version,v", false, "Create initial ctl and exit")
-	_ = fla.Parse(os.Args[1:])
+	f := fla9.NewFlagSet(os.Args[0]+" (HTTP Request & Response Service, Mock HTTP)", fla9.ExitOnError)
+	f.StringVar(&env.BasicAuth, "basic,b", "", "basic auth, format user:pass")
+	f.StringVar(&env.Ports, "ports,p", "5003", "Hosting ports, eg. 5003,5004:https")
+	f.StringVar(&env.DBFullPath, "dbpath,d", "", "Full path of the httplive.bolt")
+	f.StringVar(&env.ContextPath, "context,c", "", "Context path of httplive http service")
+	f.StringVar(&env.CaRoot, "ca", ".cert", "Cert root path of localhost.key and localhost.pem")
+	f.BoolVar(&env.Logging, "log,l", false, "Enable golog logging")
+	pInit := f.Bool("init", false, "Create initial ctl and exit")
+	pVersion := f.Bool("version,v", false, "Create initial ctl and exit")
+	_ = f.Parse(os.Args[1:])
 	ctl.Config{Initing: *pInit, PrintVersion: *pVersion}.ProcessInit()
 
 	if env.Logging {
@@ -51,23 +50,17 @@ func main() {
 		golog.DisableLogging()
 	}
 
-	certFile := mkdirCerts(env)
-
 	sigx.RegisterSignalProfile()
 
-	if fla.NArg() > 0 {
-		fmt.Println("Unknown args:", fla.Args())
+	if f.NArg() > 0 {
+		fmt.Println("Unknown args:", f.Args())
 		os.Exit(1)
 	}
 
-	host(env, certFile)
+	host(env)
 }
 
 func mkdirCerts(env *process.EnvVars) *netx.CertFiles {
-	if !env.EnableHTTPS {
-		return nil
-	}
-
 	return netx.LoadCerts(env.CaRoot)
 }
 
@@ -110,7 +103,7 @@ func fixDBPath(env *process.EnvVars) string {
 	return fullPath
 }
 
-func host(env *process.EnvVars, certFiles *netx.CertFiles) {
+func host(env *process.EnvVars) {
 	env.Init()
 
 	if err := createDB(env); err != nil {
@@ -131,23 +124,38 @@ func host(env *process.EnvVars, certFiles *netx.CertFiles) {
 	group := r.Group(groupPath)
 	group.Use(process.AdminAuth)
 	ga.Route(group).HandleFn(new(httplive.WebCliController))
+	var certFiles *netx.CertFiles
 
 	portsArr := strings.Split(env.Ports, ",")
 	for _, p := range portsArr {
-		go func(port string) {
+		if strings.HasSuffix(p, ":https") {
+			certFiles = mkdirCerts(env)
+		}
+	}
+
+	for i, p := range portsArr {
+		go func(seq int, port string) {
+
+			tls := strings.HasSuffix(port, ":https")
+			if seq == 0 {
+				go util.OpenExplorer(tls, ss.ParseInt(port), env.ContextPath)
+			}
+
 			var err error
-			if certFiles != nil {
+			if tls {
+				port = strings.TrimSuffix(port, ":https")
+				log.Printf("Listening on %s for https", port)
 				err = r.RunTLS(":"+port, certFiles.Cert, certFiles.Key)
 			} else {
+				log.Printf("Listening on %s for http", port)
 				err = r.Run(":" + port)
 			}
 			if err != nil {
 				log.Panicf("run on port %s failed: %v", port, err)
 			}
-		}(p)
-	}
 
-	go util.OpenExplorer(certFiles != nil, ss.ParseInt(portsArr[0]), env.ContextPath)
+		}(i, p)
+	}
 
 	select {}
 }
