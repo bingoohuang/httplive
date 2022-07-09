@@ -34,7 +34,7 @@ func main() {
 
 	f := fla9.NewFlagSet(os.Args[0]+" (HTTP Request & Response Service, Mock HTTP)", fla9.ExitOnError)
 	f.StringVar(&env.BasicAuth, "basic,b", "", "basic auth, format user:pass")
-	f.StringVar(&env.Ports, "ports,p", "5003", "Hosting ports, eg. 5003,5004:https")
+	f.StringVar(&env.Ports, "port,p", "5003", "Hosting ports, eg. 5003,5004:https")
 	f.StringVar(&env.DBFullPath, "dbpath,d", "", "Full path of the httplive.bolt")
 	f.StringVar(&env.ContextPath, "context,c", "", "Context path of httplive http service")
 	f.StringVar(&env.CaRoot, "ca", ".cert", "Cert root path of localhost.key and localhost.pem")
