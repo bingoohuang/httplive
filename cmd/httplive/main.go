@@ -135,15 +135,16 @@ func host(env *process.EnvVars) {
 
 	for i, p := range portsArr {
 		go func(seq int, port string) {
-
 			tls := strings.HasSuffix(port, ":https")
+			if tls {
+				port = strings.TrimSuffix(port, ":https")
+			}
 			if seq == 0 {
 				go util.OpenExplorer(tls, ss.ParseInt(port), env.ContextPath)
 			}
 
 			var err error
 			if tls {
-				port = strings.TrimSuffix(port, ":https")
 				log.Printf("Listening on %s for https", port)
 				err = r.RunTLS(":"+port, certFiles.Cert, certFiles.Key)
 			} else {
