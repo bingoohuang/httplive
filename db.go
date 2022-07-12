@@ -316,6 +316,10 @@ func CreateAPIDataModel(ep *process.Endpoint, query bool) *process.APIDataModel 
 		return m
 	}
 
+	if h := jj.Get(ep.Body, "_disabled"); h.Type == jj.True {
+		return m
+	}
+
 	m.TryDo(ep.CreateHlHandlers, asset)
 	m.TryDo(ep.CreateEcho, nil)
 	m.TryDo(ep.CreateProxy, nil)

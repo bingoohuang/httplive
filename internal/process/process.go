@@ -134,35 +134,42 @@ func registerHlHandlers(k string, creator HlHandlerCreator) {
 func (ep *Endpoint) CreateHlHandlers(m *APIDataModel, asset func(name string) string) {
 	for k, v := range hlHandlers {
 		if h := jj.Get(ep.Body, "_hl"); h.String() == k {
-			b := v()
-			if err := json.Unmarshal([]byte(ep.Body), b); err != nil {
+			if ep.CreateHlHandler(m, asset, v) {
 				return
-			}
-			if bb, ok := b.(AfterUnmashaler); ok {
-				bb.AfterUnmashal()
-			}
-
-			_, authBean := ParseAuth(ep.Body)
-
-			m.ServeFn = func(ctx *gin.Context) {
-				if !authBean.AuthRequest(ctx) {
-					return
-				}
-
-				if a, ok := b.(MethodsAllowed); ok {
-					if !a.AllowMethods(ctx.Request.Method) {
-						ctx.Status(http.StatusMethodNotAllowed)
-						return
-					}
-				}
-
-				if err := b.HlHandle(ctx, m, asset); err != nil {
-					log.Printf("E! %v", err)
-					_ = ctx.AbortWithError(http.StatusInternalServerError, err)
-				}
 			}
 		}
 	}
+}
+
+func (ep *Endpoint) CreateHlHandler(m *APIDataModel, asset func(name string) string, v HlHandlerCreator) bool {
+	b := v()
+	if err := json.Unmarshal([]byte(ep.Body), b); err != nil {
+		return true
+	}
+	if bb, ok := b.(AfterUnmashaler); ok {
+		bb.AfterUnmashal()
+	}
+
+	_, authBean := ParseAuth(ep.Body)
+
+	m.ServeFn = func(ctx *gin.Context) {
+		if !authBean.AuthRequest(ctx) {
+			return
+		}
+
+		if a, ok := b.(MethodsAllowed); ok {
+			if !a.AllowMethods(ctx.Request.Method) {
+				ctx.Status(http.StatusMethodNotAllowed)
+				return
+			}
+		}
+
+		if err := b.HlHandle(ctx, m, asset); err != nil {
+			log.Printf("E! %v", err)
+			_ = ctx.AbortWithError(http.StatusInternalServerError, err)
+		}
+	}
+	return false
 }
 
 func (ep *Endpoint) CreateEcho(m *APIDataModel, _ func(name string) string) {

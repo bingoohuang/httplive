@@ -1,5 +1,6 @@
 {
   "_hl": "sqli",
+  "_disabled": true,
   "driverName": "mysql",
   "dataSourceName": "root:root@tcp(127.0.0.1:3306)/mysql?charset=utf8&parseTime=true",
   "scripts": [
