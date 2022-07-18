@@ -8,6 +8,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/bingoohuang/fproxy"
 	"github.com/bingoohuang/httplive/pkg/gzip"
 
 	"github.com/bingoohuang/gg/pkg/netx"
@@ -128,28 +129,39 @@ func host(env *process.EnvVars) {
 
 	portsArr := strings.Split(env.Ports, ",")
 	for _, p := range portsArr {
-		if strings.HasSuffix(p, ":https") {
+		if !strings.HasSuffix(p, ":http") {
 			certFiles = mkdirCerts(env)
 		}
 	}
 
 	for i, p := range portsArr {
 		go func(seq int, port string) {
-			tls := strings.HasSuffix(port, ":https")
-			if tls {
+			onlyHTTP := strings.HasSuffix(port, ":http")
+			if onlyHTTP {
+				port = strings.TrimSuffix(port, ":http")
+			}
+			onlyTLS := strings.HasSuffix(port, ":https")
+			if onlyTLS {
 				port = strings.TrimSuffix(port, ":https")
 			}
 			if seq == 0 {
-				go util.OpenExplorer(tls, ss.ParseInt(port), env.ContextPath)
+				go util.OpenExplorer(onlyTLS, ss.ParseInt(port), env.ContextPath)
 			}
 
 			var err error
-			if tls {
+			if onlyTLS {
 				log.Printf("Listening on %s for https", port)
 				err = r.RunTLS(":"+port, certFiles.Cert, certFiles.Key)
-			} else {
+			} else if onlyHTTP {
 				log.Printf("Listening on %s for http", port)
 				err = r.Run(":" + port)
+			} else {
+				log.Printf("Listening on %s for http and https", port)
+				l, err := fproxy.CreateTLSListener(":"+port, certFiles.Cert, certFiles.Key)
+				if err != nil {
+					log.Panicf("run on port %s failed: %v", port, err)
+				}
+				err = r.RunListener(l)
 			}
 			if err != nil {
 				log.Panicf("run on port %s failed: %v", port, err)
