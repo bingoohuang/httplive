@@ -135,41 +135,43 @@ func host(env *process.EnvVars) {
 	}
 
 	for i, p := range portsArr {
-		go func(seq int, port string) {
-			onlyHTTP := strings.HasSuffix(port, ":http")
-			if onlyHTTP {
-				port = strings.TrimSuffix(port, ":http")
-			}
-			onlyTLS := strings.HasSuffix(port, ":https")
-			if onlyTLS {
-				port = strings.TrimSuffix(port, ":https")
-			}
-			if seq == 0 {
-				go util.OpenExplorer(onlyTLS, ss.ParseInt(port), env.ContextPath)
-			}
-
-			var err error
-			if onlyTLS {
-				log.Printf("Listening on %s for https", port)
-				err = r.RunTLS(":"+port, certFiles.Cert, certFiles.Key)
-			} else if onlyHTTP {
-				log.Printf("Listening on %s for http", port)
-				err = r.Run(":" + port)
-			} else {
-				log.Printf("Listening on %s for http and https", port)
-				l, err := fproxy.CreateTLSListener(":"+port, certFiles.Cert, certFiles.Key)
-				if err != nil {
-					log.Panicf("run on port %s failed: %v", port, err)
-				}
-				err = r.RunListener(l)
-			}
-			if err != nil {
-				log.Panicf("run on port %s failed: %v", port, err)
-			}
-		}(i, p)
+		go serve(r, i, p, env, certFiles)
 	}
 
 	select {}
+}
+
+func serve(r *gin.Engine, seq int, port string, env *process.EnvVars, certFiles *netx.CertFiles) {
+	onlyHTTP := strings.HasSuffix(port, ":http")
+	if onlyHTTP {
+		port = strings.TrimSuffix(port, ":http")
+	}
+	onlyTLS := strings.HasSuffix(port, ":https")
+	if onlyTLS {
+		port = strings.TrimSuffix(port, ":https")
+	}
+	if seq == 0 {
+		go util.OpenExplorer(onlyTLS, ss.ParseInt(port), env.ContextPath)
+	}
+
+	var err error
+	if onlyTLS {
+		log.Printf("Listening on %s for https", port)
+		err = r.RunTLS(":"+port, certFiles.Cert, certFiles.Key)
+	} else if onlyHTTP {
+		log.Printf("Listening on %s for http", port)
+		err = r.Run(":" + port)
+	} else {
+		log.Printf("Listening on %s for http and https", port)
+		l, err := fproxy.CreateTLSListener(":"+port, certFiles.Cert, certFiles.Key)
+		if err != nil {
+			log.Panicf("run on port %s failed: %v", port, err)
+		}
+		err = r.RunListener(l)
+	}
+	if err != nil {
+		log.Panicf("run on port %s failed: %v", port, err)
+	}
 }
 
 var wsupgrader = websocket.Upgrader{
