@@ -9,7 +9,7 @@ go 1.18
 require (
 	github.com/antonmedv/expr v1.9.0
 	github.com/asdine/storm/v3 v3.2.1
-	github.com/bingoohuang/fproxy v0.0.0-20220824044723-1715d550f1ef
+	github.com/bingoohuang/fproxy v0.0.0-20220824055331-faa0b282ebfc
 	github.com/bingoohuang/gg v0.0.0-20220623011341-703ede41a349
 	github.com/bingoohuang/golog v0.0.0-20220414031919-b31fc4e302cf
 	github.com/bingoohuang/gor v0.0.0-20200628053500-ec6cb95c0e1b
