@@ -166,7 +166,6 @@ func host(env *process.EnvVars) {
 			if err != nil {
 				log.Panicf("run on port %s failed: %v", port, err)
 			}
-
 		}(i, p)
 	}
 

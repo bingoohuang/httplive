@@ -31,8 +31,8 @@ github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZx
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
 github.com/beorn7/perks v1.0.0/go.mod h1:KWe93zE9D1o94FZ5RNwFwVgaQK1VOXiVxmqh+CedLV8=
 github.com/bingoohuang/easyjson v0.0.0-20211118132814-5606aa48c508 h1:Ew6KVZFgaX/C93v95gc1spL8H+4pis70mLSXFlvyk0E=
-github.com/bingoohuang/fproxy v0.0.0-20220718020805-b4a282f1a622 h1:KW2jQmvrUqpoB8g9dHl/wz+3BUGGvDuRZuC381tKh8g=
-github.com/bingoohuang/fproxy v0.0.0-20220718020805-b4a282f1a622/go.mod h1:flMRMQDdgk8hrYOiQnPiukcDf1l3XAoWhyA2Ij9VaPI=
+github.com/bingoohuang/fproxy v0.0.0-20220824044723-1715d550f1ef h1:ABIQY9MnCt3twhYwkXencDldxgY06le+mMRG+Gbw+WM=
+github.com/bingoohuang/fproxy v0.0.0-20220824044723-1715d550f1ef/go.mod h1:flMRMQDdgk8hrYOiQnPiukcDf1l3XAoWhyA2Ij9VaPI=
 github.com/bingoohuang/gg v0.0.0-20220623011341-703ede41a349 h1:2Us1edT7JoiGj7RACrstWgAINFknDz/TUqMS4MC6U1g=
 github.com/bingoohuang/gg v0.0.0-20220623011341-703ede41a349/go.mod h1:Ls5vFGvCd8cfN3S7s7clOr3Y7WLc7UFyNRGuXHLOfAM=
 github.com/bingoohuang/golog v0.0.0-20220414031919-b31fc4e302cf h1:fS/yA4rJJrvVRtWTfuwwxg1yiTVuPUpxiI54L9mL2iM=
