@@ -3,7 +3,7 @@ package http2curl
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 )
@@ -14,7 +14,7 @@ func ExampleGetCurlCmd() {
 	form.Add("name", "Hudson")
 	body := form.Encode()
 
-	payload := ioutil.NopCloser(bytes.NewBufferString(body))
+	payload := io.NopCloser(bytes.NewBufferString(body))
 	req, _ := http.NewRequest(http.MethodPost, "http://foo.com/cats", payload)
 	req.Header.Set("Api-Key", "123")
 

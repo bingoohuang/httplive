@@ -2,7 +2,7 @@ package httptee
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
 )
 
@@ -10,10 +10,10 @@ import (
 func DuplicateRequest(request *http.Request) *http.Request {
 	var bodyBytes []byte
 	if request.Body != nil {
-		bodyBytes, _ = ioutil.ReadAll(request.Body)
+		bodyBytes, _ = io.ReadAll(request.Body)
 	}
 
-	request.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+	request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 
 	return &http.Request{
 		Method:        request.Method,
@@ -22,7 +22,7 @@ func DuplicateRequest(request *http.Request) *http.Request {
 		ProtoMajor:    request.ProtoMajor,
 		ProtoMinor:    request.ProtoMinor,
 		Header:        request.Header,
-		Body:          ioutil.NopCloser(bytes.NewBuffer(bodyBytes)),
+		Body:          io.NopCloser(bytes.NewBuffer(bodyBytes)),
 		Host:          request.Host,
 		ContentLength: request.ContentLength,
 	}

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/bingoohuang/gg/pkg/iox"
+
 	"github.com/bingoohuang/httplive/pkg/placeholder"
 	"github.com/bingoohuang/jj"
 )
@@ -42,7 +44,7 @@ func (d DbQueryEvaluator) Eval(ctx *Context, key, param string) EvaluatorResult 
 		return EvaluatorResult{Err: err}
 	}
 
-	defer rows.Close()
+	defer iox.Close(rows)
 	columns, _ := rows.Columns()
 	columnSize := len(columns)
 

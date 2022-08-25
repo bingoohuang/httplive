@@ -11,7 +11,7 @@ type HeaderSaver struct {
 
 // Setter provides a set key:value  func.
 type Setter interface {
-	// set sets the given 'key: value' header.
+	// Set sets the given 'key: value' header.
 	Set(key, value string)
 }
 

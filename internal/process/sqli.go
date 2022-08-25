@@ -41,12 +41,12 @@ func (s Sqli) HlHandle(c *gin.Context, apiModel *APIDataModel, asset func(name s
 		return fmt.Errorf("db is not initialized")
 	}
 
-	query := vars.EvalSubstitute(s.Query, vars.VarValueHandler(func(name string) interface{} {
+	query := vars.EvalSubstitute(s.Query, vars.VarValueHandler(func(name, params, expr string) interface{} {
 		if strings.HasPrefix(name, "query_") {
 			q := name[len("query_"):]
 			return c.Query(q)
 		}
-		return ""
+		return expr
 	}))
 
 	result, err := sqx.NewSQL(query).QueryAsMaps(s.db)

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"mime"
 	"net/http"
@@ -163,7 +162,7 @@ func TryBind(c *gin.Context) interface{} {
 // GetRequestBody ...
 func GetRequestBody(requestBody *bytes.Buffer) interface{} {
 	envSize := osx.EnvSize("MAX_PAYLOAD_SIZE", 256)
-	body, err := ioutil.ReadAll(io.LimitReader(requestBody, int64(envSize)))
+	body, err := io.ReadAll(io.LimitReader(requestBody, int64(envSize)))
 	if err != nil {
 		log.Printf("read request body failed: %+v", err)
 	}

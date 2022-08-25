@@ -3,7 +3,7 @@ package process
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -269,7 +269,7 @@ func fulfilPayload(r *http.Request, m map[string]interface{}, body string) {
 		return
 	}
 
-	if p, _ := ioutil.ReadAll(r.Body); len(p) > 0 {
+	if p, _ := io.ReadAll(r.Body); len(p) > 0 {
 		typ, outi, ok := jj.ValidPayload(p, 0)
 		if ok && typ == jj.JSON && len(p[outi:]) == 0 {
 			m["payload"] = json.RawMessage(p)

@@ -68,7 +68,7 @@ func (s *BackendPool) GetNextPeer() *Backend {
 			continue
 		}
 
-		// if we have an alive backend, use it and store if its not the original one
+		// if we have an alive backend, use it and store if it's not the original one
 		if i != next {
 			atomic.StoreUint64(&s.current, idx)
 		}

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"mime"
 	"net/http"
@@ -439,13 +439,13 @@ func dynamicProcess(c *gin.Context, ep APIDataModel) bool {
 		return false
 	}
 
-	reqBody, err := ioutil.ReadAll(c.Request.Body)
+	reqBody, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		log.Printf("E! readall %v", err)
 		return false
 	}
 
-	c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(reqBody))
+	c.Request.Body = io.NopCloser(bytes.NewBuffer(reqBody))
 
 	for _, v := range ep.dynamicValuers {
 		parameters := make(gin.H, len(v.ParametersEvaluator))

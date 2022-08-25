@@ -44,7 +44,7 @@ func (p WorkerPool) Run(ctx context.Context, job Runnable) error {
 				if err, ok := r.(error); ok {
 					answer <- err
 				} else {
-					answer <- fmt.Errorf("Recovered in WorkerPool Run from: %v", r)
+					answer <- fmt.Errorf("recovered in WorkerPool Run from: %v", r)
 				}
 			}
 			<-p.guard

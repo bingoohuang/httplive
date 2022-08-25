@@ -3,7 +3,6 @@ package httplive
 import (
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"log"
 	"mime"
 	"net/http"
@@ -149,7 +148,7 @@ func (ctrl WebCliController) Save(c *gin.Context, _ saveT) (giu.HTTPStatus, inte
 	method := c.Query("method")
 	body := c.Query("body")
 	if body == "" {
-		s, _ := ioutil.ReadAll(c.Request.Body)
+		s, _ := io.ReadAll(c.Request.Body)
 		body = string(s)
 	}
 	var model process.APIDataModel
@@ -203,7 +202,7 @@ func parseFileContent(c *gin.Context) (mimeType, filename string, fileContent []
 	mimeType = mime.TypeByExtension(path.Ext(file.Filename))
 	filename = file.Filename
 	f, _ := file.Open()
-	fileContent, _ = ioutil.ReadAll(f)
+	fileContent, _ = io.ReadAll(f)
 
 	return mimeType, filename, fileContent
 }
