@@ -495,6 +495,8 @@ func routing(r *gin.Engine, ep process.APIDataModel) {
 }
 
 func noRouteHandlerWrap(c *gin.Context) {
+	process.Sleep(c)
+
 	cw := util.NewGinCopyWriter(c.Writer, c)
 	c.Writer = cw
 

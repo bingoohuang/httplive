@@ -164,6 +164,8 @@ func (a APIDataModel) CreateJsTreeModel() JsTreeDataModel {
 }
 
 func (a APIDataModel) HandleJSON(c *gin.Context) {
+	Sleep(c)
+
 	yes, fn := dealHl(c, a)
 	if yes || a.ServeFn == nil {
 		return
@@ -187,6 +189,13 @@ func (a APIDataModel) HandleJSON(c *gin.Context) {
 	rr.ResponseSize = cw.Size()
 	rr.ResponseStatus = cw.Status()
 	rr.ResponseHeader = util.ConvertHeader(cw.Header())
+}
+
+func Sleep(c *gin.Context) {
+	sleep := c.Query("_sleep")
+	if du, err := time.ParseDuration(sleep); err == nil {
+		time.Sleep(du)
+	}
 }
 
 func (a *APIDataModel) InternalProcess(subRouter string) {

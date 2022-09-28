@@ -24,21 +24,22 @@ and increase the productivity of our development and testing environments.
 
 ## Features
 
-1. 2022-07-06 simplify flag: `httplive -p 5003,5004:https -l` will listen on 5003 for http and on 5004 for https.
-1. 2022-04-12 find by endpoint: `gurl :5003/httplive/webcli/api/endpoint endpoint=/bigjson -pb format==clean`
-2. 2022-04-12 `"_hl": "mockbin",` support `payloadFile` to read a json from file.
-3. 2022-04-09 echarts config supported, see demo config [echarts1.json](assets/echarts1.json)、[echarts2.json](assets/echarts2.json)、[echarts3.json](assets/echarts3.json)
-4. 2022-04-08 support serve static files, see demo config [servestatic.json](assets/servestatic.json)
-5. 2022-04-07 counter api op==all/query/incr/deduct/reset key/k==counterName value/val/v=1/-1/incremental 
+1. 2022-09-28 support query _sleep=1s: `gurl :5003 _sleep==1s`
+2. 2022-07-06 simplify flag: `httplive -p 5003,5004:https -l` will listen on 5003 for http and on 5004 for https.
+3. 2022-04-12 find by endpoint: `gurl :5003/httplive/webcli/api/endpoint endpoint=/bigjson -pb format==clean`
+4. 2022-04-12 `"_hl": "mockbin",` support `payloadFile` to read a json from file.
+5. 2022-04-09 echarts config supported, see demo config [echarts1.json](assets/echarts1.json)、[echarts2.json](assets/echarts2.json)、[echarts3.json](assets/echarts3.json)
+6. 2022-04-08 support serve static files, see demo config [servestatic.json](assets/servestatic.json)
+7. 2022-04-07 counter api op==all/query/incr/deduct/reset key/k==counterName value/val/v=1/-1/incremental 
    1. `gurl :5003/counter -pb -r`  => `{"counter":23}`
    2. `gurl :5003/counter op==query -pb -r` => `{"counter":23}`
    2. `gurl :5003/counter op==deduct -pb -r` => `{"counter":22}`
    2. `gurl :5003/counter op==reset -pb -r` => `{"counter":0}`
-6. 2021-12-01 admin api made more easy
+8. 2021-12-01 admin api made more easy
     - `curl 'http://127.0.0.1:5003/httplive/webcli/api/save?endpoint=/x1' -d '{"close": true}'` 
     - `curl 'http://127.0.0.1:5003/httplive/webcli/api/save?endpoint=/x1' -d '@a.json` 
     - `curl 'http://127.0.0.1:5003/httplive/webcli/api/save?endpoint=/x2&method=GET' -d '{"Status": true}'`
-7. 2021-11-18 `http://127.0.0.1:5003/echo.json` returns user agent string's parsing results[^1]
+9. 2021-11-18 `http://127.0.0.1:5003/echo.json` returns user agent string's parsing results[^1]
 
 ## Installation
 
