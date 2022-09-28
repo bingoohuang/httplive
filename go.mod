@@ -2,16 +2,14 @@ module github.com/bingoohuang/httplive
 
 go 1.18
 
-//replace (
-//    github.com/bingoohuang/fproxy => /Users/bingoobjca/github/fproxy
-//)
+//replace github.com/bingoohuang/golog => /Users/bingoobjca/github/golog
 
 require (
 	github.com/antonmedv/expr v1.9.0
 	github.com/asdine/storm/v3 v3.2.1
 	github.com/bingoohuang/fproxy v0.0.0-20220824055331-faa0b282ebfc
 	github.com/bingoohuang/gg v0.0.0-20220825014456-513d8c7ea917
-	github.com/bingoohuang/golog v0.0.0-20220722005412-0d00ed3f3800
+	github.com/bingoohuang/golog v0.0.0-20220928084502-cdb748e15d3c
 	github.com/bingoohuang/gor v0.0.0-20200628053500-ec6cb95c0e1b
 	github.com/bingoohuang/jj v0.0.0-20220825024251-1012533583ea
 	github.com/bingoohuang/sariaf v0.0.0-20210118074537-bac7a178cb89
@@ -63,6 +61,7 @@ require (
 	github.com/pbnjay/pixfont v0.0.0-20200714042608-33b744692567 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
+	github.com/segmentio/ksuid v1.0.4 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/thoas/go-funk v0.9.0 // indirect
 	github.com/ugorji/go/codec v1.1.7 // indirect

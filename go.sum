@@ -35,8 +35,8 @@ github.com/bingoohuang/fproxy v0.0.0-20220824055331-faa0b282ebfc h1:lF77IU55Ewm3
 github.com/bingoohuang/fproxy v0.0.0-20220824055331-faa0b282ebfc/go.mod h1:flMRMQDdgk8hrYOiQnPiukcDf1l3XAoWhyA2Ij9VaPI=
 github.com/bingoohuang/gg v0.0.0-20220825014456-513d8c7ea917 h1:r9bOiFAG8PSREJSYkKEm3iwMklS7fINn5waGjKqwvMw=
 github.com/bingoohuang/gg v0.0.0-20220825014456-513d8c7ea917/go.mod h1:YTSnmf7zkGIb5pwDLMW1GaOFbtD3+Jyg6anBytG2wwA=
-github.com/bingoohuang/golog v0.0.0-20220722005412-0d00ed3f3800 h1:MAWkcwf7nJG5hMBcsy+cdVoEMFs6g1Hlz5lJVbi5YVk=
-github.com/bingoohuang/golog v0.0.0-20220722005412-0d00ed3f3800/go.mod h1:GpONkik2T1ABcjaHUfK8tfEGpxFaV5zysPpyoAMih00=
+github.com/bingoohuang/golog v0.0.0-20220928084502-cdb748e15d3c h1:ce5Q8BQqgvVgVonydBWnDetCC7uFk05+uMGyEFfXLmk=
+github.com/bingoohuang/golog v0.0.0-20220928084502-cdb748e15d3c/go.mod h1:GpONkik2T1ABcjaHUfK8tfEGpxFaV5zysPpyoAMih00=
 github.com/bingoohuang/gonet v0.0.0-20190716021716-fd516efe8b31/go.mod h1:lSe5gMXAiQESg/xTshM6sByKvDkMGdDffZSXt0d64JI=
 github.com/bingoohuang/gor v0.0.0-20200321095356-94cf6290c6ea/go.mod h1:ahEOivpxL+rGjwq6hk2H8aQEMh/Uc6r1N3ohugldIww=
 github.com/bingoohuang/gor v0.0.0-20200628053500-ec6cb95c0e1b h1:V8FCwcSdI/IxeiS3cAH94x9080H1r58PP7ltUnohFPk=
@@ -263,6 +263,8 @@ github.com/rogpeppe/go-internal v1.6.1 h1:/FiVV8dS/e+YqF2JvO3yXRFbBLTIuSDkuC7aBO
 github.com/sanity-io/litter v1.2.0/go.mod h1:JF6pZUFgu2Q0sBZ+HSV35P8TVPI1TTzEwyu9FXAw2W4=
 github.com/satori/go.uuid v1.2.0/go.mod h1:dA0hQrYB0VpLJoorglMZABFdXlWrHn1NEOzdhQKdks0=
 github.com/scylladb/termtables v0.0.0-20191203121021-c4c0b6d42ff4/go.mod h1:C1a7PQSMz9NShzorzCiG2fk9+xuCgLkPeCvMHYR2OWg=
+github.com/segmentio/ksuid v1.0.4 h1:sBo2BdShXjmcugAMwjugoGUdUV0pcxY5mW4xKRn3v4c=
+github.com/segmentio/ksuid v1.0.4/go.mod h1:/XUiZBD3kVx5SmUOl55voK5yeAbBNNIed+2O73XgrPE=
 github.com/sirupsen/logrus v1.2.0/go.mod h1:LxeOpSwHxABJmUn/MG1IvRgCAasNZTLOkJPxbbu5VWo=
 github.com/sirupsen/logrus v1.4.2/go.mod h1:tLMulIdttU9McNUspp0xgXVQah82FyeX6MwdIuYE2rE=
 github.com/sirupsen/logrus v1.8.1 h1:dJKuHgqk1NNQlqoA6BTlM1Wf9DOH3NBjQyu0h9+AZZE=
