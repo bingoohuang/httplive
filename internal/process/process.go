@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gobars/cmd"
+
 	"github.com/antonmedv/expr"
 	"github.com/antonmedv/expr/ast"
 	"github.com/antonmedv/expr/parser"
@@ -225,6 +227,31 @@ func fulfilOther(r *http.Request, m map[string]interface{}) {
 	if r.Close {
 		m["connection"] = "close"
 	}
+
+	_, ips := cmd.Bash(`hostname -I`)
+	_, hostnamctl := cmd.Bash(`hostnamectl`)
+
+	m["server"] = map[string]interface{}{
+		"Ips":      strings.Fields(ips.Stdout[0]),
+		"hostname": parseLinesKeyValue(hostnamctl.Stdout),
+	}
+}
+
+func parseLinesKeyValue(kvs []string) map[string]string {
+	m := make(map[string]string)
+	for _, kv := range kvs {
+		kk := strings.SplitN(kv, ":", 2)
+		if len(kk) == 2 {
+			k := kk[0]
+			v := kk[1]
+			m[strings.TrimSpace(k)] = strings.TrimSpace(v)
+		} else if len(kk) == 1 {
+			k := kk[0]
+			m[strings.TrimSpace(k)] = ""
+		}
+	}
+
+	return m
 }
 
 func fulfilRouter(c *gin.Context, model *APIDataModel, m map[string]interface{}) {

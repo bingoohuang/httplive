@@ -24,7 +24,7 @@ and increase the productivity of our development and testing environments.
 
 ## Features
 
-1. 2022-09-28 support query _sleep=1s: `gurl :5003 _sleep==1s`
+1. 2022-09-28 support query _sleep=1s: `gurl :5003 _sleep==1s`, add server IPs and hostnamectl output for the default echo API.
 2. 2022-07-06 simplify flag: `httplive -p 5003,5004:https -l` will listen on 5003 for http and on 5004 for https.
 3. 2022-04-12 find by endpoint: `gurl :5003/httplive/webcli/api/endpoint endpoint=/bigjson -pb format==clean`
 4. 2022-04-12 `"_hl": "mockbin",` support `payloadFile` to read a json from file.
