@@ -194,13 +194,17 @@ func (a APIDataModel) HandleJSON(c *gin.Context) {
 }
 
 func Sleep(c *gin.Context) {
+	targetIP := c.Query("_target")
 	sleep := c.Query("_sleep")
+	hostIps := GetHostIps()
 	if du, err := time.ParseDuration(sleep); err == nil {
-		time.Sleep(du)
+		if targetIP == "" || ss.AnyOf(targetIP, hostIps...) {
+			time.Sleep(du)
+		}
 	}
 
 	if abort := c.Query("_abort"); abort != "" {
-		if ss.AnyOf(abort, GetHostIps()...) {
+		if targetIP == "" || ss.AnyOf(targetIP, hostIps...) {
 			log.Printf("request to abort by %s", abort)
 			os.Exit(1)
 		}

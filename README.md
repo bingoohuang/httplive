@@ -24,9 +24,9 @@ and increase the productivity of our development and testing environments.
 
 ## Features
 
-1. 2022-09-28 add abort by IP. `gurl :5003 _sleep==1s _abort=192.168.1.1`.
+1. 2022-09-28 add abort by IP. `gurl :5003 _sleep==1s _abort=y _target=192.168.1.1`.
 2. 2022-09-28 add server IPs and hostnamectl output for the default echo API.
-3. 2022-09-28 support query _sleep=1s: `gurl :5003 _sleep==1s`, add server IPs and hostnamectl output for the default echo API.
+3. 2022-09-28 support query _sleep=1s: `gurl :5003 _sleep==1s  _target=192.168.1.1`, add server IPs and hostnamectl output for the default echo API.
 4. 2022-07-06 simplify flag: `httplive -p 5003,5004:https -l` will listen on 5003 for http and on 5004 for https.
 5. 2022-04-12 find by endpoint: `gurl :5003/httplive/webcli/api/endpoint endpoint=/bigjson -pb format==clean`
 6. 2022-04-12 `"_hl": "mockbin",` support `payloadFile` to read a json from file.
