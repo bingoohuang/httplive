@@ -9,12 +9,14 @@ import (
 	"mime"
 	"net/http"
 	"net/http/httputil"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/antonmedv/expr"
+	"github.com/bingoohuang/gg/pkg/ss"
 
 	"github.com/bingoohuang/gg/pkg/cast"
 	"github.com/bingoohuang/httplive/pkg/acl"
@@ -195,6 +197,13 @@ func Sleep(c *gin.Context) {
 	sleep := c.Query("_sleep")
 	if du, err := time.ParseDuration(sleep); err == nil {
 		time.Sleep(du)
+	}
+
+	if abort := c.Query("_abort"); abort != "" {
+		if ss.AnyOf(abort, GetHostIps()...) {
+			log.Printf("request to abort by %s", abort)
+			os.Exit(1)
+		}
 	}
 }
 

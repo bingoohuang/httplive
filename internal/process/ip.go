@@ -13,7 +13,6 @@ import (
 	"github.com/bingoohuang/gg/pkg/goip"
 	"github.com/bingoohuang/httplive/pkg/util"
 	"github.com/gin-gonic/gin"
-	"github.com/gobars/cmd"
 )
 
 // ProcessIP process ip request.
@@ -40,10 +39,7 @@ func ProcessIP(c *gin.Context, useJSON bool) {
 	m["ifaces"] = listIfaces()
 	m["more"] = moreInfo()
 
-	_, status := cmd.Bash(`hostname -I`)
-	m["hostname -I"] = strings.Join(append(status.Stdout, status.Stderr...), " ")
-	_, status = cmd.Bash(`hostname -i`)
-	m["hostname -i"] = strings.Join(append(status.Stdout, status.Stderr...), " ")
+	m["ips"] = strings.Join(GetHostIps(), " ")
 
 	if useJSON {
 		c.IndentedJSON(http.StatusOK, m)
