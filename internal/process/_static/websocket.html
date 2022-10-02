@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8"/>
+    <title>Sample of websocket with golang</title>
+    <script src="_static/jquery-2.1.4.min.js"></script>
+
+    <script>
+        $(function () {
+            const u = 'ws://' + window.location.host + window.location.pathname + "?websocket=y"
+            console.log(u) // ws://127.0.0.1:5003/websocket?websocket=y
+            const w = new WebSocket(u)
+            const $msgList = $('#msg-list')
+            w.onmessage = function (e) {
+                $('<li>').text(e.data).appendTo($msgList)
+                w.send('{"message":"这是来自html的数据"}')
+            };
+        });
+    </script>
+</head>
+<body>
+<ul id="msg-list"></ul>
+</body>
+</html>
