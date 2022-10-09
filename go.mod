@@ -9,6 +9,7 @@ require (
 	github.com/asdine/storm/v3 v3.2.1
 	github.com/bingoohuang/fproxy v0.0.0-20220824055331-faa0b282ebfc
 	github.com/bingoohuang/gg v0.0.0-20220825014456-513d8c7ea917
+	github.com/bingoohuang/godaemon v0.0.0-20220907040433-7f208f406639
 	github.com/bingoohuang/golog v0.0.0-20220928084502-cdb748e15d3c
 	github.com/bingoohuang/gor v0.0.0-20200628053500-ec6cb95c0e1b
 	github.com/bingoohuang/jj v0.0.0-20220825024251-1012533583ea
@@ -52,6 +53,7 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/juju/errors v0.0.0-20200330140219-3fe23663418f // indirect
 	github.com/juju/loggo v0.0.0-20210728185423-eebad3a902c4 // indirect
+	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/leodido/go-urn v1.2.0 // indirect
@@ -72,7 +74,7 @@ require (
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
 	golang.org/x/mod v0.4.2 // indirect
 	golang.org/x/net v0.0.0-20220809184613-07c6da5e1ced // indirect
-	golang.org/x/sys v0.0.0-20220728004956-3c1f35247d10 // indirect
+	golang.org/x/sys v0.0.0-20220906165534-d0df966e6959 // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.5 // indirect
