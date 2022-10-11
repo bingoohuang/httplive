@@ -43,12 +43,12 @@ func main() {
 	f.StringVar(&env.CaRoot, "ca", ".cert", "Cert root path of localhost.key and localhost.pem")
 	f.BoolVar(&env.Logging, "log,l", false, "Enable golog logging")
 	pInit := f.Bool("init", false, "Create initial ctl and exit")
-	pDeamon := f.Bool("deamon", false, "Deamonized")
+	pDaemon := f.Bool("daemon", false, "Daemonized")
 	pVersion := f.Bool("version,v", false, "Create initial ctl and exit")
 	_ = f.Parse(os.Args[1:])
 	ctl.Config{Initing: *pInit, PrintVersion: *pVersion}.ProcessInit()
 
-	if *pDeamon {
+	if *pDaemon {
 		if p, _ := new(godaemon.Context).Reborn(); p != nil {
 			os.Exit(0)
 		}
