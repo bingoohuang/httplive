@@ -19,27 +19,20 @@ import (
 	textTemplate "text/template"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
-
-	"github.com/bingoohuang/jj"
-
-	"github.com/bingoohuang/gg/pkg/ss"
-	"github.com/bingoohuang/httplive/pkg/countable"
-
-	"github.com/bingoohuang/gg/pkg/iox"
-
-	"github.com/bingoohuang/gg/pkg/v"
-
 	"github.com/asdine/storm/v3"
-	"go.etcd.io/bbolt"
-
+	"github.com/bingoohuang/gg/pkg/iox"
+	"github.com/bingoohuang/gg/pkg/ss"
+	"github.com/bingoohuang/gg/pkg/v"
 	"github.com/bingoohuang/golog/pkg/hlog"
 	"github.com/bingoohuang/httplive/internal/process"
+	"github.com/bingoohuang/httplive/pkg/countable"
 	"github.com/bingoohuang/httplive/pkg/http2curl"
 	"github.com/bingoohuang/httplive/pkg/util"
+	"github.com/bingoohuang/jj"
 	"github.com/gin-gonic/gin"
-
+	"github.com/julienschmidt/httprouter"
 	"github.com/mssola/user_agent"
+	"go.etcd.io/bbolt"
 )
 
 // Dao defines the api to access the database.

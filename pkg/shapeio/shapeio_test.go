@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/bingoohuang/httplive/pkg/shapeio"
-
 	"github.com/dustin/go-humanize"
 )
 

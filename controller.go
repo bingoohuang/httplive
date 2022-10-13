@@ -9,14 +9,12 @@ import (
 	"path"
 	"strings"
 
-	"github.com/bingoohuang/jj"
-
-	"github.com/gin-gonic/gin/binding"
-
 	"github.com/bingoohuang/gg/pkg/v"
 	"github.com/bingoohuang/gor/giu"
 	"github.com/bingoohuang/httplive/internal/process"
+	"github.com/bingoohuang/jj"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
 type versionT struct {

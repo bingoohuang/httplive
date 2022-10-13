@@ -16,9 +16,8 @@ import (
 	"time"
 
 	"github.com/antonmedv/expr"
-	"github.com/bingoohuang/gg/pkg/ss"
-
 	"github.com/bingoohuang/gg/pkg/cast"
+	"github.com/bingoohuang/gg/pkg/ss"
 	"github.com/bingoohuang/httplive/pkg/acl"
 	"github.com/bingoohuang/httplive/pkg/http2curl"
 	"github.com/bingoohuang/httplive/pkg/util"

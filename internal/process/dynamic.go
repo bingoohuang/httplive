@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/antonmedv/expr/vm"
-
 	"github.com/bingoohuang/httplive/pkg/eval"
 	"github.com/bingoohuang/httplive/pkg/util"
 	"github.com/bingoohuang/jj"

@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/bingoohuang/golog/pkg/hlog"
-
 	"github.com/gin-gonic/gin"
 )
 

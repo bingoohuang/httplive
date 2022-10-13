@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/bingoohuang/gg/pkg/osx"
-
 	"github.com/bingoohuang/gg/pkg/thinktime"
 	"github.com/bingoohuang/httplive/pkg/util"
 	"github.com/bingoohuang/jj"

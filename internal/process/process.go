@@ -13,14 +13,13 @@ import (
 	"github.com/antonmedv/expr"
 	"github.com/antonmedv/expr/ast"
 	"github.com/antonmedv/expr/parser"
-	"github.com/mssola/user_agent"
-
 	"github.com/bingoohuang/httplive/pkg/eval"
 	"github.com/bingoohuang/httplive/pkg/httptee"
 	"github.com/bingoohuang/httplive/pkg/lb"
 	"github.com/bingoohuang/httplive/pkg/util"
 	"github.com/bingoohuang/jj"
 	"github.com/gin-gonic/gin"
+	"github.com/mssola/user_agent"
 )
 
 // RouterResult result for router

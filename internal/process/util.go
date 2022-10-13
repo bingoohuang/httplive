@@ -6,11 +6,9 @@ import (
 	"strings"
 
 	"github.com/bingoohuang/gg/pkg/goip"
-
-	"github.com/gobars/cmd"
-
 	"github.com/bingoohuang/httplive/pkg/util"
 	"github.com/gin-gonic/gin"
+	"github.com/gobars/cmd"
 )
 
 func TrimContextPath(c *gin.Context) string {
