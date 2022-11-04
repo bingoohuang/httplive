@@ -9,7 +9,7 @@ require (
 	github.com/asdine/storm/v3 v3.2.1
 	github.com/bingoohuang/fproxy v0.0.0-20220824055331-faa0b282ebfc
 	github.com/bingoohuang/gg v0.0.0-20220825014456-513d8c7ea917
-	github.com/bingoohuang/godaemon v0.0.0-20220907040433-7f208f406639
+	github.com/bingoohuang/godaemon v0.0.0-20221104024058-3bf8b9130635
 	github.com/bingoohuang/golog v0.0.0-20220928084502-cdb748e15d3c
 	github.com/bingoohuang/gor v0.0.0-20200628053500-ec6cb95c0e1b
 	github.com/bingoohuang/jj v0.0.0-20220825024251-1012533583ea

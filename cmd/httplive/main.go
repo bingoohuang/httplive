@@ -43,13 +43,7 @@ func main() {
 	_ = f.Parse(os.Args[1:])
 	ctl.Config{Initing: *pInit, PrintVersion: *pVersion}.ProcessInit()
 
-	if *pDaemon {
-		if p, _ := new(godaemon.Context).Reborn(); p != nil {
-			os.Exit(0)
-		}
-		log.Print("- - - - - - - - - - - - - - -")
-		log.Print("daemon started")
-	}
+	godaemon.Daemonize(*pDaemon)
 
 	if env.Logging {
 		golog.Setup(golog.Spec("stdout"))
