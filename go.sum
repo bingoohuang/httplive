@@ -37,8 +37,8 @@ github.com/bingoohuang/gg v0.0.0-20230105015225-9f479171b5a4 h1:jFmupmsK2psNQX6e
 github.com/bingoohuang/gg v0.0.0-20230105015225-9f479171b5a4/go.mod h1:DfYJZZ45OOHWaqh5aIpa1uX3Lp4qvhG3fkNG203IUVs=
 github.com/bingoohuang/godaemon v0.0.0-20221104024058-3bf8b9130635 h1:YR8zDR8SJi9Ea5LOVqz3pmh2vCU/HscLIrTmUYfs07w=
 github.com/bingoohuang/godaemon v0.0.0-20221104024058-3bf8b9130635/go.mod h1:xfxElNPL0/tWWnqq1Iq1W1N1lnG8032nJ5X/JhDdOwU=
-github.com/bingoohuang/golog v0.0.0-20221128015304-05de68b5131c h1:ZjmLyDk/h4tu9OUapLtya/OCTzQAvjGeq39LWULCFDQ=
-github.com/bingoohuang/golog v0.0.0-20221128015304-05de68b5131c/go.mod h1:18u49CdpUpGmqLfvNXkHJ7COoS295w7QZ+nxAr8sOHI=
+github.com/bingoohuang/golog v0.0.0-20230128053742-a8993f581e53 h1:Lc1vlpFwao9nMq7U9jCEt51B8cJClUsLLDq8CFYhTPw=
+github.com/bingoohuang/golog v0.0.0-20230128053742-a8993f581e53/go.mod h1:18u49CdpUpGmqLfvNXkHJ7COoS295w7QZ+nxAr8sOHI=
 github.com/bingoohuang/gonet v0.0.0-20190716021716-fd516efe8b31/go.mod h1:lSe5gMXAiQESg/xTshM6sByKvDkMGdDffZSXt0d64JI=
 github.com/bingoohuang/gor v0.0.0-20200321095356-94cf6290c6ea/go.mod h1:ahEOivpxL+rGjwq6hk2H8aQEMh/Uc6r1N3ohugldIww=
 github.com/bingoohuang/gor v0.0.0-20200628053500-ec6cb95c0e1b h1:V8FCwcSdI/IxeiS3cAH94x9080H1r58PP7ltUnohFPk=

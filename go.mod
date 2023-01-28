@@ -10,7 +10,7 @@ require (
 	github.com/bingoohuang/fproxy v0.0.0-20220824055331-faa0b282ebfc
 	github.com/bingoohuang/gg v0.0.0-20230105015225-9f479171b5a4
 	github.com/bingoohuang/godaemon v0.0.0-20221104024058-3bf8b9130635
-	github.com/bingoohuang/golog v0.0.0-20221128015304-05de68b5131c
+	github.com/bingoohuang/golog v0.0.0-20230128053742-a8993f581e53
 	github.com/bingoohuang/gor v0.0.0-20200628053500-ec6cb95c0e1b
 	github.com/bingoohuang/jj v0.0.0-20221223142008-b501230916f9
 	github.com/bingoohuang/sariaf v0.0.0-20210118074537-bac7a178cb89

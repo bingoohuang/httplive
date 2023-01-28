@@ -55,12 +55,14 @@ func (i ID) Int() uint64 { return cast.ToUint64(string(i)) }
 // be used to delay JSON decoding or precompute a JSON encoding.
 type RawMessage []byte
 
-func (m RawMessage) String() string {
+func ParseJSON(m string) string {
 	if len(m) > 0 && m[0] == '"' {
-		return string(m[1 : len(m)-1])
+		if val, err := strconv.Unquote(m); err == nil {
+			return val
+		}
 	}
 
-	return string(m)
+	return (m)
 }
 
 // MarshalJSON returns m as the JSON encoding of m.
@@ -368,7 +370,7 @@ func (a *APIDataModel) apiacl() {
 }
 
 func (a APIDataModel) createCasbin() (*casbin.Enforcer, *sariaf.Router, map[string]string) {
-	body := a.Body.String()
+	body := string(a.Body)
 	modelConf := util.UnquoteCover(body, "###START_MODEL###", "###END_MODEL###")
 	policyConf := util.UnquoteCover(body, "###START_POLICY###", "###END_POLICY###")
 	authConf := util.UnquoteCover(body, "###START_AUTH###", "###END_AUTH###")
@@ -397,12 +399,12 @@ func (a APIDataModel) createCasbin() (*casbin.Enforcer, *sariaf.Router, map[stri
 	return e, sariafRouter, authMap
 }
 
-func (a *APIDataModel) TryDo(f func(*APIDataModel, func(name string) string), asset func(name string) string) {
+func (a *APIDataModel) TryDo(f func(*APIDataModel, string, func(name string) string) bool, body string, asset func(name string) string) bool {
 	if a.ServeFn != nil {
-		return
+		return false
 	}
 
-	f(a, asset)
+	return f(a, body, asset)
 }
 
 func AdminAuth(c *gin.Context) {
@@ -473,7 +475,7 @@ func dealHl(c *gin.Context, ep APIDataModel) (bool, gin.HandlerFunc) {
 			c.Data(http.StatusOK, util.ContentTypeText, []byte(util.TimeFmt(time.Now())))
 		}
 	case "conf":
-		util.GinData(c, []byte(ep.Body))
+		util.GinData(c, ep.Body)
 	default:
 		return dealMore(hl)
 	}

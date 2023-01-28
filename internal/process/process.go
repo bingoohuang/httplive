@@ -33,17 +33,17 @@ type RouterResult struct {
 	RemoteAddr     string
 }
 
-func (ep Endpoint) CreateProxy(m *APIDataModel, _ func(name string) string) {
-	proxy := jj.Get(ep.Body, "_proxy")
+func (ep Endpoint) CreateProxy(m *APIDataModel, body string, _ func(name string) string) bool {
+	proxy := jj.Get(body, "_proxy")
 	isProxy := proxy.Type == jj.String && util.HasPrefix(proxy.String(), "http")
 	if !isProxy {
-		return
+		return false
 	}
 
 	pool := lb.CreateProxyServerPool(proxy.String(), ep.Methods+" "+ep.Endpoint)
 	if err := pool.CheckBackends(); err != nil {
 		log.Printf("E! proxy server check failed %v", err)
-		return
+		return false
 	}
 
 	var (
@@ -52,7 +52,7 @@ func (ep Endpoint) CreateProxy(m *APIDataModel, _ func(name string) string) {
 	)
 
 	if isTee := proxy.Type == jj.String && util.HasPrefix(proxy.String(), "http"); isTee {
-		tee := jj.Get(ep.Body, "_tee")
+		tee := jj.Get(body, "_tee")
 		if teeHandler, err = httptee.CreateHandler(tee.String()); err != nil {
 			log.Printf("E! tee server failed %v", err)
 		}
@@ -67,15 +67,17 @@ func (ep Endpoint) CreateProxy(m *APIDataModel, _ func(name string) string) {
 		rp := util.ReverseProxy(c.Request.URL.String(), p.Addr.Host, p.Addr.Path)
 		rp.ServeHTTP(c.Writer, c.Request)
 	}
+
+	return true
 }
 
-func (ep *Endpoint) CreateDirect(m *APIDataModel, _ func(name string) string) {
-	direct := jj.Get(ep.Body, "_direct")
+func (ep *Endpoint) CreateDirect(m *APIDataModel, body string, _ func(name string) string) bool {
+	direct := jj.Get(body, "_direct")
 	if direct.Type == jj.Null {
-		return
+		return false
 	}
 
-	_, authBean := ParseAuth(ep.Body)
+	_, authBean := ParseAuth(body)
 
 	m.ServeFn = func(c *gin.Context) {
 		if !authBean.AuthRequest(c) {
@@ -84,10 +86,10 @@ func (ep *Endpoint) CreateDirect(m *APIDataModel, _ func(name string) string) {
 
 		util.GinData(c, []byte(eval.JjGen(direct.String())))
 	}
+	return true
 }
 
-func (ep *Endpoint) CreateDefault(m *APIDataModel, _ func(name string) string) {
-	body := ep.Body
+func (ep *Endpoint) CreateDefault(m *APIDataModel, body string, _ func(name string) string) bool {
 	dynamic := jj.Get(body, "_dynamic")
 	if dynamic.Type == jj.JSON && dynamic.IsArray() {
 		m.dynamicValuers = createDynamics(body, []byte(dynamic.Raw))
@@ -110,6 +112,8 @@ func (ep *Endpoint) CreateDefault(m *APIDataModel, _ func(name string) string) {
 
 		util.GinData(c, []byte(Eval(ep.Endpoint, body)))
 	}
+
+	return true
 }
 
 type HlHandler interface {
@@ -130,19 +134,26 @@ func registerHlHandlers(k string, creator HlHandlerCreator) {
 	hlHandlers[k] = creator
 }
 
-func (ep *Endpoint) CreateHlHandlers(m *APIDataModel, asset func(name string) string) {
+func (ep *Endpoint) CreateHlHandlers(m *APIDataModel, body string, asset func(name string) string) bool {
+	h := jj.Get(body, "_hl")
+	if h.Type == jj.Null {
+		return false
+	}
+
 	for k, v := range hlHandlers {
-		if h := jj.Get(ep.Body, "_hl"); h.String() == k {
-			if ep.CreateHlHandler(m, asset, v) {
-				return
+		if h.String() == k {
+			if ep.CreateHlHandler(m, body, asset, v) {
+				return true
 			}
 		}
 	}
+
+	return false
 }
 
-func (ep *Endpoint) CreateHlHandler(m *APIDataModel, asset func(name string) string, v HlHandlerCreator) bool {
+func (ep *Endpoint) CreateHlHandler(m *APIDataModel, body string, asset func(name string) string, v HlHandlerCreator) bool {
 	b := v()
-	if err := json.Unmarshal([]byte(ep.Body), b); err != nil {
+	if err := json.Unmarshal([]byte(body), b); err != nil {
 		return true
 	}
 	if bb, ok := b.(AfterUnmashaler); ok {
@@ -171,10 +182,10 @@ func (ep *Endpoint) CreateHlHandler(m *APIDataModel, asset func(name string) str
 	return false
 }
 
-func (ep *Endpoint) CreateEcho(m *APIDataModel, _ func(name string) string) {
-	echoType := jj.Get(ep.Body, "_echo")
+func (ep *Endpoint) CreateEcho(m *APIDataModel, body string, _ func(name string) string) bool {
+	echoType := jj.Get(body, "_echo")
 	if echoType.Type != jj.String {
-		return
+		return false
 	}
 
 	echoMode := echoType.String()
@@ -189,6 +200,8 @@ func (ep *Endpoint) CreateEcho(m *APIDataModel, _ func(name string) string) {
 			c.Data(http.StatusOK, util.ContentTypeText, dumpRequest)
 		}
 	}
+
+	return true
 }
 
 func CreateRequestMap(c *gin.Context, model *APIDataModel) map[string]interface{} {

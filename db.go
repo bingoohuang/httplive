@@ -310,15 +310,25 @@ func CreateAPIDataModel(ep *process.Endpoint, query bool) *process.APIDataModel 
 		return m
 	}
 
-	if h := jj.Get(ep.Body, "_disabled"); h.Type == jj.True {
+	body := process.ParseJSON(ep.Body)
+
+	if h := jj.Get(body, "_disabled"); h.Type == jj.True {
 		return m
 	}
 
-	m.TryDo(ep.CreateHlHandlers, asset)
-	m.TryDo(ep.CreateEcho, nil)
-	m.TryDo(ep.CreateProxy, nil)
-	m.TryDo(ep.CreateDirect, nil)
-	m.TryDo(ep.CreateDefault, nil)
+	fnRegistered := m.TryDo(ep.CreateHlHandlers, body, asset)
+	if !fnRegistered {
+		fnRegistered = m.TryDo(ep.CreateEcho, body, nil)
+	}
+	if !fnRegistered {
+		fnRegistered = m.TryDo(ep.CreateProxy, body, nil)
+	}
+	if !fnRegistered {
+		fnRegistered = m.TryDo(ep.CreateDirect, body, nil)
+	}
+	if !fnRegistered {
+		fnRegistered = m.TryDo(ep.CreateDefault, body, nil)
+	}
 
 	return m
 }
@@ -330,7 +340,7 @@ func CreateEndpoint(model process.APIDataModel, old *process.Endpoint) process.E
 	ep := process.Endpoint{
 		ID: model.ID.Int(), Endpoint: model.Endpoint, Methods: model.Method, MimeType: model.MimeType,
 		Filename: model.Filename, FileContent: model.FileContent,
-		Body: model.Body.String(), CreateTime: now, UpdateTime: now, DeletedAt: "",
+		Body: string(model.Body), CreateTime: now, UpdateTime: now, DeletedAt: "",
 	}
 	if old != nil {
 		if old.Body != "" && ep.Body == "" {
@@ -409,7 +419,9 @@ func serveAPI(w http.ResponseWriter, r *http.Request) (v process.RouterResult) {
 // JoinContextPath joins the context path to elem.
 func JoinContextPath(elem string, p *process.APIDataModel) string {
 	if p != nil {
-		if h := jj.Get(p.Body.String(), "_hl"); h.String() == process.HlServerStatic {
+		body := process.ParseJSON(string(p.Body))
+		h := jj.Get(body, "_hl")
+		if h.String() == process.HlServerStatic {
 			if prefix, hasParams := process.ParsePathParams(p); !hasParams {
 				elem = path.Join(prefix, "/*file")
 			}

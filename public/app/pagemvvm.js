@@ -291,7 +291,12 @@
                 }
 
                 if (response && response.body) {
-                    vm.content(response.body);
+                    let body = response.body;
+                    if (typeof body === 'string' || body instanceof String) {
+                        vm.content(body);
+                    } else {
+                        vm.content(JSON.stringify(body));
+                    }
                 } else {
                     vm.content("");
                 }
