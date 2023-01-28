@@ -1,11 +1,12 @@
 package process
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"html"
 	"io"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -29,6 +30,7 @@ type File struct {
 	DirFiles  string
 	HumanSize string
 	ModTime   time.Time
+	Md5sum    string
 }
 
 type DirList struct {
@@ -64,7 +66,7 @@ func ListDir(dir, rawQuery string, max int) (*DirList, error) {
 		return nil, err
 	}
 
-	title := html.EscapeString(path.Base(dir))
+	title := html.EscapeString(filepath.Base(dir))
 
 	var files []File
 
@@ -83,27 +85,26 @@ func ListDir(dir, rawQuery string, max int) (*DirList, error) {
 		if i.IsDir() {
 			name += "/"
 			var totalFiles int64
-			size, totalFiles, _ = DirSize(path.Join(dir, name))
+			size, totalFiles, _ = DirSize(filepath.Join(dir, name))
 			dirFiles = fmt.Sprintf("%d", totalFiles)
 		}
 
-		fileLink := name
-		if i.IsDir() {
-			fileLink += rawQuery
+		file := File{
+			weight:    ss.Ifi(i.IsDir(), 0, 1),
+			Seq:       n + 1,
+			Name:      name,
+			Url:       name,
+			Size:      size,
+			HumanSize: man.Bytes(uint64(size)),
+			DirFiles:  dirFiles,
+			ModTime:   i.ModTime(),
 		}
-
-		files = append(files,
-			File{
-				weight:    ss.Ifi(i.IsDir(), 0, 1),
-				Seq:       n + 1,
-				Name:      name,
-				Url:       fileLink,
-				Size:      size,
-				HumanSize: man.Bytes(uint64(size)),
-				DirFiles:  dirFiles,
-				ModTime:   i.ModTime(),
-			},
-		)
+		if i.IsDir() {
+			file.Url += rawQuery
+		} else {
+			file.Md5sum = md5sumFile(filepath.Join(dir, i.Name()))
+		}
+		files = append(files, file)
 	}
 
 	sort.SliceStable(files, func(i, j int) bool {
@@ -120,6 +121,21 @@ func ListDir(dir, rawQuery string, max int) (*DirList, error) {
 	}
 
 	return &DirList{Title: title, Files: files}, nil
+}
+
+func md5sumFile(name string) string {
+	file, err := os.Open(name)
+	if err != nil {
+		return ""
+	}
+	defer file.Close()
+
+	hash := md5.New()
+	if _, err = io.Copy(hash, file); err != nil {
+		return ""
+	}
+
+	return hex.EncodeToString(hash.Sum(nil))
 }
 
 var numReg = regexp.MustCompile(`\d+`)

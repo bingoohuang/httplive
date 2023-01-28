@@ -102,6 +102,7 @@
             <th>Human size</th>
             <th>Dir files</th>
             <th>Modification</th>
+            <th>Md5sum</th>
         </tr>
         {{range $files := .Files}}
         <tr>
@@ -112,6 +113,7 @@
             <td>{{.DirFiles}}</td>
             {{/* t2s example: {{ t2s .ModTime "2006-01-02 15:04"}} */}}
             <td>{{t2s .ModTime}}</td>
+            <td>{{.Md5sum}}</td>
         </tr>
         {{end}}
     </table>
