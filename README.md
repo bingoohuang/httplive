@@ -40,7 +40,7 @@ and increase the productivity of our development and testing environments.
     2. `gurl :5003/counter op==reset -pb -r` => `{"counter":0}`
 11. 2021-12-01 admin api made more easy
      - `curl 'http://127.0.0.1:5003/httplive/webcli/api/save?endpoint=/x1' -d '{"close": true}'` 
-     - `curl 'http://127.0.0.1:5003/httplive/webcli/api/save?endpoint=/x1' -d '@a.json` 
+     - `curl 'http://127.0.0.1:5003/httplive/webcli/api/save?endpoint=/x1&id=7' -d '@a.json` 
      - `curl 'http://127.0.0.1:5003/httplive/webcli/api/save?endpoint=/x2&method=GET' -d '{"Status": true}'`
 12. 2021-11-18 `http://127.0.0.1:5003/echo.json` returns user agent string's parsing results[^1]
 

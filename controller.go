@@ -142,6 +142,7 @@ type saveT struct {
 
 // Save 保存body.
 func (ctrl WebCliController) Save(c *gin.Context, _ saveT) (giu.HTTPStatus, interface{}) {
+	id := c.Query("id")
 	endpoint := c.Query("endpoint")
 	method := c.Query("method")
 	body := c.Query("body")
@@ -160,7 +161,8 @@ func (ctrl WebCliController) Save(c *gin.Context, _ saveT) (giu.HTTPStatus, inte
 			method = "ANY"
 		}
 		model.Method = method
-		model.Body = body
+		model.Body = process.RawMessage(body)
+		model.ID = process.ID(id)
 	}
 
 	dp, err := SaveEndpoint(model)

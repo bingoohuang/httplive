@@ -3,6 +3,8 @@ package process
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -39,22 +41,59 @@ type ID string
 
 // UnmarshalJSON unmarshals JSON from integer or string.
 func (i *ID) UnmarshalJSON(b []byte) error {
-	*i = ID(b)
+	if len(b) > 2 {
+		*i = ID(b[1 : len(b)-1])
+	}
 	return nil
 }
 
 // Int convert ID to integer.
 func (i ID) Int() uint64 { return cast.ToUint64(string(i)) }
 
+// RawMessage is a raw encoded JSON value.
+// It implements Marshaler and Unmarshaler and can
+// be used to delay JSON decoding or precompute a JSON encoding.
+type RawMessage []byte
+
+func (m RawMessage) String() string {
+	if len(m) > 0 && m[0] == '"' {
+		return string(m[1 : len(m)-1])
+	}
+
+	return string(m)
+}
+
+// MarshalJSON returns m as the JSON encoding of m.
+func (m RawMessage) MarshalJSON() ([]byte, error) {
+	if m == nil {
+		return []byte("null"), nil
+	}
+	return m, nil
+}
+
+// UnmarshalJSON sets *m to a copy of data.
+func (m *RawMessage) UnmarshalJSON(data []byte) error {
+	if m == nil {
+		return errors.New("json.RawMessage: UnmarshalJSON on nil pointer")
+	}
+	*m = append((*m)[0:0], data...)
+	return nil
+}
+
+var (
+	_ json.Marshaler   = (*RawMessage)(nil)
+	_ json.Unmarshaler = (*RawMessage)(nil)
+)
+
 // APIDataModel ...
 type APIDataModel struct {
-	ID          ID     `json:"id" form:"id"`
-	Endpoint    string `json:"endpoint" form:"endpoint"`
-	Method      string `json:"method" form:"method"`
-	MimeType    string `json:"mimeType"`
-	Filename    string `json:"filename"`
-	FileContent []byte `json:"-"`
-	Body        string `json:"body"`
+	ID          ID         `json:"id" form:"id"`
+	Endpoint    string     `json:"endpoint" form:"endpoint"`
+	Method      string     `json:"method" form:"method"`
+	MimeType    string     `json:"mimeType"`
+	Filename    string     `json:"filename"`
+	FileContent []byte     `json:"-"`
+	Body        RawMessage `json:"body"`
 
 	dynamicValuers []DynamicValue
 	ServeFn        gin.HandlerFunc `json:"-"`
@@ -329,9 +368,10 @@ func (a *APIDataModel) apiacl() {
 }
 
 func (a APIDataModel) createCasbin() (*casbin.Enforcer, *sariaf.Router, map[string]string) {
-	modelConf := util.UnquoteCover(a.Body, "###START_MODEL###", "###END_MODEL###")
-	policyConf := util.UnquoteCover(a.Body, "###START_POLICY###", "###END_POLICY###")
-	authConf := util.UnquoteCover(a.Body, "###START_AUTH###", "###END_AUTH###")
+	body := a.Body.String()
+	modelConf := util.UnquoteCover(body, "###START_MODEL###", "###END_MODEL###")
+	policyConf := util.UnquoteCover(body, "###START_POLICY###", "###END_POLICY###")
+	authConf := util.UnquoteCover(body, "###START_AUTH###", "###END_AUTH###")
 
 	e, err := acl.NewCasbin(modelConf, policyConf)
 	if err != nil {

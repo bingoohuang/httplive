@@ -303,7 +303,7 @@ func CreateAPIDataModel(ep *process.Endpoint, query bool) *process.APIDataModel 
 		MimeType:    ep.MimeType,
 		Filename:    ep.Filename,
 		FileContent: ep.FileContent,
-		Body:        ep.Body,
+		Body:        process.RawMessage(ep.Body),
 	}
 
 	if query {
@@ -330,7 +330,7 @@ func CreateEndpoint(model process.APIDataModel, old *process.Endpoint) process.E
 	ep := process.Endpoint{
 		ID: model.ID.Int(), Endpoint: model.Endpoint, Methods: model.Method, MimeType: model.MimeType,
 		Filename: model.Filename, FileContent: model.FileContent,
-		Body: model.Body, CreateTime: now, UpdateTime: now, DeletedAt: "",
+		Body: model.Body.String(), CreateTime: now, UpdateTime: now, DeletedAt: "",
 	}
 	if old != nil {
 		if old.Body != "" && ep.Body == "" {
@@ -409,7 +409,7 @@ func serveAPI(w http.ResponseWriter, r *http.Request) (v process.RouterResult) {
 // JoinContextPath joins the context path to elem.
 func JoinContextPath(elem string, p *process.APIDataModel) string {
 	if p != nil {
-		if h := jj.Get(p.Body, "_hl"); h.String() == process.HlServerStatic {
+		if h := jj.Get(p.Body.String(), "_hl"); h.String() == process.HlServerStatic {
 			if prefix, hasParams := process.ParsePathParams(p); !hasParams {
 				elem = path.Join(prefix, "/*file")
 			}
