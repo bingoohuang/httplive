@@ -41,8 +41,10 @@ type ID string
 
 // UnmarshalJSON unmarshals JSON from integer or string.
 func (i *ID) UnmarshalJSON(b []byte) error {
-	if len(b) > 2 {
+	if len(b) > 2 && b[0] == '"' && b[len(b)-1] == '"' {
 		*i = ID(b[1 : len(b)-1])
+	} else {
+		*i = ID(b)
 	}
 	return nil
 }

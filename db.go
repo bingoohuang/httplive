@@ -27,6 +27,7 @@ import (
 	"github.com/bingoohuang/httplive/internal/process"
 	"github.com/bingoohuang/httplive/pkg/countable"
 	"github.com/bingoohuang/httplive/pkg/http2curl"
+	"github.com/bingoohuang/httplive/pkg/timeago"
 	"github.com/bingoohuang/httplive/pkg/util"
 	"github.com/bingoohuang/jj"
 	"github.com/gin-gonic/gin"
@@ -190,11 +191,7 @@ func asset(name string) string {
 }
 
 func timeToString(t time.Time, format ...string) string {
-	f := "2006-01-02 15:04:05"
-	if len(format) > 0 && format[0] != "" {
-		f = format[0]
-	}
-	return t.Format(f)
+	return timeago.Format(time.Now(), t, false)
 }
 
 var dbLock sync.Mutex

@@ -97,7 +97,7 @@ func (ep *Endpoint) CreateDefault(m *APIDataModel, body string, _ func(name stri
 
 	model := *m
 
-	body, authBean := ParseAuth(ep.Body)
+	body, authBean := ParseAuth(body)
 	body, _ = jj.Delete(body, "_hl")
 	body, _ = jj.Delete(body, "_dynamic")
 
@@ -154,13 +154,13 @@ func (ep *Endpoint) CreateHlHandlers(m *APIDataModel, body string, asset func(na
 func (ep *Endpoint) CreateHlHandler(m *APIDataModel, body string, asset func(name string) string, v HlHandlerCreator) bool {
 	b := v()
 	if err := json.Unmarshal([]byte(body), b); err != nil {
-		return true
+		return false
 	}
 	if bb, ok := b.(AfterUnmashaler); ok {
 		bb.AfterUnmashal()
 	}
 
-	_, authBean := ParseAuth(ep.Body)
+	_, authBean := ParseAuth(body)
 
 	m.ServeFn = func(ctx *gin.Context) {
 		if !authBean.AuthRequest(ctx) {
