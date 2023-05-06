@@ -16,13 +16,13 @@ type Valuer func(reqBody []byte, c *gin.Context) interface{}
 
 // DynamicValue works for dynamic processing.
 type DynamicValue struct {
-	Condition string            `json:"condition"`
-	Response  json.RawMessage   `json:"response"`
-	Status    int               `json:"status"`
-	Headers   map[string]string `json:"headers"`
+	Headers map[string]string `json:"headers"`
 
 	Expr                *vm.Program
 	ParametersEvaluator map[string]Valuer
+	Condition           string          `json:"condition"`
+	Response            json.RawMessage `json:"response"`
+	Status              int             `json:"status"`
 }
 
 func (v DynamicValue) responseDynamic(ep APIDataModel, c *gin.Context) {

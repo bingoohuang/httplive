@@ -1,6 +1,7 @@
 package process
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -19,18 +20,19 @@ import (
 	"github.com/bingoohuang/httplive/pkg/util"
 	"github.com/bingoohuang/jj"
 	"github.com/gin-gonic/gin"
+	"github.com/hjson/hjson-go/v4"
 	"github.com/mssola/user_agent"
 )
 
 // RouterResult result for router
 type RouterResult struct {
-	RouterServed   bool
-	RouterBody     []byte
-	Filename       string
 	ResponseHeader map[string]string
+	Filename       string
+	RemoteAddr     string
+	RouterBody     []byte
 	ResponseStatus int
 	ResponseSize   int
-	RemoteAddr     string
+	RouterServed   bool
 }
 
 func (ep Endpoint) CreateProxy(m *APIDataModel, body string, _ func(name string) string) bool {
@@ -110,10 +112,33 @@ func (ep *Endpoint) CreateDefault(m *APIDataModel, body string, _ func(name stri
 			return
 		}
 
-		util.GinData(c, []byte(Eval(ep.Endpoint, body)))
+		b := convertHJSONToJSON([]byte(body))
+		util.GinData(c, []byte(Eval(ep.Endpoint, b)))
 	}
 
 	return true
+}
+
+func convertHJSONToJSON(data []byte) string {
+	var node *hjson.Node
+	if err := hjson.Unmarshal(data, &node); err != nil {
+		return string(data)
+	}
+	out, err := json.Marshal(node)
+	if err != nil {
+		return string(data)
+	}
+
+	return string(fixJSON(out))
+}
+
+func fixJSON(data []byte) []byte {
+	data = bytes.Replace(data, []byte("\\u003c"), []byte("<"), -1)
+	data = bytes.Replace(data, []byte("\\u003e"), []byte(">"), -1)
+	data = bytes.Replace(data, []byte("\\u0026"), []byte("&"), -1)
+	data = bytes.Replace(data, []byte("\\u0008"), []byte("\\b"), -1)
+	data = bytes.Replace(data, []byte("\\u000c"), []byte("\\f"), -1)
+	return data
 }
 
 type HlHandler interface {
@@ -301,6 +326,7 @@ type visitor struct {
 }
 
 func (v *visitor) Enter(_ *ast.Node) {}
+func (v *visitor) Visit(*ast.Node)   {}
 func (v *visitor) Exit(node *ast.Node) {
 	if n, ok := (*node).(*ast.IdentifierNode); ok {
 		v.identifiers = append(v.identifiers, n.Value)

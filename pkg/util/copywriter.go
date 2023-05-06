@@ -10,8 +10,8 @@ import (
 
 type GinCopyWriter struct {
 	gin.ResponseWriter
-	Buf bytes.Buffer
 	c   *gin.Context
+	Buf bytes.Buffer
 }
 
 // NewGinCopyWriter creates a new GinCopyWriter.

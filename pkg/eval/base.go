@@ -19,10 +19,10 @@ const (
 )
 
 type EvaluatorResult struct {
-	Mode EvaluatorMode
-	Key  string
 	Val  interface{}
 	Err  error
+	Key  string
+	Mode EvaluatorMode
 }
 
 type EvaluatorFn func() EvaluatorResult

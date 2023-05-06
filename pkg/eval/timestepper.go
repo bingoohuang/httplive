@@ -23,9 +23,9 @@ type Stepper interface {
 type TimeStepper struct {
 	start, end time.Time
 	current    time.Time
+	fill       interface{}
 	fmt        string
 	step       time.Duration
-	fill       interface{}
 }
 
 func (s *TimeStepper) Reset() {

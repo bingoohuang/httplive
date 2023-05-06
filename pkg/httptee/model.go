@@ -9,14 +9,14 @@ import (
 
 // Handler contains the address of the main PrimaryTarget and the one for the Host target
 type Handler struct {
-	Alternatives []Backend
 	workers      Pool
+	Alternatives []Backend
 }
 
 // Backend represents the backend server.
 type Backend struct {
-	Host string
 	Addr *url.URL
+	Host string
 }
 
 // AlternativeReq represents the alternative request.

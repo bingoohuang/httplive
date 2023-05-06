@@ -60,10 +60,10 @@ func (d *Dao) ListEndpoints() (result []process.Endpoint) {
 }
 
 // FindEndpoint finds endpoint with specified ID.
-func (d *Dao) FindEndpoint(ID uint64) *process.Endpoint {
+func (d *Dao) FindEndpoint(id uint64) *process.Endpoint {
 	result := &process.Endpoint{}
-	err := d.db.One("ID", ID, result)
-	if err == storm.ErrNotFound {
+	err := d.db.One("ID", id, result)
+	if errors.Is(err, storm.ErrNotFound) {
 		return nil
 	}
 	if err != nil {
@@ -76,7 +76,7 @@ func (d *Dao) FindEndpoint(ID uint64) *process.Endpoint {
 func (d *Dao) FindByEndpoint(endpoint string) *process.Endpoint {
 	result := &process.Endpoint{}
 	err := d.db.One("Endpoint", endpoint, result)
-	if err == storm.ErrNotFound {
+	if errors.Is(err, storm.ErrNotFound) {
 		return nil
 	}
 	if err != nil {

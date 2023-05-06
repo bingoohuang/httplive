@@ -112,6 +112,7 @@ type visitor struct {
 }
 
 func (v *visitor) Enter(_ *ast.Node) {}
+func (v *visitor) Visit(*ast.Node)   {}
 func (v *visitor) Exit(node *ast.Node) {
 	if n, ok := (*node).(*ast.IdentifierNode); ok {
 		v.identifiers = append(v.identifiers, n.Value)

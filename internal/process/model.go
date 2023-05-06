@@ -64,7 +64,7 @@ func ParseJSON(m string) string {
 		}
 	}
 
-	return (m)
+	return m
 }
 
 // MarshalJSON returns m as the JSON encoding of m.
@@ -91,46 +91,46 @@ var (
 
 // APIDataModel ...
 type APIDataModel struct {
-	ID          ID         `json:"id" form:"id"`
-	Endpoint    string     `json:"endpoint" form:"endpoint"`
-	Method      string     `json:"method" form:"method"`
-	MimeType    string     `json:"mimeType"`
-	Filename    string     `json:"filename"`
-	FileContent []byte     `json:"-"`
-	Body        RawMessage `json:"body"`
+	ServeFn     gin.HandlerFunc `json:"-"`
+	ID          ID              `json:"id" form:"id"`
+	Endpoint    string          `json:"endpoint" form:"endpoint"`
+	Method      string          `json:"method" form:"method"`
+	MimeType    string          `json:"mimeType"`
+	Filename    string          `json:"filename"`
+	FileContent []byte          `json:"-"`
+	Body        RawMessage      `json:"body"`
 
 	dynamicValuers []DynamicValue
-	ServeFn        gin.HandlerFunc `json:"-"`
 }
 
 // WsMessage ...
 type WsMessage struct {
-	Time           string            `json:"time"`
-	Host           string            `json:"host"`
 	Body           interface{}       `json:"body"`
 	Response       interface{}       `json:"response"`
-	ResponseStatus int               `json:"status"`
 	ResponseHeader map[string]string `json:"responseHeader"`
-	ResponseSize   int               `json:"responseSize"`
 	Header         map[string]string `json:"header"`
+	Query          map[string]string `json:"query"`
+	Time           string            `json:"time"`
+	Host           string            `json:"host"`
 	Method         string            `json:"method"`
 	Path           string            `json:"path"`
-	Query          map[string]string `json:"query"`
 	RemoteAddr     string            `json:"remoteAddr"`
+	ResponseStatus int               `json:"status"`
+	ResponseSize   int               `json:"responseSize"`
 }
 
 // Endpoint is the structure for table httplive_endpoint.
 type Endpoint struct {
-	ID          uint64 `name:"id" storm:"id,increment"`
 	Endpoint    string `name:"endpoint" storm:"unique"`
 	Methods     string `name:"methods"`
 	MimeType    string `name:"mime_type"`
 	Filename    string `name:"filename"`
 	Body        string `name:"body"`
-	FileContent []byte `name:"file_content"`
 	CreateTime  string `name:"create_time"`
 	UpdateTime  string `name:"update_time"`
 	DeletedAt   string `name:"deleted_at"`
+	FileContent []byte `name:"file_content"`
+	ID          uint64 `name:"id" storm:"id,increment"`
 }
 
 func (a APIDataModel) HandleFileDownload(c *gin.Context) {
@@ -144,8 +144,7 @@ func (a APIDataModel) HandleFileDownload(c *gin.Context) {
 	c.Status(http.StatusOK)
 
 	hl := c.Query("_hl")
-	switch hl {
-	case "conf":
+	if hl == "conf" {
 		c.JSON(http.StatusOK, a)
 		return
 	}
@@ -169,12 +168,12 @@ func (a APIDataModel) HandleFileDownload(c *gin.Context) {
 
 // JsTreeDataModel ...
 type JsTreeDataModel struct {
-	ID        int               `json:"id"`
 	Key       string            `json:"key"`
 	OriginKey string            `json:"originKey"`
 	Text      string            `json:"text"`
 	Type      string            `json:"type"`
 	Children  []JsTreeDataModel `json:"children"`
+	ID        int               `json:"id"`
 }
 
 func (a APIDataModel) getLabelByMethod() string {
@@ -335,7 +334,8 @@ func (a *APIDataModel) adminacl() {
 			return AuthResultFailed, ""
 		}
 
-		return AuthResultOK, user[:strings.Index(user, ":")]
+		p := strings.Index(user, ":")
+		return AuthResultOK, user[:p]
 	}
 }
 
@@ -367,7 +367,8 @@ func (a *APIDataModel) apiacl() {
 			return AuthResultFailed, ""
 		}
 
-		return AuthResultOK, user[:strings.Index(user, ":")]
+		p := strings.Index(user, ":")
+		return AuthResultOK, user[:p]
 	}
 }
 

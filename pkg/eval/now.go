@@ -24,10 +24,8 @@ func (d NowEvaluator) Eval(ctx *Context, key, param string) EvaluatorResult {
 		jp = jj.Parse(evalParam)
 		dateFmt = JSONStrOr(jp, "fmt", dateFmt)
 		offset, _ = timex.ParseDuration(JSONStrOr(jp, "offset", "0"))
-	} else {
-		if len(param) > 0 {
-			dateFmt = param[1:]
-		}
+	} else if len(param) > 0 {
+		dateFmt = param[1:]
 	}
 	dateFmt = dateReplacer.Replace(dateFmt)
 

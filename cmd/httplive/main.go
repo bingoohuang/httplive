@@ -155,13 +155,15 @@ func serve(r *gin.Engine, seq int, port string, env *process.EnvVars, certFiles 
 	}
 
 	var err error
-	if onlyTLS {
+	switch {
+
+	case onlyTLS:
 		log.Printf("Listening on %s for https", port)
 		err = r.RunTLS(":"+port, certFiles.Cert, certFiles.Key)
-	} else if onlyHTTP {
+	case onlyHTTP:
 		log.Printf("Listening on %s for http", port)
 		err = r.Run(":" + port)
-	} else {
+	default:
 		log.Printf("Listening on %s for http and https", port)
 		l, err := fproxy.CreateTLSListener(":"+port, certFiles.Cert, certFiles.Key)
 		if err != nil {

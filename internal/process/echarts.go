@@ -24,8 +24,8 @@ type EchartConfig struct {
 		Name     string `json:"name"`
 		X        string `json:"x"`
 		Y        string `json:"y"`
-		Selected bool   `json:"selected"`
 		Tooltip  string `json:"tooltip"`
+		Selected bool   `json:"selected"`
 	} `json:"series"`
 	CsvData      []string        `json:"csvData"`
 	DataRows     json.RawMessage `json:"dataRows"`

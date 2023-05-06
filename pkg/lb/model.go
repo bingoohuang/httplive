@@ -14,10 +14,10 @@ type BackendPool struct {
 
 // Backend holds the data about a server
 type Backend struct {
-	alive bool
+	Addr  *url.URL
 	Host  string // ip:port
 	mux   sync.RWMutex
-	Addr  *url.URL
+	alive bool
 }
 
 // SetAlive for this backend

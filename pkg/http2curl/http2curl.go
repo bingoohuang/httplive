@@ -27,9 +27,9 @@ type nopCloser struct{ io.Reader }
 
 func (nopCloser) Close() error { return nil }
 
-func bashEscape(s string) string { return `'` + strings.Replace(s, `'`, `'\''`, -1) + `'` }
+func bashEscape(s string) string { return `'` + strings.ReplaceAll(s, `'`, `'\''`) + `'` }
 
-// GetCurlCmd returns a CurlCmd corresponding to an http.Request
+// GetCurlCmd returns a CurlCmd corresponding to a http.Request
 func GetCurlCmd(r *http.Request) (*CurlCmd, error) {
 	c := &CurlCmd{}
 	c.append("curl -X " + r.Method)

@@ -138,8 +138,8 @@ func moreInfo() map[string]interface{} {
 
 // Info ...
 type Info struct {
-	Code int `json:"code"`
 	Data IP  `json:"data"`
+	Code int `json:"code"`
 }
 
 // IP ...

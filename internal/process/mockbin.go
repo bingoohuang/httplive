@@ -26,12 +26,12 @@ func init() {
 type MockbinCookie struct {
 	Name     string `json:"name"`
 	Value    string `json:"value"`
-	MaxAge   int    `json:"maxAge"`
 	Path     string `json:"path"`
 	Domain   string `json:"domain"`
+	SameSite string `json:"sameSite"`
+	MaxAge   int    `json:"maxAge"`
 	Secure   bool   `json:"secure"`
 	HTTPOnly bool   `json:"httpOnly"`
-	SameSite string `json:"sameSite"`
 }
 
 func (v MockbinCookie) SetCookie(c *gin.Context) {
@@ -54,16 +54,16 @@ func parseSameSite(sameSite string) http.SameSite {
 
 // Mockbin defines the mockbin struct.
 type Mockbin struct {
-	Status      int               `json:"status"`
+	Headers     map[string]string `json:"headers"`
 	Method      string            `json:"method"`
 	RedirectURL string            `json:"redirectURL"`
-	Headers     map[string]string `json:"headers"`
-	Cookies     []MockbinCookie   `json:"cookies"`
-	Close       bool              `json:"close"`
 	ContentType string            `json:"contentType"`
-	Payload     json.RawMessage   `json:"payload"`
 	PayloadFile string            `json:"payloadFile"`
 	Sleep       string            `json:"sleep"`
+	Cookies     []MockbinCookie   `json:"cookies"`
+	Payload     json.RawMessage   `json:"payload"`
+	Status      int               `json:"status"`
+	Close       bool              `json:"close"`
 }
 
 func (m Mockbin) Redirect(c *gin.Context) {

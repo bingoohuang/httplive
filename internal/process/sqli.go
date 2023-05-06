@@ -2,6 +2,7 @@ package process
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -22,12 +23,12 @@ func init() {
 }
 
 type Sqli struct {
-	Scripts        []string `json:"scripts"`
-	Query          string   `json:"query"`
-	DriverName     string   `json:"driverName"`
-	DataSourceName string   `json:"dataSourceName"`
+	db             *sql.DB
+	Query          string `json:"query"`
+	DriverName     string `json:"driverName"`
+	DataSourceName string `json:"dataSourceName"`
 
-	db *sql.DB
+	Scripts []string `json:"scripts"`
 }
 
 func (s Sqli) HlHandle(c *gin.Context, apiModel *APIDataModel, asset func(name string) string) error {
@@ -49,7 +50,7 @@ func (s Sqli) HlHandle(c *gin.Context, apiModel *APIDataModel, asset func(name s
 	}))
 
 	result, err := sqx.NewSQL(query).QueryAsMaps(s.db)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		c.JSON(200, err.Error())
 	} else {
 		c.JSON(200, result)

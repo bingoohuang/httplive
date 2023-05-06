@@ -3,6 +3,7 @@ package process
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"html"
 	"io"
@@ -22,15 +23,15 @@ import (
 // code from https://github.com/m3ng9i/ran/blob/master/server/dirlist.go
 
 type File struct {
-	weight    int
-	Seq       int
+	ModTime   time.Time
 	Name      string
 	Url       string
-	Size      int64
 	DirFiles  string
 	HumanSize string
-	ModTime   time.Time
 	Md5sum    string
+	weight    int
+	Seq       int
+	Size      int64
 }
 
 type DirList struct {
@@ -60,7 +61,7 @@ func ListDir(dir, rawQuery string, max int) (*DirList, error) {
 
 	info, err := f.Readdir(max)
 	if err != nil {
-		if err == io.EOF { // blank directory
+		if errors.Is(err, io.EOF) { // blank directory
 			return &DirList{}, nil
 		}
 		return nil, err

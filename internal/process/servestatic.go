@@ -43,24 +43,27 @@ func (a *AllowMethods) AllowMethods(method string) bool {
 }
 
 type ServeStatic struct {
-	Root  string `json:"root"`
-	Dir   string `json:"dir"` // (empty) / list / grid
-	Index string `json:"index"`
+	UploadRateLimit string `json:"uploadRateLimit"` // rate limit per second for uploading, empty for no limit
+	Root            string `json:"root"`
+	Index           string `json:"index"`
 
 	DownloadRateLimit string `json:"downloadRateLimit"` // rate limit per second for downloading, empty for no limit
 
-	Upload          bool   `json:"upload"`          // allow upload or not
-	UploadMaxSize   string `json:"uploadMaxSize"`   // max size like 10M to allow uploading, empty for no limit
-	UploadRateLimit string `json:"uploadRateLimit"` // rate limit per second for uploading, empty for no limit
 	UploadMaxMemory string `json:"uploadMaxMemory"` // max memory usage for uploading, default 16MiB
+
+	UploadMaxSize string `json:"uploadMaxSize"` // max size like 10M to allow uploading, empty for no limit
+	Dir           string `json:"dir"`           // (empty) / list / grid
 
 	AllowMethods `json:"allowMethods"`
 
-	dirFirst          bool
 	downloadRateLimit uint64
 	uploadMaxSize     uint64
 	uploadRateLimit   uint64
 	uploadMaxMemory   uint64
+
+	dirFirst bool
+
+	Upload bool `json:"upload"` // allow upload or not
 }
 
 func (s *ServeStatic) AfterUnmashal() {
@@ -143,7 +146,7 @@ func (s *ServeStatic) serveUpload(c *gin.Context, apiModel *APIDataModel, rootSt
 	start := time.Now()
 
 	if err := r.ParseMultipartForm(int64(s.uploadMaxMemory)); err != nil {
-		if err != http.ErrNotMultipart {
+		if !errors.Is(err, http.ErrNotMultipart) {
 			return err
 		}
 	}
@@ -199,14 +202,14 @@ func (s *limitResponseWriter) Write(p []byte) (int, error) {
 
 // UploadResult is the structure of download result.
 type UploadResult struct {
-	Files         []string
-	FileSizes     []string
 	TotalSize     string
 	Cost          string
 	Start         string
 	End           string
 	MaxTempMemory string
 	LimitSize     string
+	Files         []string
+	FileSizes     []string
 }
 
 func (s *ServeStatic) saveFormFile(c *gin.Context, apiModel *APIDataModel, fh *multipart.FileHeader) (string, int64, error) {
@@ -355,8 +358,8 @@ func (s ServeStatic) tryIndexHtml(c *gin.Context) {
 }
 
 type DirListTemplateData struct {
-	ServeStatic
 	*DirList
+	ServeStatic
 }
 
 func (s ServeStatic) listPage(c *gin.Context, dir string) error {

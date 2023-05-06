@@ -20,9 +20,9 @@ var (
 
 type Options struct {
 	ExcludedExtensions ExcludedExtensions
+	DecompressFn       func(c *gin.Context)
 	ExcludedPaths      ExcludedPaths
 	ExcludedPathRegexs ExcludedPathRegexs
-	DecompressFn       func(c *gin.Context)
 }
 
 type Option func(*Options)

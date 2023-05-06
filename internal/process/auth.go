@@ -36,11 +36,12 @@ func (k *ApiKey) Auth(c *gin.Context) bool {
 	}
 
 	var val string
-	if k.Header {
+	switch {
+	case k.Header:
 		val = c.GetHeader(http.CanonicalHeaderKey(k.Key))
-	} else if k.QueryParams {
+	case k.QueryParams:
 		val = c.Query(k.Key)
-	} else {
+	default:
 		val = c.GetHeader(http.CanonicalHeaderKey(k.Key))
 		if val == "" {
 			val = c.Query(k.Key)
@@ -79,9 +80,9 @@ type AuthorizationWrap struct {
 }
 
 type Authorization struct {
+	ApiKey      *ApiKey `json:"apiKey,omitempty"`
 	BasicAuth   string  `json:"basicAuth,omitempty"`   // Authorization: Basic base64encode(username+":"+password)
 	BearerToken string  `json:"bearerToken,omitempty"` // Authorization: Bearer <token>
-	ApiKey      *ApiKey `json:"apiKey,omitempty"`
 }
 
 func (a *Authorization) AuthRequest(c *gin.Context) bool {
