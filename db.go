@@ -190,7 +190,7 @@ func asset(name string) string {
 	return string(data)
 }
 
-func timeToString(t time.Time, format ...string) string {
+func timeToString(t time.Time, _ ...string) string {
 	return timeago.Format(time.Now(), t, false)
 }
 

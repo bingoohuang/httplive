@@ -133,11 +133,11 @@ func convertHJSONToJSON(data []byte) string {
 }
 
 func fixJSON(data []byte) []byte {
-	data = bytes.Replace(data, []byte("\\u003c"), []byte("<"), -1)
-	data = bytes.Replace(data, []byte("\\u003e"), []byte(">"), -1)
-	data = bytes.Replace(data, []byte("\\u0026"), []byte("&"), -1)
-	data = bytes.Replace(data, []byte("\\u0008"), []byte("\\b"), -1)
-	data = bytes.Replace(data, []byte("\\u000c"), []byte("\\f"), -1)
+	data = bytes.ReplaceAll(data, []byte("\\u003c"), []byte("<"))
+	data = bytes.ReplaceAll(data, []byte("\\u003e"), []byte(">"))
+	data = bytes.ReplaceAll(data, []byte("\\u0026"), []byte("&"))
+	data = bytes.ReplaceAll(data, []byte("\\u0008"), []byte("\\b"))
+	data = bytes.ReplaceAll(data, []byte("\\u000c"), []byte("\\f"))
 	return data
 }
 
