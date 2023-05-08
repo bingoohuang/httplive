@@ -21,3 +21,4 @@ vendor
 /httplive.bolt
 .cert
 .vscode
+var/pid
