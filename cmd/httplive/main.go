@@ -1,12 +1,16 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"path"
 	"strings"
+	"sync"
 
 	"github.com/bingoohuang/fproxy"
 	"github.com/bingoohuang/gg/pkg/ctl"
@@ -134,45 +138,53 @@ func host(env *process.EnvVars) {
 		}
 	}
 
+	var wg sync.WaitGroup
 	for i, p := range portsArr {
-		go serve(r, i, p, env, certFiles)
+		wg.Add(1)
+		go func(seq int, port string) {
+			defer wg.Done()
+			serve(r, seq, port, env, certFiles)
+		}(i, p)
 	}
 
-	select {}
+	wg.Wait()
+}
+
+func TrimSuffix(s, suffix string) (string, bool) {
+	if strings.HasSuffix(s, suffix) {
+		return strings.TrimSuffix(s, suffix), true
+	}
+
+	return s, false
 }
 
 func serve(r *gin.Engine, seq int, port string, env *process.EnvVars, certFiles *netx.CertFiles) {
-	onlyHTTP := strings.HasSuffix(port, ":http")
-	if onlyHTTP {
-		port = strings.TrimSuffix(port, ":http")
-	}
-	onlyTLS := strings.HasSuffix(port, ":https")
-	if onlyTLS {
-		port = strings.TrimSuffix(port, ":https")
-	}
+	port, onlyHTTP := TrimSuffix(port, ":http")
+	port, onlyTLS := TrimSuffix(port, ":https")
+
 	if seq == 0 {
 		go util.OpenExplorer(onlyTLS, ss.ParseInt(port), env.ContextPath)
 	}
 
 	var err error
-	switch {
-
-	case onlyTLS:
-		log.Printf("Listening on %s for https", port)
-		err = r.RunTLS(":"+port, certFiles.Cert, certFiles.Key)
-	case onlyHTTP:
-		log.Printf("Listening on %s for http", port)
-		err = r.Run(":" + port)
-	default:
-		log.Printf("Listening on %s for http and https", port)
-		l, err := fproxy.CreateTLSListener(":"+port, certFiles.Cert, certFiles.Key)
-		if err != nil {
-			log.Panicf("run on port %s failed: %v", port, err)
+	for err == nil || errors.Is(err, io.EOF) {
+		switch {
+		case onlyTLS:
+			log.Printf("Listening on %s for https", port)
+			err = r.RunTLS(":"+port, certFiles.Cert, certFiles.Key)
+		case onlyHTTP:
+			log.Printf("Listening on %s for http", port)
+			err = r.Run(":" + port)
+		default:
+			log.Printf("Listening on %s for http and https", port)
+			var l net.Listener
+			l, err = fproxy.CreateTLSListener(":"+port, certFiles.Cert, certFiles.Key)
+			if err == nil {
+				err = r.RunListener(l)
+			}
 		}
-		err = r.RunListener(l)
-	}
-	if err != nil {
-		log.Panicf("run on port %s failed: %v", port, err)
+
+		log.Printf("listening on port %s: %v", port, err)
 	}
 }
 
