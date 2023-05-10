@@ -12,6 +12,7 @@ import (
 	"github.com/bingoohuang/gg/pkg/ctl"
 	"github.com/bingoohuang/gg/pkg/fla9"
 	"github.com/bingoohuang/gg/pkg/netx"
+	"github.com/bingoohuang/gg/pkg/osx/env"
 	"github.com/bingoohuang/gg/pkg/sigx"
 	"github.com/bingoohuang/gg/pkg/ss"
 	"github.com/bingoohuang/godaemon"
@@ -28,15 +29,14 @@ import (
 
 func main() {
 	gin.SetMode(gin.ReleaseMode)
-	env := &httplive.Envs
+	conf := &httplive.Envs
 
 	f := fla9.NewFlagSet(os.Args[0]+" (HTTP Request & Response Service, Mock HTTP)", fla9.ExitOnError)
-	f.StringVar(&env.BasicAuth, "basic,b", "", "basic auth, format user:pass")
-	f.StringVar(&env.Ports, "port,p", "5003", "Hosting ports, eg. 5003,5004:https")
-	f.StringVar(&env.DBFullPath, "dbpath,c", "", "Full path of the httplive.bolt")
-	f.StringVar(&env.ContextPath, "context", "", "Context path of httplive http service")
-	f.StringVar(&env.CaRoot, "ca", ".cert", "Cert root path of localhost.key and localhost.pem")
-	f.BoolVar(&env.Logging, "log,l", false, "Enable golog logging")
+	f.StringVar(&conf.BasicAuth, "basic,b", "", "basic auth, format user:pass")
+	f.StringVar(&conf.Ports, "port,p", "5003", "Hosting ports, eg. 5003,5004:https")
+	f.StringVar(&conf.DBFullPath, "dbpath,c", "", "Full path of the httplive.bolt")
+	f.StringVar(&conf.ContextPath, "context", "", "Context path of httplive http service")
+	f.StringVar(&conf.CaRoot, "ca", ".cert", "Cert root path of localhost.key and localhost.pem")
 	pInit := f.Bool("init", false, "Create initial ctl and exit")
 	pDaemon := f.Bool("daemon,d", false, "Daemonize")
 	pVersion := f.Bool("version,v", false, "Create initial ctl and exit")
@@ -45,7 +45,7 @@ func main() {
 
 	godaemon.Daemonize(*pDaemon)
 
-	if env.Logging {
+	if env.Bool("GOLOG", true) {
 		golog.Setup(golog.Spec("stdout"))
 	} else {
 		golog.DisableLogging()
@@ -58,7 +58,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	host(env)
+	host(conf)
 }
 
 func mkdirCerts(env *process.EnvVars) *netx.CertFiles {

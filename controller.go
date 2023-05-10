@@ -1,3 +1,4 @@
+// Package httplive used as a JSON http mock server.
 package httplive
 
 import (
