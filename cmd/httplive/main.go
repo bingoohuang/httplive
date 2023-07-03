@@ -35,7 +35,7 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 	conf := &httplive.Envs
 
-	f := fla9.NewFlagSet(os.Args[0]+" (HTTP Request & Response Service, Mock HTTP)", fla9.ExitOnError)
+	f := fla9.NewFlagSet(os.Args[0]+" (HTTP Request & Response Service, Mock HTTP, env: GOLOG=0 )", fla9.ExitOnError)
 	f.StringVar(&conf.BasicAuth, "basic,b", "", "basic auth, format user:pass")
 	f.StringVar(&conf.Ports, "port,p", "5003", "Hosting ports, eg. 5003,5004:https")
 	f.StringVar(&conf.DBFullPath, "dbpath,c", "", "Full path of the httplive.bolt")
@@ -50,7 +50,7 @@ func main() {
 	godaemon.Daemonize(*pDaemon)
 
 	if env.Bool("GOLOG", true) {
-		golog.Setup(golog.Spec("stdout"))
+		golog.Setup()
 	} else {
 		golog.DisableLogging()
 	}

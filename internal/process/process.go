@@ -86,7 +86,11 @@ func (ep *Endpoint) CreateDirect(m *APIDataModel, body string, _ func(name strin
 			return
 		}
 
-		util.GinData(c, []byte(eval.JjGen(direct.String())))
+		dat, err := eval.JjGen(direct.String())
+		if err != nil {
+			log.Printf("E! JjGen %s: %v", ep.Endpoint, err)
+		}
+		util.GinData(c, []byte(dat))
 	}
 	return true
 }
@@ -113,7 +117,11 @@ func (ep *Endpoint) CreateDefault(m *APIDataModel, body string, _ func(name stri
 		}
 
 		b := convertHJSONToJSON([]byte(body))
-		util.GinData(c, []byte(Eval(ep.Endpoint, b)))
+		dat, err := Eval(ep.Endpoint, b)
+		if err != nil {
+			log.Printf("E! eval %s: %v", ep.Endpoint, err)
+		}
+		util.GinData(c, []byte(dat))
 	}
 
 	return true

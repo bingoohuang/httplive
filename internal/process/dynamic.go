@@ -40,15 +40,19 @@ func (v DynamicValue) responseDynamic(ep APIDataModel, c *gin.Context) {
 		}
 	}
 
-	payload := []byte(Eval(ep.Endpoint, string(v.Response)))
-	if contentType == "" {
-		contentType = util.DetectContentType(payload)
+	payload, err := Eval(ep.Endpoint, string(v.Response))
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	c.Data(statusCode, contentType, payload)
+	if contentType == "" {
+		contentType = util.DetectContentType([]byte(payload))
+	}
+
+	c.Data(statusCode, contentType, []byte(payload))
 }
 
-func Eval(endpoint string, body string) string {
+func Eval(endpoint string, body string) (string, error) {
 	return eval.JjGen(eval.Execute(endpoint, body))
 }
 

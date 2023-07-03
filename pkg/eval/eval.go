@@ -13,12 +13,12 @@ import (
 // purges expired items every 10 minutes
 var evalCache = cache.New(5*time.Minute, 10*time.Minute)
 
-func JjGen(v string) string {
+func JjGen(v string) (string, error) {
 	if jj.Valid(v) {
 		return jj.Gen(v)
 	}
 
-	return v
+	return v, nil
 }
 
 func Execute(endpoint string, body string) string {

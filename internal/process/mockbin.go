@@ -35,7 +35,7 @@ type MockbinCookie struct {
 }
 
 func (v MockbinCookie) SetCookie(c *gin.Context) {
-	c.SetSameSite(parseSameSite(v.SameSite)) // must called before c.SetCookie()
+	c.SetSameSite(parseSameSite(v.SameSite)) // must call before c.SetCookie()
 	c.SetCookie(v.Name, v.Value, v.MaxAge, v.Path, v.Domain, v.Secure, v.HTTPOnly)
 }
 
@@ -131,7 +131,11 @@ func (m Mockbin) HlHandle(c *gin.Context, _ *APIDataModel, _ func(name string) s
 
 	payload := string(m.Payload)
 	if jj.Valid(payload) {
-		payload = jj.Gen(payload)
+		var err error
+		payload, err = jj.Gen(payload)
+		if err != nil {
+			return err
+		}
 	}
 
 	c.Header("Content-Length", fmt.Sprintf("%d", len(payload)))
