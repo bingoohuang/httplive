@@ -19,7 +19,7 @@ import (
 	"github.com/bingoohuang/gg/pkg/osx/env"
 	"github.com/bingoohuang/gg/pkg/sigx"
 	"github.com/bingoohuang/gg/pkg/ss"
-	"github.com/bingoohuang/godaemon"
+	_ "github.com/bingoohuang/godaemon/autoload"
 	"github.com/bingoohuang/golog"
 	"github.com/bingoohuang/gor/giu"
 	"github.com/bingoohuang/httplive"
@@ -42,12 +42,9 @@ func main() {
 	f.StringVar(&conf.ContextPath, "context", "", "Context path of httplive http service")
 	f.StringVar(&conf.CaRoot, "ca", ".cert", "Cert root path of localhost.key and localhost.pem")
 	pInit := f.Bool("init", false, "Create initial ctl and exit")
-	pDaemon := f.Bool("daemon,d", false, "Daemonize")
 	pVersion := f.Bool("version,v", false, "Create initial ctl and exit")
 	_ = f.Parse(os.Args[1:])
 	ctl.Config{Initing: *pInit, PrintVersion: *pVersion}.ProcessInit()
-
-	godaemon.Daemonize(*pDaemon)
 
 	if env.Bool("GOLOG", true) {
 		golog.Setup()

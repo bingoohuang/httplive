@@ -202,6 +202,9 @@ func DBDo(f func(dao *Dao) error) error {
 	defer dbLock.Unlock()
 
 	db, err := storm.Open(Envs.DBFile)
+	if err != nil {
+		return fmt.Errorf("store open %q: %w", Envs.DBFile, err)
+	}
 	defer iox.Close(db)
 
 	dao, err := CreateDao(db)
