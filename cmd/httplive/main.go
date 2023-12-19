@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -8,9 +9,13 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
 	"path"
+	"path/filepath"
 	"strings"
 	"sync"
+	"syscall"
+	"time"
 
 	"github.com/bingoohuang/fproxy"
 	"github.com/bingoohuang/gg/pkg/ctl"
@@ -37,7 +42,7 @@ func main() {
 
 	f := fla9.NewFlagSet(os.Args[0]+" (HTTP Request & Response Service, Mock HTTP, env: GOLOG=0 )", fla9.ExitOnError)
 	f.StringVar(&conf.BasicAuth, "basic,b", "", "basic auth, format user:pass")
-	f.StringVar(&conf.Ports, "port,p", "5003", "Hosting ports, eg. 5003,5004:https")
+	f.StringVar(&conf.Ports, "port,p", "5003", "Hosting ports, eg. 5003,5004:https,unix:$TMPDIR/a.sock")
 	f.StringVar(&conf.DBFullPath, "dbpath,c", "", "Full path of the httplive.bolt")
 	f.StringVar(&conf.ContextPath, "context", "", "Context path of httplive http service")
 	f.StringVar(&conf.CaRoot, "ca", ".cert", "Cert root path of localhost.key and localhost.pem")
@@ -130,17 +135,33 @@ func host(env *process.EnvVars) {
 
 	portsArr := strings.Split(env.Ports, ",")
 	for _, p := range portsArr {
-		if !strings.HasSuffix(p, ":http") {
+		if strings.HasPrefix(p, "unix:") {
+		} else if !strings.HasSuffix(p, ":http") {
 			certFiles = mkdirCerts(env)
 		}
 	}
+
+	srv := &http.Server{Handler: r.Handler()}
+
+	// Cleanup the sockfile.
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := srv.Shutdown(ctx); err != nil {
+			log.Fatal("Server Shutdown:", err)
+		}
+		log.Println("Server exiting")
+	}()
 
 	var wg sync.WaitGroup
 	for i, p := range portsArr {
 		wg.Add(1)
 		go func(seq int, port string) {
 			defer wg.Done()
-			serve(r, seq, port, env, certFiles)
+			serve(srv, seq, port, env, certFiles)
 		}(i, p)
 	}
 
@@ -155,33 +176,54 @@ func TrimSuffix(s, suffix string) (string, bool) {
 	return s, false
 }
 
-func serve(r *gin.Engine, seq int, port string, env *process.EnvVars, certFiles *netx.CertFiles) {
+func serve(srv *http.Server, seq int, port string, env *process.EnvVars, certFiles *netx.CertFiles) {
 	port, onlyHTTP := TrimSuffix(port, ":http")
 	port, onlyTLS := TrimSuffix(port, ":https")
+	unixSocket := ""
+	if strings.HasPrefix(port, "unix:") {
+		unixSocket = filepath.Clean(port[len("unix:"):])
+	}
+	go func() {
+		if unixSocket != "" {
+			os.Remove(unixSocket)
+		}
+	}()
 
-	if seq == 0 {
+	if seq == 0 && unixSocket != "" {
 		go util.OpenExplorer(onlyTLS, ss.ParseInt(port), env.ContextPath)
 	}
 
+	var l net.Listener
 	var err error
 	for err == nil || errors.Is(err, io.EOF) {
 		switch {
+		case unixSocket != "":
+			// Create a Unix domain socket and listen for incoming connections.
+			l, err = net.Listen("unix", unixSocket)
+			if err != nil {
+				log.Panicln(err)
+			}
+			log.Printf("listen on socket: %s", unixSocket)
+			err = srv.Serve(l)
 		case onlyTLS:
 			log.Printf("Listening on %s for https", port)
-			err = r.RunTLS(":"+port, certFiles.Cert, certFiles.Key)
+			srv.Addr = ":" + port
+			err = srv.ListenAndServeTLS(certFiles.Cert, certFiles.Key)
 		case onlyHTTP:
 			log.Printf("Listening on %s for http", port)
-			err = r.Run(":" + port)
+			srv.Addr = ":" + port
+			err = srv.ListenAndServe()
 		default:
 			log.Printf("Listening on %s for http and https", port)
-			var l net.Listener
 			l, err = fproxy.CreateTLSListener(":"+port, certFiles.Cert, certFiles.Key)
 			if err == nil {
-				err = r.RunListener(l)
+				err = srv.Serve(l)
 			}
 		}
 
-		log.Printf("listening on port %s: %v", port, err)
+		if err != nil {
+			log.Printf("server %s error: %v", port, err)
+		}
 	}
 }
 
