@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/antonmedv/expr"
-	"github.com/antonmedv/expr/ast"
-	"github.com/antonmedv/expr/parser"
 	"github.com/bingoohuang/jj"
+	"github.com/expr-lang/expr"
+	"github.com/expr-lang/expr/ast"
+	"github.com/expr-lang/expr/parser"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )

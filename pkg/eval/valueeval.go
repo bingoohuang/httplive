@@ -3,7 +3,7 @@ package eval
 import (
 	"strings"
 
-	"github.com/antonmedv/expr"
+	"github.com/expr-lang/expr"
 )
 
 type ValEvalEvaluator struct{}

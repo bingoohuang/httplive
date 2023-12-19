@@ -17,7 +17,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/antonmedv/expr"
 	"github.com/bingoohuang/gg/pkg/cast"
 	"github.com/bingoohuang/gg/pkg/ss"
 	"github.com/bingoohuang/httplive/pkg/acl"
@@ -25,6 +24,7 @@ import (
 	"github.com/bingoohuang/httplive/pkg/util"
 	"github.com/bingoohuang/sariaf"
 	"github.com/casbin/casbin/v2"
+	"github.com/expr-lang/expr"
 	"github.com/gin-gonic/gin"
 	"github.com/mssola/user_agent"
 	"github.com/sirupsen/logrus"

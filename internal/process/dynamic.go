@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/antonmedv/expr/vm"
 	"github.com/bingoohuang/httplive/pkg/eval"
 	"github.com/bingoohuang/httplive/pkg/util"
 	"github.com/bingoohuang/jj"
+	"github.com/expr-lang/expr/vm"
 	"github.com/gin-gonic/gin"
 )
 
