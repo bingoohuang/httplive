@@ -32,6 +32,7 @@ import (
 	"github.com/bingoohuang/httplive/pkg/gzip"
 	"github.com/bingoohuang/httplive/pkg/util"
 	"github.com/gin-gonic/gin"
+	"github.com/gofrs/flock"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
@@ -183,49 +184,98 @@ func serve(srv *http.Server, seq int, port string, env *process.EnvVars, certFil
 	unixSocket := ""
 	if strings.HasPrefix(port, "unix:") {
 		unixSocket = filepath.Clean(port[len("unix:"):])
+	} else if strings.HasSuffix(port, ".sock") {
+		unixSocket = filepath.Clean(port)
 	}
-	go func() {
-		if unixSocket != "" {
-			os.Remove(unixSocket)
-		}
-	}()
 
-	if seq == 0 && unixSocket != "" {
+	if seq == 0 && unixSocket == "" {
 		go util.OpenExplorer(onlyTLS, ss.ParseInt(port), env.ContextPath)
 	}
 
-	var l net.Listener
 	var err error
 	for err == nil || errors.Is(err, io.EOF) {
-		switch {
-		case unixSocket != "":
-			// Create a Unix domain socket and listen for incoming connections.
-			l, err = net.Listen("unix", unixSocket)
-			if err != nil {
-				log.Panicln(err)
-			}
-			log.Printf("listen on socket: %s", unixSocket)
-			err = srv.Serve(l)
-		case onlyTLS:
-			log.Printf("Listening on %s for https", port)
-			srv.Addr = ":" + port
-			err = srv.ListenAndServeTLS(certFiles.Cert, certFiles.Key)
-		case onlyHTTP:
-			log.Printf("Listening on %s for http", port)
-			srv.Addr = ":" + port
-			err = srv.ListenAndServe()
-		default:
-			log.Printf("Listening on %s for http and https", port)
-			l, err = fproxy.CreateTLSListener(":"+port, certFiles.Cert, certFiles.Key)
-			if err == nil {
-				err = srv.Serve(l)
-			}
-		}
+		err = serv(srv, unixSocket, port, certFiles, onlyHTTP, onlyTLS)
+	}
+}
 
+func serv(srv *http.Server, unixSocket, port string, certFiles *netx.CertFiles, onlyHTTP, onlyTLS bool) error {
+	var deferFunc func()
+	var l net.Listener
+	var err error
+	switch {
+	case unixSocket != "":
+		// Create a Unix domain socket and listen for incoming connections.
+		l, deferFunc, err = ListenUnixSocket(unixSocket, 0777)
 		if err != nil {
-			log.Printf("server %s error: %v", port, err)
+			log.Panicln(err)
+		}
+		defer deferFunc()
+		log.Printf("listen on socket: %s", unixSocket)
+
+		err = srv.Serve(l)
+	case onlyTLS:
+		log.Printf("Listening on %s for https", port)
+		srv.Addr = ":" + port
+		err = srv.ListenAndServeTLS(certFiles.Cert, certFiles.Key)
+	case onlyHTTP:
+		log.Printf("Listening on %s for http", port)
+		srv.Addr = ":" + port
+		err = srv.ListenAndServe()
+	default:
+		log.Printf("Listening on %s for http and https", port)
+		l, err = fproxy.CreateTLSListener(":"+port, certFiles.Cert, certFiles.Key)
+		if err == nil {
+			err = srv.Serve(l)
 		}
 	}
+
+	if err != nil {
+		log.Printf("server %s error: %v", port, err)
+	}
+
+	return err
+}
+
+func ListenUnixSocket(unixSocket string, mode os.FileMode) (l net.Listener, deferFunc func(), err error) {
+	if unixSocket != "" {
+		deferFunc, err = lockUnixSocket(unixSocket)
+		if err != nil {
+			return nil, nil, fmt.Errorf("lock %s: %w", unixSocket, err)
+		}
+	}
+
+	l, err = net.Listen("unix", unixSocket)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if err := os.Chmod(unixSocket, mode); err != nil {
+		return nil, nil, fmt.Errorf("chmod %s to %s: %w", unixSocket, mode, err)
+	}
+
+	return l, deferFunc, nil
+}
+
+func lockUnixSocket(unixSocket string) (func(), error) {
+	fileLock := flock.New(unixSocket + ".lock")
+	locked, err := fileLock.TryLock()
+	if err != nil {
+		return nil, fmt.Errorf("try lock %s.lock error: %v", unixSocket, err)
+	}
+	if !locked {
+		return nil, fmt.Errorf("try lock %s.lock failed", unixSocket)
+	}
+
+	if _, err := os.Stat(unixSocket); err == nil {
+		if err := os.Remove(unixSocket); err != nil {
+			return nil, fmt.Errorf("remove %s error: %v", unixSocket, err)
+		}
+	}
+
+	return func() {
+		fileLock.Unlock()
+		os.Remove(unixSocket)
+	}, nil
 }
 
 var wsupgrader = websocket.Upgrader{

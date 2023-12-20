@@ -19,6 +19,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/gobars/cmd v0.0.0-20210215022658-cd78beda9673
+	github.com/gofrs/flock v0.8.1
 	github.com/gorilla/websocket v1.5.1
 	github.com/hjson/hjson-go/v4 v4.4.0
 	github.com/julienschmidt/httprouter v1.3.0
