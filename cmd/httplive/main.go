@@ -183,9 +183,13 @@ func serve(srv *http.Server, seq int, port string, env *process.EnvVars, certFil
 	port, onlyTLS := TrimSuffix(port, ":https")
 	unixSocket := ""
 	if strings.HasPrefix(port, "unix:") {
-		unixSocket = filepath.Clean(port[len("unix:"):])
+		unixSocket = port[len("unix:"):]
 	} else if strings.HasSuffix(port, ".sock") {
-		unixSocket = filepath.Clean(port)
+		unixSocket = port
+	}
+	if unixSocket != "" {
+		unixSocket = filepath.Clean(unixSocket)
+		port = unixSocket
 	}
 
 	if seq == 0 && unixSocket == "" {
@@ -207,7 +211,7 @@ func serv(srv *http.Server, unixSocket, port string, certFiles *netx.CertFiles, 
 		// Create a Unix domain socket and listen for incoming connections.
 		l, deferFunc, err = ListenUnixSocket(unixSocket, 0777)
 		if err != nil {
-			log.Panicln(err)
+			log.Fatalf("ListenUnixSocket on %s error: %v", unixSocket, err)
 		}
 		defer deferFunc()
 		log.Printf("listen on socket: %s", unixSocket)
@@ -230,18 +234,16 @@ func serv(srv *http.Server, unixSocket, port string, certFiles *netx.CertFiles, 
 	}
 
 	if err != nil {
-		log.Printf("server %s error: %v", port, err)
+		log.Printf("Server %s error: %v", port, err)
 	}
 
 	return err
 }
 
 func ListenUnixSocket(unixSocket string, mode os.FileMode) (l net.Listener, deferFunc func(), err error) {
-	if unixSocket != "" {
-		deferFunc, err = lockUnixSocket(unixSocket)
-		if err != nil {
-			return nil, nil, fmt.Errorf("lock %s: %w", unixSocket, err)
-		}
+	deferFunc, err = lockUnixSocket(unixSocket)
+	if err != nil {
+		return nil, nil, fmt.Errorf("lock %s: %w", unixSocket, err)
 	}
 
 	l, err = net.Listen("unix", unixSocket)
@@ -273,8 +275,9 @@ func lockUnixSocket(unixSocket string) (func(), error) {
 	}
 
 	return func() {
-		fileLock.Unlock()
+		os.Remove(unixSocket + ".lock")
 		os.Remove(unixSocket)
+		fileLock.Unlock()
 	}, nil
 }
 
