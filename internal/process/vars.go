@@ -15,6 +15,7 @@ type EnvVars struct {
 	ContextPath string
 	CaRoot      string
 	BasicAuth   string
+	HTTPretty   bool
 }
 
 // Init initializes the environments.

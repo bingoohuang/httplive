@@ -41,6 +41,7 @@ func main() {
 	conf := &httplive.Envs
 
 	f := fla9.NewFlagSet(os.Args[0]+" (HTTP Request & Response Service, Mock HTTP, env: GOLOG=0 )", fla9.ExitOnError)
+	f.BoolVar(&conf.HTTPretty, "pretty,P", false, "http pretty on API")
 	f.StringVar(&conf.BasicAuth, "basic,b", "", "basic auth, format user:pass")
 	f.StringVar(&conf.Ports, "port,p", "5003", "Hosting ports, eg. 5003,5004:https,unix:$TMPDIR/a.sock")
 	f.StringVar(&conf.DBFullPath, "dbpath,c", "", "Full path of the httplive.bolt")
@@ -120,7 +121,7 @@ func host(env *process.EnvVars) {
 
 	r := gin.New()
 	r.Use(gzip.Gzip(gzip.DefaultCompression, gzip.WithDecompressFn(gzip.DefaultDecompressHandle)))
-	r.Use(httplive.APIMiddleware, httplive.StaticFileMiddleware,
+	r.Use(httplive.APIMiddleware(env.HTTPretty), httplive.StaticFileMiddleware,
 		util.CORSMiddleware, httplive.ConfigJsMiddleware)
 
 	wsPath := httplive.JoinContextPath("/httplive/ws", nil)

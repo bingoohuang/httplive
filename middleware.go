@@ -13,6 +13,7 @@ import (
 	"github.com/bingoohuang/httplive/internal/process"
 	"github.com/bingoohuang/httplive/internal/res"
 	"github.com/bingoohuang/httplive/pkg/util"
+	"github.com/bingoohuang/httpretty"
 	"github.com/gin-gonic/gin"
 	"github.com/mssola/user_agent"
 	"github.com/sirupsen/logrus"
@@ -50,28 +51,52 @@ func StaticFileMiddleware(c *gin.Context) {
 }
 
 // APIMiddleware ...
-func APIMiddleware(c *gin.Context) {
-	p := process.TrimContextPath(c)
-	ua := user_agent.New(c.Request.UserAgent())
-	isBrowser := ua.OS() != ""
-	isBrowserIndex := isBrowser && p == "/" && c.Query("_hl") == ""
+func APIMiddleware(enableHTTPretty bool) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		p := process.TrimContextPath(c)
+		ua := user_agent.New(c.Request.UserAgent())
+		isBrowser := ua.OS() != ""
+		isBrowserIndex := isBrowser && p == "/" && c.Query("_hl") == ""
 
-	if isBrowserIndex || util.AnyOf(p, "/favicon.ico") || util.HasPrefix(p, "/httplive/", "/_static/") {
-		c.Next()
-		return
-	}
-
-	var bufferRead bytes.Buffer
-	c.Request.Body = CreateTeeReader(c.Request.Body, &bufferRead)
-
-	if result := serveAPI(c.Writer, c.Request); result.RouterServed {
-		if broadcastThrottler.Allow() {
-			broadcast(c, &bufferRead, result)
+		if isBrowserIndex || util.AnyOf(p, "/favicon.ico") || util.HasPrefix(p, "/httplive/", "/_static/") {
+			c.Next()
+			return
 		}
 
-		c.Abort()
-	} else {
-		c.Next()
+		var bufferRead bytes.Buffer
+		c.Request.Body = CreateTeeReader(c.Request.Body, &bufferRead)
+
+		f := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if result := serveAPI(w, r); result.RouterServed {
+				if broadcastThrottler.Allow() {
+					broadcast(c, &bufferRead, result)
+				}
+
+				c.Abort()
+			} else {
+				c.Next()
+			}
+		})
+
+		if enableHTTPretty {
+			httPrettyLogger := &httpretty.Logger{
+				SkipSanitize:    true,
+				Time:            true,
+				TLS:             true,
+				RequestHeader:   true,
+				RequestBody:     true,
+				ResponseHeader:  true,
+				ResponseBody:    true,
+				Colors:          true, // erase line if you don't like colors
+				MaxRequestBody:  40960,
+				MaxResponseBody: 40960,
+				Formatters:      []httpretty.Formatter{&httpretty.JSONFormatter{}},
+			}
+			wr := httPrettyLogger.Middleware(f)
+			f = wr.ServeHTTP
+		}
+
+		f.ServeHTTP(c.Writer, c.Request)
 	}
 }
 

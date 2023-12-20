@@ -5,10 +5,11 @@ go 1.21.3
 require (
 	github.com/asdine/storm/v3 v3.2.1
 	github.com/bingoohuang/fproxy v0.0.0-20231128072613-7240e633b906
-	github.com/bingoohuang/gg v0.0.0-20231211081724-54dddffe9175
+	github.com/bingoohuang/gg v0.0.0-20231220005642-cc3afaff0454
 	github.com/bingoohuang/godaemon v0.0.0-20231211091115-99a7d3fc04eb
 	github.com/bingoohuang/golog v0.0.0-20230906061256-349f3ea70be2
 	github.com/bingoohuang/gor v0.0.0-20230310012915-2ad15da4d290
+	github.com/bingoohuang/httpretty v0.0.0-20231215093510-cdca54cd21d1
 	github.com/bingoohuang/jj v0.0.0-20231201013430-d2abb381b275
 	github.com/bingoohuang/sariaf v0.0.0-20210118074537-bac7a178cb89
 	github.com/casbin/casbin/v2 v2.80.0
@@ -94,7 +95,7 @@ require (
 	lukechampine.com/uint128 v1.3.0 // indirect
 	modernc.org/cc/v3 v3.41.0 // indirect
 	modernc.org/ccgo/v3 v3.16.15 // indirect
-	modernc.org/libc v1.37.6 // indirect
+	modernc.org/libc v1.38.0 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
 	modernc.org/memory v1.7.2 // indirect
 	modernc.org/opt v0.1.3 // indirect
