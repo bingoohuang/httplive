@@ -42,8 +42,8 @@ github.com/bingoohuang/gor v0.0.0-20230310012915-2ad15da4d290 h1:nh+MTvj0lK5TfQ4
 github.com/bingoohuang/gor v0.0.0-20230310012915-2ad15da4d290/go.mod h1:pAoLBYCnrPiRMN6jzNTlN2xXt28JfDt+TigDycUN24s=
 github.com/bingoohuang/gou v0.0.0-20200427104110-9b847a792b6b h1:oClcAEpNt6yiv/l8DRfHjmAc6pk948zTVKyjEXlMNYM=
 github.com/bingoohuang/gou v0.0.0-20200427104110-9b847a792b6b/go.mod h1:aDOwtkuv68JHEEsHoWJhqyUODo79t5k/erZCZllNBhc=
-github.com/bingoohuang/httpretty v0.0.0-20231215093510-cdca54cd21d1 h1:PxPysazCI6hJSZaLFXJTm6g/mQkt1HW75SVoE3D0M8U=
-github.com/bingoohuang/httpretty v0.0.0-20231215093510-cdca54cd21d1/go.mod h1:4HQwwwmRHk3KTYqTaXiUsz4EpcETZ8cHgh7/cv4qBMg=
+github.com/bingoohuang/httpretty v0.0.0-20231222043219-67a34f97d832 h1:+wdmbzvtIhDt0J7wqW4VYip/SGg1L0CncGIBVQXaDuk=
+github.com/bingoohuang/httpretty v0.0.0-20231222043219-67a34f97d832/go.mod h1:4HQwwwmRHk3KTYqTaXiUsz4EpcETZ8cHgh7/cv4qBMg=
 github.com/bingoohuang/jiami v0.0.0-20221123002830-d9d1f5f029b4 h1:+VmCTioMLui7PJgGD0AGOq44ls7GVYqxqv5NY1nncvY=
 github.com/bingoohuang/jiami v0.0.0-20221123002830-d9d1f5f029b4/go.mod h1:orsb36bWkIn1YzTj9vxKi61P/RJj4eopmi8dyrOFeEY=
 github.com/bingoohuang/jj v0.0.0-20231201013430-d2abb381b275 h1:VRuSTEQNsKtpvPaf4aBJNYKcpiwKScRCiPYq5ymPtCg=
@@ -310,8 +310,8 @@ github.com/rivo/uniseg v0.1.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJ
 github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6SoW27p1b0cqNHllgS5HIMJraePCO15w5zCzIWYg=
 github.com/rogpeppe/go-internal v1.6.1/go.mod h1:xXDCJY+GAPziupqXw64V24skbSoqbTEfhy4qGm1nDQc=
 github.com/rogpeppe/go-internal v1.8.0/go.mod h1:WmiCO8CzOY8rg0OYDC4/i/2WRWAB6poM+XZ2dLUbcbE=
-github.com/rogpeppe/go-internal v1.9.0 h1:73kH8U+JUqXU8lRuOHeVHaa/SZPifC7BkcraZVejAe8=
-github.com/rogpeppe/go-internal v1.9.0/go.mod h1:WtVeX8xhTBvf0smdhujwtBcq4Qrzq/fJaraNFVN+nFs=
+github.com/rogpeppe/go-internal v1.12.0 h1:exVL4IDcn6na9z1rAb56Vxr+CgyK3nn3O+epU5NdKM8=
+github.com/rogpeppe/go-internal v1.12.0/go.mod h1:E+RYuTGaKKdloAfM02xzb0FW3Paa99yedzYV+kq4uf4=
 github.com/satori/go.uuid v1.2.0/go.mod h1:dA0hQrYB0VpLJoorglMZABFdXlWrHn1NEOzdhQKdks0=
 github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b/go.mod h1:dA0hQrYB0VpLJoorglMZABFdXlWrHn1NEOzdhQKdks0=
 github.com/scylladb/termtables v0.0.0-20191203121021-c4c0b6d42ff4/go.mod h1:C1a7PQSMz9NShzorzCiG2fk9+xuCgLkPeCvMHYR2OWg=

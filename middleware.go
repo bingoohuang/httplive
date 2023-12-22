@@ -92,7 +92,7 @@ func APIMiddleware(enableHTTPretty bool) func(c *gin.Context) {
 				MaxResponseBody: 40960,
 				Formatters:      []httpretty.Formatter{&httpretty.JSONFormatter{}},
 			}
-			wr := httPrettyLogger.Middleware(f)
+			wr := httPrettyLogger.Middleware(f, true)
 			f = wr.ServeHTTP
 		}
 

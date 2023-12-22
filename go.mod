@@ -9,7 +9,7 @@ require (
 	github.com/bingoohuang/godaemon v0.0.0-20231211091115-99a7d3fc04eb
 	github.com/bingoohuang/golog v0.0.0-20230906061256-349f3ea70be2
 	github.com/bingoohuang/gor v0.0.0-20230310012915-2ad15da4d290
-	github.com/bingoohuang/httpretty v0.0.0-20231215093510-cdca54cd21d1
+	github.com/bingoohuang/httpretty v0.0.0-20231222043219-67a34f97d832
 	github.com/bingoohuang/jj v0.0.0-20231201013430-d2abb381b275
 	github.com/bingoohuang/sariaf v0.0.0-20210118074537-bac7a178cb89
 	github.com/casbin/casbin/v2 v2.80.0
@@ -73,6 +73,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
+	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/segmentio/ksuid v1.0.4 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/thoas/go-funk v0.9.3 // indirect
