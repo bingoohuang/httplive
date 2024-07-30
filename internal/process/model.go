@@ -384,7 +384,12 @@ func (a APIDataModel) createCasbin() (*casbin.Enforcer, *sariaf.Router, map[stri
 		return nil, nil, nil
 	}
 
-	policyRows := e.GetNamedPolicy("p")
+	policyRows, err := e.GetNamedPolicy("p")
+	if err != nil {
+		logrus.Warnf("failed to create casbin: %v", err)
+		return nil, nil, nil
+	}
+
 	sariafRouter := sariaf.New()
 	for _, row := range policyRows {
 		if err := sariafRouter.Handle(sariaf.MethodAny, row[1], nil); err != nil {
