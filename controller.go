@@ -3,10 +3,12 @@ package httplive
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"mime"
 	"net/http"
+	"os"
 	"path"
 	"strings"
 
@@ -139,6 +141,63 @@ func validate(obj interface{}) error {
 
 type saveT struct {
 	giu.T `url:"POST /api/save"`
+}
+
+type ReqFile struct {
+	ID       string `json:"id"`
+	Endpoint string `json:"endpoint"`
+	Path     string `json:"path"`
+	Method   string `json:"method"`
+	// Body @body.json 或者 直接内嵌 JSON
+	Body json.RawMessage `json:"body"`
+}
+
+func ProcessReqFile(reqFile string) {
+	if err := ProcessReq(reqFile); err != nil {
+		os.WriteFile(reqFile+".result", []byte(err.Error()), os.ModePerm)
+	} else {
+		os.WriteFile(reqFile+".ok", nil, os.ModePerm)
+	}
+}
+
+func ProcessReq(reqFile string) error {
+	req := &ReqFile{}
+	data, err := os.ReadFile(reqFile)
+	if err != nil {
+		return fmt.Errorf("read file %s: %w", reqFile, err)
+	}
+	if err := json.Unmarshal(data, req); err != nil {
+		return fmt.Errorf("unmarshal json from file %s: %w", reqFile, err)
+	}
+
+	if req.Endpoint == "" {
+		req.Endpoint = req.Path
+	}
+	if req.Method == "" {
+		req.Method = "ANY"
+	}
+
+	strBody := string(req.Body)
+	if strings.HasPrefix(strBody, `"@`) {
+		bodyFile := strBody[2 : len(strBody)-1]
+		bodyData, err := os.ReadFile(bodyFile)
+		if err != nil {
+			return fmt.Errorf("read file %s: %w", bodyFile, err)
+		}
+		req.Body = bodyData
+	}
+
+	model := process.APIDataModel{
+		Endpoint: req.Endpoint,
+		Method:   req.Method,
+		ID:       process.ID(req.ID),
+		Body:     process.RawMessage(req.Body),
+	}
+	if _, err := SaveEndpoint(model); err != nil {
+		return fmt.Errorf("save endpoint: %v", err)
+	}
+
+	return nil
 }
 
 // Save 保存body.

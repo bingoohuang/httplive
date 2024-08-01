@@ -31,6 +31,7 @@ import (
 	"github.com/bingoohuang/httplive/internal/process"
 	"github.com/bingoohuang/httplive/pkg/gzip"
 	"github.com/bingoohuang/httplive/pkg/util"
+	"github.com/fsnotify/fsnotify"
 	"github.com/gin-gonic/gin"
 	"github.com/gofrs/flock"
 	"github.com/gorilla/websocket"
@@ -112,6 +113,46 @@ func fixDBPath(env *process.EnvVars) string {
 	return fullPath
 }
 
+func watchReqTouching(ctx context.Context, dir, suffix string, processor func(reqFile string)) error {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return err
+	}
+	defer watcher.Close()
+
+	// Start listening for events.
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event, ok := <-watcher.Events:
+				if !ok {
+					return
+				}
+
+				if event.Has(fsnotify.Create) && strings.HasSuffix(event.Name, suffix) {
+					os.Remove(filepath.Join(dir, event.Name))
+					name := event.Name[:len(event.Name)-len(suffix)]
+					processor(filepath.Join(dir, name))
+				}
+			case err, ok := <-watcher.Errors:
+				if !ok {
+					return
+				}
+				log.Println("error:", err)
+			}
+		}
+	}()
+
+	if err = watcher.Add(dir); err != nil {
+		return err
+	}
+
+	<-ctx.Done()
+	return nil
+}
+
 func host(env *process.EnvVars) {
 	env.Init()
 
@@ -147,16 +188,21 @@ func host(env *process.EnvVars) {
 
 	// Cleanup the sockfile.
 	c := make(chan os.Signal, 1)
+	ctx, cancel := context.WithCancel(context.Background())
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		if err := srv.Shutdown(ctx); err != nil {
+		cancel()
+		ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+
+		err := srv.Shutdown(ctx)
+		if err != nil {
 			log.Fatal("Server Shutdown:", err)
 		}
 		log.Println("Server exiting")
 	}()
+
+	go watchReqTouching(ctx, filepath.Dir(env.DBFullPath), ".httplive", httplive.ProcessReqFile)
 
 	var wg sync.WaitGroup
 	for i, p := range portsArr {
